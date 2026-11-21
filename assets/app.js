@@ -2,6 +2,12 @@
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
 const APPS_TESTNET     = "0xfFF120c006ceB3487AD61943E4022e15cc8eb923"; // OneIDCampaignsV5
 const BINDINGS_TESTNET = "0xC76847F54Fe3C2ca6eB61e5dd998e11Bd7e5988C"; // IdentityBindings
+const PROFILE_TESTNET  = "0x03b4a3129199b16ccf144a100b1fc65f31d907c1"; // IdentityProfile (Wave 2)
+const PROFILE_ABI = [
+  "function setProfile(string bio, tuple(string title, string url)[] links)",
+  "function removeProfile()",
+  "function profileOf(address who) view returns (string bio, tuple(string title, string url)[] links, uint64 updatedAt)"
+];
 const BINDINGS_ABI = [
   "function registerBinding(string,bytes)",
   "function removeBinding()",
@@ -100,7 +106,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -300,7 +306,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -482,7 +488,7 @@ function toast(msg){ const el = $("toast"); if(!el) return; el.textContent = msg
 function short(a){ return a.slice(0,6)+"…"+a.slice(-4); }
 function fmtTime(ts){ const d = new Date(Number(ts)*1000); return d.toLocaleString(LANG === "zh" ? "zh-CN" : "en-GB", {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"}); }
 
-let providerMain = null, providerTest = null, registry = null, appsRead = null, bindingsRead = null;
+let providerMain = null, providerTest = null, registry = null, appsRead = null, bindingsRead = null, profileRead = null;
 function chain(){
   if (!providerMain){
     const fb = (urls, chainId) => new ethers.FallbackProvider(urls.map(u => new ethers.JsonRpcProvider(u, chainId, { staticNetwork: true })), chainId, { quorum: 1 });
@@ -491,7 +497,66 @@ function chain(){
     registry = new ethers.Contract(REGISTRY_MAINNET, ERC721_ABI, providerMain);
     appsRead = new ethers.Contract(APPS_TESTNET, APPS_ABI, providerTest);
     bindingsRead = new ethers.Contract(BINDINGS_TESTNET, BINDINGS_ABI, providerTest);
+    profileRead = new ethers.Contract(PROFILE_TESTNET, PROFILE_ABI, providerTest);
   }
+}
+
+/* ---------- on-chain profile (bio + links, self-described) ---------- */
+async function readProfile(addr){
+  chain();
+  try{
+    const r = await profileRead.profileOf(addr);
+    return { bio: r[0], links: r[1].map(l => ({ title: l[0], url: l[1] })), updatedAt: Number(r[2]) };
+  }catch(e){ return null; }
+}
+async function loadProfile(addr){
+  const box = $("profileBox"); if (!box) return;
+  box.style.display = "none";
+  const ed = $("profileEdit"); if (ed) ed.style.display = "none";
+  const p = await readProfile(addr);
+  if (p && (p.bio || p.links.length)){
+    const bioEl = $("profileBio");
+    bioEl.textContent = p.bio || "";
+    bioEl.style.display = p.bio ? "" : "none";
+    $("profileLinks").innerHTML = p.links.map(l => `<a class="btn ghost sm" href="${String(l.url).replace(/"/g, "")}" target="_blank" rel="noopener" style="text-decoration:none">${String(l.title).replace(/</g, "&lt;")}</a>`).join("");
+    box.style.display = "";
+  }
+  if (ed && myAddr && addr.toLowerCase() === myAddr.toLowerCase()){
+    $("pfBio").value = p ? p.bio : "";
+    for (let i = 0; i < 5; i++){
+      const lk = p && p.links[i] ? p.links[i] : { title: "", url: "" };
+      $("pfT" + i).value = lk.title; $("pfU" + i).value = lk.url;
+    }
+    ed.style.display = "";
+  }
+}
+async function saveProfile(){
+  const msg = $("pfMsg");
+  try{
+    await connectWallet();
+    const bio = $("pfBio").value.trim();
+    const links = [];
+    for (let i = 0; i < 5; i++){
+      const tt = $("pfT" + i).value.trim(), uu = $("pfU" + i).value.trim();
+      if (tt || uu) links.push({ title: tt, url: uu });
+    }
+    const c = new ethers.Contract(PROFILE_TESTNET, PROFILE_ABI, signer);
+    msg.textContent = t("m_signing");
+    await (await c.setProfile(bio, links)).wait();
+    msg.textContent = t("prof_saved");
+    loadProfile(myAddr);
+  }catch(e){ msg.textContent = ((e.shortMessage || e.message) || "").slice(0, 120); }
+}
+async function removeProfileFn(){
+  const msg = $("pfMsg");
+  try{
+    await connectWallet();
+    const c = new ethers.Contract(PROFILE_TESTNET, PROFILE_ABI, signer);
+    msg.textContent = t("m_signing");
+    await (await c.removeProfile()).wait();
+    msg.textContent = t("prof_removed");
+    loadProfile(myAddr);
+  }catch(e){ msg.textContent = ((e.shortMessage || e.message) || "").slice(0, 120); }
 }
 
 /* ---------- checker + card (shared read) ---------- */
@@ -573,6 +638,7 @@ function disconnectWallet(){
   try{ sessionStorage.setItem("hg_dc", "1"); }catch(e){}
   document.querySelectorAll(".connectBtn").forEach(b => { b.textContent = t("connect"); b.title = ""; });
   toast(t("m_disconnected"));
+  const pe = $("profileEdit"); if (pe) pe.style.display = "none";
   if ($("campGrid")) loadCampaigns();
   if ($("mineGrid")) loadMine();
   if ($("statHumans")) loadPlatformStats();
@@ -1487,11 +1553,21 @@ document.addEventListener("DOMContentLoaded", () => {
     $("cardNote").textContent = t(human ? "card_note_yes" : "card_note_no");
     toggleGuide(human === false);
     loadRecord(addr);
+    loadProfile(addr);
     const hbEl = $("cardBinding");
     if (hbEl){ hbEl.innerHTML = ""; creatorBinding(addr).then(hb => { const be = $("bindEntryStatus"); if (be) be.textContent = hb ? "@" + hb + " \u2713" : t("card_bind_none"); if (hb) { const nm = $("cardName"); if (nm) nm.textContent = "@" + hb; hbEl.innerHTML = `<a href="https://x.com/${hb}" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;font-family:var(--mono);font-size:15px">@${hb}</a> <span style="color:var(--gold);font-size:12px;border:1px solid rgba(240,185,11,.45);border-radius:99px;padding:2px 8px">${t("bind_bound")}</span>`; } }); }
   };
   const kbAuto = new URLSearchParams(location.search).get("a");
   if (kb && kbAuto && ethers.isAddress(kbAuto)) { $("cardInput").value = kbAuto; kb.click(); }
+  const pfl = $("pfLinks");
+  if (pfl){
+    let h = "";
+    for (let i = 0; i < 5; i++) h += `<div class="f-2col"><div class="f-row"><input id="pfT${i}" data-i18n-ph="prof_title_ph" spellcheck="false"></div><div class="f-row"><input id="pfU${i}" data-i18n-ph="prof_url_ph" spellcheck="false"></div></div>`;
+    pfl.innerHTML = h;
+    applyI18n();
+    $("pfSave").addEventListener("click", saveProfile);
+    $("pfRemove").addEventListener("click", removeProfileFn);
+  }
   const clb = $("copyLinkBtn");
   if (clb) clb.onclick = async () => {
     const a2 = ($("cardAddr")?.textContent || "").trim();
