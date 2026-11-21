@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builders — HumanGate</title>
+<meta name="description" content="HumanGate — one real human, one entry. The on-chain anti-sybil primitive for Binance Agent ID: raffles, votes and claim drops that bot farms cannot enter.">
+<meta property="og:title" content="HumanGate — One Human, One Entry">
+<meta property="og:description" content="Raffles, votes and claim drops gated by Binance Agent ID. One KYC, one ID, zero bot farms. Draws anyone can recompute.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/og.png">
+<meta name="twitter:image" content="assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="1" y="1" width="24" height="24" rx="6" stroke="#f0b90b" stroke-width="2"/><circle cx="13" cy="12" r="3.4" fill="#f0b90b"/><rect x="11.9" y="14" width="2.2" height="5" rx="1.1" fill="#f0b90b"/></svg>
+      <b>HumanGate</b><span>testnet</span>
+    </a>
+    <div class="nav-links">
+      <a href="campaigns.html" data-i18n="nav_campaigns"></a>
+      <a href="create.html" data-i18n="nav_create"></a>
+      <a href="mine.html" data-i18n="nav_mine"></a>
+      <a href="card.html" data-i18n="nav_card"></a>
+      <div class="nav-dd" id="learnDd">
+        <button type="button" class="nav-dd-btn" id="learnBtn"><span data-i18n="nav_learn"></span> <span>▾</span></button>
+        <div class="nav-dd-menu">
+          <a href="how.html" data-i18n="nav_how"></a>
+          <a href="builders.html" class="on" data-i18n="nav_builders"></a>
+        </div>
+      </div>
+      <div class="lang"><button data-lang="en" onclick="setLang('en')">EN</button><button data-lang="zh" onclick="setLang('zh')">中文</button></div>
+      <button class="btn connectBtn" data-i18n="connect"></button>
+    </div>
+  </div>
+</nav>
+
+
+<div class="pagehead">
+  <div class="wrap">
+    <div class="kicker" data-i18n="kick_build"></div>
+    <h1 data-i18n="h_build"></h1>
+    <p data-i18n="build_sub"></p>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <p style="color:var(--muted);font-size:15px;margin-bottom:16px" data-i18n="code_note"></p>
+    <div class="codebox"><span class="kw">interface</span> IHumanGate { <span class="kw">function</span> isHuman(address) <span class="kw">external view returns</span> (bool); }<br><br><span class="kw">function</span> enter() <span class="kw">external</span> {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">require</span>(gate.isHuman(msg.sender), <span class="str">"not a unique human"</span>);<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">require</span>(!entered[msg.sender], <span class="str">"already counted"</span>);<br>&nbsp;&nbsp;&nbsp;&nbsp;entered[msg.sender] = <span class="kw">true</span>;<br>}</div>
+    <table class="addr-table">
+      <tr><td data-i18n="a_gate"></td><td><a href="https://testnet.bscscan.com/address/0x4858c1c6a4428c65ee6f60aac21a3f404d85d598" target="_blank" rel="noopener">0x4858c1c6a4428c65ee6f60aac21a3f404d85d598</a></td></tr>
+      <tr><td data-i18n="a_apps"></td><td><a href="https://testnet.bscscan.com/address/0xfFF120c006ceB3487AD61943E4022e15cc8eb923" target="_blank" rel="noopener">0xfFF120c006ceB3487AD61943E4022e15cc8eb923</a></td></tr>
+      <tr><td data-i18n="a_bind"></td><td><a href="https://testnet.bscscan.com/address/0xC76847F54Fe3C2ca6eB61e5dd998e11Bd7e5988C" target="_blank" rel="noopener">0xC76847F54Fe3C2ca6eB61e5dd998e11Bd7e5988C</a></td></tr>
+      <tr><td data-i18n="a_reg"></td><td><a href="https://bscscan.com/address/0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F" target="_blank" rel="noopener">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</a> (SPACE ID Agent ID)</td></tr>
+      <tr><td data-i18n="a_skill"></td><td data-i18n="a_skill_v"></td></tr>
+    </table>
+  </div>
+</section>
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">—</span><h2 data-i18n="skill_h"></h2></div>
+    <p style="color:var(--muted);font-size:16.5px;line-height:1.7;max-width:760px" data-i18n="skill_p"></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap f-in">
+    <div data-i18n="foot_l"></div>
+    <div class="mono" data-i18n="foot_r"></div>
+  </div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HumanGate — One Human. One Entry.</title>
+<meta name="description" content="HumanGate — one real human, one entry. The on-chain anti-sybil primitive for Binance Agent ID: raffles, votes and claim drops that bot farms cannot enter.">
+<meta property="og:title" content="HumanGate — One Human, One Entry">
+<meta property="og:description" content="Raffles, votes and claim drops gated by Binance Agent ID. One KYC, one ID, zero bot farms. Draws anyone can recompute.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/og.png">
+<meta name="twitter:image" content="assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="1" y="1" width="24" height="24" rx="6" stroke="#f0b90b" stroke-width="2"/><circle cx="13" cy="12" r="3.4" fill="#f0b90b"/><rect x="11.9" y="14" width="2.2" height="5" rx="1.1" fill="#f0b90b"/></svg>
+      <b>HumanGate</b><span>testnet</span>
+    </a>
+    <div class="nav-links">
+      <a href="campaigns.html" data-i18n="nav_campaigns"></a>
+      <a href="create.html" data-i18n="nav_create"></a>
+      <a href="mine.html" data-i18n="nav_mine"></a>
+      <a href="card.html" data-i18n="nav_card"></a>
+      <div class="nav-dd" id="learnDd">
+        <button type="button" class="nav-dd-btn" id="learnBtn"><span data-i18n="nav_learn"></span> <span>▾</span></button>
+        <div class="nav-dd-menu">
+          <a href="how.html" data-i18n="nav_how"></a>
+          <a href="builders.html" data-i18n="nav_builders"></a>
+        </div>
+      </div>
+      <div class="lang"><button data-lang="en" onclick="setLang('en')">EN</button><button data-lang="zh" onclick="setLang('zh')">中文</button></div>
+      <button class="btn connectBtn" data-i18n="connect"></button>
+    </div>
+  </div>
+</nav>
+
+
+<header>
+  <div class="wrap">
+    <div class="kicker" data-i18n="kick_home"></div>
+    <h1><span data-i18n="h1a"></span><br><span class="hollow" data-i18n="h1b"></span> <span class="gold" data-i18n="h1c"></span></h1>
+    <p class="hero-sub" data-i18n="hero_sub"></p>
+    <p class="hero-note" data-i18n="hero_note"></p>
+    <div class="hero-ctas">
+      <a class="btn big" href="campaigns.html" data-i18n="hero_cta_join" style="text-decoration:none"></a>
+      <a class="btn big ghost" href="create.html" data-i18n="hero_cta_create" style="text-decoration:none"></a>
+    </div>
+    <div class="watermark">HumanGate</div>
+    <div class="checker">
+      <label data-i18n="check_label"></label>
+      <div class="checker-row">
+        <input id="checkInput" placeholder="0x…" spellcheck="false">
+        <button class="btn" id="checkBtn" data-i18n="check_btn"></button>
+      </div>
+      <div class="verdict" id="verdict"></div>
+      <div class="try"><span data-i18n="check_try"></span> <a id="trySample" data-i18n="check_try_link"></a> <span data-i18n="check_try2"></span></div>
+    </div>
+
+    <div class="guide claimGuide" style="display:none">
+      <h3 data-i18n="guide_h"></h3>
+      <ol>
+        <li data-i18n="guide_1"></li>
+        <li data-i18n="guide_2"></li>
+        <li data-i18n="guide_3"></li>
+        <li data-i18n="guide_4"></li>
+      </ol>
+    </div>
+    <div class="feed">
+      <div class="feed-head"><span class="dot"></span><span data-i18n="feed_h"></span><span class="blk" id="feedBlock"></span></div>
+      <ul id="feedList"><li>…</li></ul>
+    </div>
+  </div>
+<div class="strip">
+  <div class="wrap strip-in">
+    <div class="stat"><b id="statCampaigns">–</b><span data-i18n="stat_campaigns"></span></div>
+</header>
+
+<div class="marquee"><div class="marquee-track" id="mqTrack"></div></div>
+<script>
+(function(){
+  const keys=['mq1','mq2','mq3','mq4','mq5','mq6'];
+  function fill(){
+    const lang = localStorage.getItem('hg-lang') || ((navigator.language||'en').startsWith('zh')?'zh':'en');
+    const dict = window.__HG_DICTS && window.__HG_DICTS[lang];
+    if(!dict){ document.getElementById('mqTrack').innerHTML=''; return; }
+    const items = keys.map(k=>'<span>'+dict[k]+'</span>').join('<b>·</b>');
+    document.getElementById('mqTrack').innerHTML = items + '<b>·</b>' + items + '<b>·</b>';
+  }
+  window.__mqFill = fill; fill();
+})();
+</script>
+
+    <div class="stat"><b id="statEntries">–</b><span data-i18n="stat_entries"></span></div>
+    <div class="stat"><b id="statHumans">–</b><span data-i18n="stat_humans"></span></div>
+    <div class="stat"><b id="statPayouts">–</b><span data-i18n="stat_payouts"></span></div>
+  </div>
+</div>
+
+
+<section style="padding-top:34px">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">◷</span><h2 data-i18n="soon_h"></h2><p data-i18n="soon_sub"></p></div>
+    <div class="camp-grid" id="soonGrid"></div>
+  </div>
+</section>
+<section>
+  <div class="wrap">
+    <div class="teasers">
+      <a class="teaser" href="campaigns.html">
+        <div class="no" data-i18n="t1_no"></div><h3 data-i18n="t1_h"></h3><p data-i18n="t1_p"></p>
+        <div class="go" data-i18n="t_go"></div>
+      </a>
+      <a class="teaser" href="how.html">
+        <div class="no" data-i18n="t2_no"></div><h3 data-i18n="t2_h"></h3><p data-i18n="t2_p"></p>
+        <div class="go" data-i18n="t_go2"></div>
+      </a>
+      <a class="teaser" href="builders.html">
+        <div class="no" data-i18n="t3_no"></div><h3 data-i18n="t3_h"></h3><p data-i18n="t3_p"></p>
+        <div class="go" data-i18n="t_go3"></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap f-in">
+    <div data-i18n="foot_l"></div>
+    <div class="mono" data-i18n="foot_r"></div>
+  </div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create — HumanGate</title>
+<meta name="description" content="HumanGate — one real human, one entry. The on-chain anti-sybil primitive for Binance Agent ID: raffles, votes and claim drops that bot farms cannot enter.">
+<meta property="og:title" content="HumanGate — One Human, One Entry">
+<meta property="og:description" content="Raffles, votes and claim drops gated by Binance Agent ID. One KYC, one ID, zero bot farms. Draws anyone can recompute.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/og.png">
+<meta name="twitter:image" content="assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="1" y="1" width="24" height="24" rx="6" stroke="#f0b90b" stroke-width="2"/><circle cx="13" cy="12" r="3.4" fill="#f0b90b"/><rect x="11.9" y="14" width="2.2" height="5" rx="1.1" fill="#f0b90b"/></svg>
+      <b>HumanGate</b><span>testnet</span>
+    </a>
+    <div class="nav-links">
+      <a href="campaigns.html" data-i18n="nav_campaigns"></a>
+      <a href="create.html" class="on" data-i18n="nav_create"></a>
+      <a href="mine.html" data-i18n="nav_mine"></a>
+      <a href="card.html" data-i18n="nav_card"></a>
+      <div class="nav-dd" id="learnDd">
+        <button type="button" class="nav-dd-btn" id="learnBtn"><span data-i18n="nav_learn"></span> <span>▾</span></button>
+        <div class="nav-dd-menu">
+          <a href="how.html" data-i18n="nav_how"></a>
+          <a href="builders.html" data-i18n="nav_builders"></a>
+        </div>
+      </div>
+      <div class="lang"><button data-lang="en" onclick="setLang('en')">EN</button><button data-lang="zh" onclick="setLang('zh')">中文</button></div>
+      <button class="btn connectBtn" data-i18n="connect"></button>
+    </div>
+  </div>
+</nav>
+
+<div class="pagehead">
+  <div class="wrap">
+    <div class="kicker" data-i18n="kick_create"></div>
+    <h1 data-i18n="h_create"></h1>
+    <p data-i18n="create_sub"></p>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <div class="form">
+      <div class="tabs">
+        <button type="button" class="on" data-i18n="f_tab_raffle"></button>
+        <button type="button" data-i18n="f_tab_vote"></button>
+        <button type="button" data-i18n="f_tab_claim"></button>
+      </div>
+      <div class="f-sec" data-i18n="f_sec1"></div>
+      <div class="f-row">
+        <label data-i18n="f_title"></label>
+        <input id="fTitle" data-i18n-ph="f_title_ph" spellcheck="false">
+      </div>
+      <div class="f-2col">
+        <div class="f-row"><label data-i18n="f_start"></label><input id="fStart" type="datetime-local"></div>
+        <div class="f-row"><label data-i18n="f_end"></label><input id="fEnd" type="datetime-local"></div>
+      </div>
+      
+      <div class="f-sec" data-i18n="f_sec2"></div>
+      <div class="f-row" id="fPrizeRow">
+        <label data-i18n="f_prize_token"></label>
+        <select id="fTokenSel">
+          <option value="none" data-i18n="f_tok_none"></option>
+          <option value="bnb" data-i18n="f_tok_bnb"></option>
+          <option value="usdt" data-i18n="f_tok_usdt"></option>
+          <option value="usdc" data-i18n="f_tok_usdc"></option>
+          <option value="erc20" data-i18n="f_tok_erc20"></option>
+        </select>
+      </div>
+      <div class="f-row" id="fTokenAddrRow" style="display:none">
+        <label data-i18n="f_token_addr"></label>
+        <input id="fTokenAddr" placeholder="0x…" spellcheck="false">
+      </div>
+      <div class="f-row" id="fWinnersRow">
+        <label data-i18n="f_winners"></label>
+        <input id="fWinners" type="number" min="1" value="1">
+        <div class="hint" data-i18n="f_prize_hint"></div>
+      </div>
+      
+      
+      <div class="f-row" id="fModeRow" style="display:none">
+        <label data-i18n="f_mode"></label>
+        <div class="tabs" style="margin-bottom:8px">
+          <button type="button" id="fModeFixed" class="on" data-i18n="f_mode_fixed"></button>
+          <button type="button" id="fModeRandom" data-i18n="f_mode_random"></button>
+        </div>
+        <div class="hint" data-i18n="f_mode_hint"></div>
+      </div>
+      <div class="f-row" id="fPoolRow" style="display:none">
+        <label data-i18n="f_pool"></label>
+        <input id="fPool" type="text" inputmode="decimal" placeholder="0.1">
+      </div>
+      <div class="f-row" id="fMaxClaimsRow" style="display:none">
+        <label data-i18n="f_maxclaims"></label>
+        <input id="fMaxClaims" type="number" min="1" value="10">
+      </div>
+      <div class="f-row" id="fPerWinnerRow" style="display:none">
+        <label data-i18n="f_per_winner"></label>
+        <input id="fPerWinner" type="text" inputmode="decimal" placeholder="0.01">
+      </div>
+      <div class="f-row" id="fOptionsRow" style="display:none">
+        <label data-i18n="f_options"></label>
+        <input id="fOptions" type="number" min="2" max="16" value="2">
+      </div>
+      <div class="f-row" id="fSeedHint"><div class="hint" data-i18n="f_seed_hint"></div></div>
+      <div class="f-sec" data-i18n="f_sec3"></div>
+      <div class="f-row"><label data-i18n="f_posturl"></label><input type="text" id="fPostUrl" data-i18n-ph="post_ph" autocomplete="off"></div>
+      <div class="f-row"><label data-i18n="f_series"></label><input type="text" id="fSeries" data-i18n-ph="series_ph" autocomplete="off"></div>
+      <div id="fErrors" style="display:none;color:#ff8a8a;font-size:13.5px;line-height:1.75;margin-bottom:10px"></div>
+      <button class="btn" id="createSubmit" data-i18n="f_submit_raffle"></button>
+      <span class="camp-msg" id="formMsg"></span>
+    </div>
+    <div class="f-sec" data-i18n="f_preview"></div>
+    <div id="createPreview" style="max-width:430px"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap f-in">
+    <div data-i18n="foot_l"></div>
+    <div class="mono" data-i18n="foot_r"></div>
+  </div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

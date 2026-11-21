@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My campaigns — HumanGate</title>
+<meta name="description" content="HumanGate — one real human, one entry. The on-chain anti-sybil primitive for Binance Agent ID: raffles, votes and claim drops that bot farms cannot enter.">
+<meta property="og:title" content="HumanGate — One Human, One Entry">
+<meta property="og:description" content="Raffles, votes and claim drops gated by Binance Agent ID. One KYC, one ID, zero bot farms. Draws anyone can recompute.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/og.png">
+<meta name="twitter:image" content="assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="1" y="1" width="24" height="24" rx="6" stroke="#f0b90b" stroke-width="2"/><circle cx="13" cy="12" r="3.4" fill="#f0b90b"/><rect x="11.9" y="14" width="2.2" height="5" rx="1.1" fill="#f0b90b"/></svg>
+      <b>HumanGate</b><span>testnet</span>
+    </a>
+    <div class="nav-links">
+      <a href="campaigns.html" data-i18n="nav_campaigns"></a>
+      <a href="create.html" data-i18n="nav_create"></a>
+      <a href="mine.html" class="on" data-i18n="nav_mine"></a>
+      <a href="card.html" data-i18n="nav_card"></a>
+      <div class="nav-dd" id="learnDd">
+        <button type="button" class="nav-dd-btn" id="learnBtn"><span data-i18n="nav_learn"></span> <span>▾</span></button>
+        <div class="nav-dd-menu">
+          <a href="how.html" data-i18n="nav_how"></a>
+          <a href="builders.html" data-i18n="nav_builders"></a>
+        </div>
+      </div>
+      <div class="lang"><button data-lang="en" onclick="setLang('en')">EN</button><button data-lang="zh" onclick="setLang('zh')">中文</button></div>
+      <button class="btn connectBtn" data-i18n="connect"></button>
+    </div>
+  </div>
+</nav>
+
+<div class="pagehead">
+  <div class="wrap">
+    <div class="kicker" data-i18n="mine_kick"></div>
+    <h1 data-i18n="mine_h"></h1>
+    <p data-i18n="mine_sub"></p>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <div class="panel" id="mineSummary" style="display:none;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px">
+      <canvas id="mineAvatar" width="56" height="56" style="border-radius:12px"></canvas>
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span id="mineName" style="font-weight:800;font-size:19px">—</span><span id="mineHuman" style="display:none;color:var(--gold);font-size:12px;border:1px solid rgba(240,185,11,.45);border-radius:99px;padding:2px 9px" data-i18n="ms_human"></span></div>
+        <div class="mono" id="mineMeta" style="color:var(--muted);font-size:12.5px;margin-top:3px;word-break:break-all"></div>
+      </div>
+      <div class="mono" style="font-size:13.5px;color:var(--muted)"><span data-i18n="ms_created"></span> <b id="msCreated" style="color:var(--text)">–</b> \u00b7 <span data-i18n="ms_participated"></span> <b id="msEntered" style="color:var(--text)">–</b> \u00b7 <span data-i18n="ms_won"></span> <b id="msWon" style="color:var(--gold)">–</b></div>
+      <a class="btn ghost" id="mineProfileBtn" href="card.html" data-i18n="ms_profile" style="text-decoration:none"></a>
+    </div>
+    <div class="camp-grid" id="mineGrid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap f-in">
+    <div data-i18n="foot_l"></div>
+    <div class="mono" data-i18n="foot_r"></div>
+  </div>
+</footer>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
