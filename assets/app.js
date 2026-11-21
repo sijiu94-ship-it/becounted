@@ -100,7 +100,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -300,7 +300,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -517,11 +517,21 @@ let signer = null, myAddr = null;
 async function connectWallet(){
   if(!window.ethereum){ toast(t("m_nowallet")); return; }
   try{
+    await window.ethereum.request({ method:"eth_requestAccounts" });
     const prov = new ethers.BrowserProvider(window.ethereum);
-    const net = await prov.getNetwork();
-    if(net.chainId !== BigInt(NETWORK.appsChainId)) await window.ethereum.request({ method:"wallet_switchEthereumChain", params:[{ chainId: NETWORK.appsChainHex }] });
     signer = await prov.getSigner();
     myAddr = await signer.getAddress();
+    try{
+      const net = await prov.getNetwork();
+      if(net.chainId !== BigInt(NETWORK.appsChainId)){
+        try{ await window.ethereum.request({ method:"wallet_switchEthereumChain", params:[{ chainId: NETWORK.appsChainHex }] }); }
+        catch(swErr){
+          if(swErr && swErr.code === 4902){
+            await window.ethereum.request({ method:"wallet_addEthereumChain", params:[{ chainId: NETWORK.appsChainHex, chainName:"BNB Smart Chain Testnet", nativeCurrency:{ name:"tBNB", symbol:"tBNB", decimals:18 }, rpcUrls:["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet-dataseed.bnbchain.org"], blockExplorerUrls:["https://testnet.bscscan.com"] }] });
+          } else throw swErr;
+        }
+      }
+    }catch(chainErr){ toast(t("m_wrongnet")); }
     document.querySelectorAll(".connectBtn").forEach(b => b.textContent = short(myAddr));
     try{
       const h = await readHuman(myAddr);
