@@ -798,11 +798,13 @@ async function loadFeed(){
 let createKind = 0; // 0 raffle, 1 vote, 2 claim
 function switchCreateTab(k){
   createKind = k;
-  document.querySelectorAll(".form .tabs button").forEach((b,i)=>b.classList.toggle("on", i===k));
+  document.querySelectorAll(".form > .tabs > button").forEach((b,i)=>b.classList.toggle("on", i===k));
   $("fWinnersRow").style.display = k===0 ? "" : "none";
   $("fOptionsRow").style.display = k===1 ? "" : "none";
   $("fSeedHint").style.display = k===0 ? "" : "none";
-  $("fPrizeRow").style.display = k===0 ? "" : "none";
+  $("fPrizeRow").style.display = (k===0 || k===2) ? "" : "none";
+  $("fTokenAddrRow").style.display = (k!==1 && $("fTokenSel").value === "erc20") ? "" : "none";
+  $("fPerWinnerRow").style.display = (k===0 && $("fTokenSel").value !== "none") ? "" : "none";
   $("fPoolRow").style.display = k===2 ? "" : "none";
   $("fModeRow").style.display = k===2 ? "" : "none";
   $("fMaxClaimsRow").style.display = k===2 ? "" : "none";
@@ -846,6 +848,9 @@ function validateCreate(){
     const o = parseInt($("fOptions")?.value || "0", 10);
     if (markErr("fOptions", !(o >= 2 && o <= 16))) errs.push(t("e_options"));
   } else {
+    const csel = $("fTokenSel")?.value || "none";
+    if (csel === "none") errs.push(t("e_token"));
+    if (csel === "erc20" && markErr("fTokenAddr", !ethers.isAddress(($("fTokenAddr")?.value || "").trim()))) errs.push(t("e_token"));
     const pool = parseFloat($("fPool")?.value || "0");
     const mc = parseInt($("fMaxClaims")?.value || "0", 10);
     if (markErr("fPool", !(pool > 0))) errs.push(t("e_pool"));
@@ -874,7 +879,9 @@ function renderPreview(){
   } else {
     const pool = $("fPool")?.value || "0";
     const mc = $("fMaxClaims")?.value || "10";
-    keyline = `<b>${pool} BNB</b> \u00b7 ${mc} ${t("c_claimed_n")}`;
+    const csel2 = $("fTokenSel")?.value || "bnb";
+    const tok = csel2 === "erc20" ? "ERC20" : csel2 === "none" ? "BNB" : csel2.toUpperCase();
+    keyline = `<b>${pool} ${tok}</b> \u00b7 ${mc} ${t("c_claimed_n")}`;
     cta = t("c_claim_btn");
   }
   pv.innerHTML = `<div class="camp">
@@ -1504,7 +1511,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const toLocal = d => { const p = n => String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
     $("fStart").value = toLocal(new Date(Date.now() + 5*60000));
     $("fEnd").value = toLocal(new Date(Date.now() + 3*86400000));
-    document.querySelectorAll(".form .tabs button").forEach((b,i)=> b.addEventListener("click", ()=>switchCreateTab(i)));
+    document.querySelectorAll(".form > .tabs > button").forEach((b,i)=> b.addEventListener("click", ()=>switchCreateTab(i)));
     $("createSubmit").addEventListener("click", submitCreate);
     document.querySelectorAll(".form input, .form select").forEach(el => el.addEventListener("input", renderPreview));
     document.querySelectorAll(".form .tabs button").forEach(b => b.addEventListener("click", () => setTimeout(renderPreview, 60)));
