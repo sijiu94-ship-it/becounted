@@ -100,7 +100,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -300,7 +300,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -561,7 +561,10 @@ async function connectWallet(){
   if ($("cardAvatar")) drawIdenticon("0x0000000000000000000000000000000000000000");
   const scb = $("makeCardBtn");
   if (scb) scb.addEventListener("click", drawShareCard);
-  }catch(e){ toast(t("m_rejected")); }
+  }catch(e){
+    if(e && e.code === -32002) toast(t("m_pending"));
+    else toast(t("m_rejected") + " [" + ((e && (e.shortMessage || e.message)) || "unknown").slice(0, 110) + "]");
+  }
 }
 
 /* ---------- countdowns ---------- */
