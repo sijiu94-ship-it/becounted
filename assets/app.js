@@ -108,7 +108,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -130,6 +130,15 @@ en: {
   code_note:"Gate any function with one line. The primitive is stateless — your contract keeps its own per-campaign dedup, keyed by the human.",
   a_gate:"HumanGate — BSC testnet", a_apps:"OneIDCampaigns — BSC testnet", a_bind:"IdentityBindings (testnet)", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
   a_skill_v:"is-human — a zero-dependency checker any AI agent can run before it acts. Source in the project repo.",
+  a_profile:"IdentityProfile (bio + links)", embed_h:"Embed the check on your site", embed_p:"Two lines of code put a live Agent ID check on any web page. It reads the registry directly - no API key, no backend, read-only. For on-chain gating, use the contract interface or the template instead.",
+  nav_white:"Whitepaper", kick_wp:"WHITEPAPER", h_wp:"The HumanGate Whitepaper", wp_sub:"What this is, how it works, what it refuses to do, and where its limits are - in one page.",
+  wp1_h:"Thesis: addresses are transport, identity is the person", wp1_p:"Sybil attacks are not a verification problem, they are a structure problem: minting addresses is free, so any defense priced per address eventually loses. Agent ID changes the unit - one KYC, one ID, non-transferable. HumanGate turns that fact into a single question any contract can ask: isHuman(address).",
+  wp2_h:"The two-key principle", wp2_p:"Key one - 'is this a unique human?' - is asked by address, on every call, and answered by the primitive. Key two - 'has this human been counted in this activity?' - is keyed by the holder, and its state lives with the caller. The primitive itself stores nothing: no lists, no scores, no history. That is deliberate - a gate that remembers nothing has nothing to leak, sell, or misuse.",
+  wp3_h:"Three boundaries", wp3_p:"Three refusals, by design: no reverse lookup (a name never resolves to a wallet), no character judgment (the gate proves sameness, never trustworthiness), and no small-account hunting (no clustering, no labeling). Each refusal gives up a business we could have had - and keeps the one question we answer clean.",
+  wp4_h:"Security model", wp4_1:"The gate is read-only: a view function with no owner, no upgrade path, and no pause switch. Nobody can change its answer, including us.", wp4_2:"Prizes are escrowed by the campaign contract the moment a campaign is created. Winners claim for themselves; a prize unclaimed after 30 days returns to the creator.", wp4_3:"Draws are reproducible: the seed block is fixed at creation, and anyone can recompute the winner list from public data - the campaign page does it in one click.", wp4_4:"Honest randomness: the lucky-claim mode uses blockhash pseudo-randomness, labelled in the contract and the UI as entertainment-grade, for small pools only.", wp4_5:"The site never asks for unlimited approvals: token escrow approves the exact amount, once.",
+  wp5_h:"Built to the contest's security red lines", wp5_p:"No third-party Agentic Wallet login (participation happens in the Binance App's own browser, or through the user's own agent with per-call confirmation). No silent or bundled transfers. No unlimited approvals. Contracts are open source, with owner powers disclosed - there are none. No name impersonates Binance or BNB. And no mnemonics, private keys, or pairing codes are ever collected. Our own agent tooling is read-only by design.",
+  wp6_h:"Known limitations", wp6_1:"The gate is narrow today: Agent ID holders number in the thousands, so gated campaigns start small. The gate widens by itself as issuance grows - the contract does not change, the crowd does.", wp6_2:"Uniqueness is capped by KYC, not by mathematics: one person holding several verified identities could hold several IDs. We claim 'one identity, one entry' - not 'one soul, one entry'.", wp6_3:"If Binance rebuilds or replaces the Agentic Wallet, how an ID carries over is Binance's call, not ours. Our claim is narrower, and honest: the first working interface for a proven pattern - not 'the standard'.",
+  wp7_h:"Contracts", wp7_p:"Currently live on BSC testnet. Mainnet addresses replace these at launch, verified on BscScan.",
   skill_h:"For agents, not just contracts",
   skill_p:"The same check ships as a skill: an AI agent about to enter, claim or pay can ask “is a unique human behind this address?” and get an answer whose evidence is on-chain — not issued by us, not stored by us.",
   // card page
@@ -308,7 +317,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -328,6 +337,15 @@ zh: {
   code_note:"一行代码给任何函数加门。原语无状态——去重状态由你的合约按「人」自己记。",
   a_gate:"HumanGate — BSC 测试网", a_apps:"OneIDCampaigns — BSC 测试网", a_bind:"绑定登记合约（测试网）", a_reg:"Agent ID 注册表 — BSC 主网", a_skill:"Agent 技能",
   a_skill_v:"is-human——零依赖的小工具，任何 AI Agent 在动手之前都能先跑一遍。源码在项目仓库里。",
+  a_profile:"个人主页资料（简介 + 链接）", embed_h:"把查真人嵌入你的网站", embed_p:"两行代码就能把实时查真人放到任何网页上：直读注册表、无需密钥、无需后端、纯只读。链上门禁请用上方的合约接口或模板。",
+  nav_white:"白皮书", kick_wp:"白皮书", h_wp:"HumanGate 白皮书", wp_sub:"它是什么、怎么工作、拒绝做什么、局限在哪里——一页说清。",
+  wp1_h:"论点：地址是运输工具，身份才是人", wp1_p:"女巫攻击不是验证问题，是结构问题：造地址免费，任何按地址收费的防御最终都会输。Agent ID 换了计量单位——一次 KYC、一个 ID、不可转让。HumanGate 把这个事实变成任何合约都能问的一句话：isHuman（地址）。",
+  wp2_h:"两键原则", wp2_p:"第一把钥匙——「这是不是唯一的真人」——按地址问、每次都问、由原语回答。第二把钥匙——「这个人这次活动算过没有」——按持有者记、状态存在调用方那里。原语本身什么都不存：没有名单、没有分数、没有历史。这是刻意的——一道什么都不记的门，没有可泄露、可出售、可滥用的东西。",
+  wp3_h:"三条边界", wp3_p:"三条拒绝，写进设计：不反查（名字永远解不出钱包）、不判人品（门只证明「同一个人」，从不证明「可信」）、不查小号（不聚类、不贴标签）。每条拒绝都放弃了一门本可做的生意——换来的是我们回答的那个问题始终干净。",
+  wp4_h:"安全模型", wp4_1:"门禁只读：一个 view 函数，无 owner、不可升级、没有暂停开关。没人能改它的答案，包括我们自己。", wp4_2:"奖品在活动创建时就托管进活动合约。中奖者自助领取；30 天无人领的奖金才退回创作者。", wp4_3:"开奖可复算：种子区块在创建时定死，任何人都能用公开数据重算中奖名单——活动页一键就能验。", wp4_4:"诚实的随机：拼手气用的是区块哈希伪随机，合约与页面都明示为娱乐级，只适合小额奖池。", wp4_5:"网站从不要无限授权：代币托管只批准确切金额、只批一次。",
+  wp5_h:"按比赛安全红线建造", wp5_p:"不在第三方站点做 Agentic Wallet 登录（参与走币安 App 内浏览器，或用户自己的 Agent 逐笔确认）；没有静默或捆绑转账；没有无限授权；合约开源且 owner 权限如实披露——答案是：没有；任何名称不冒充币安或 BNB；永不收集助记词、私钥或配对码。我们自己的 Agent 工具按设计就是只读的。",
+  wp6_h:"已知局限", wp6_1:"门现在很窄：Agent ID 持有者目前只有数千人，门禁活动的起点规模有限。发放越多门越宽——合约不用改，人群自己变。", wp6_2:"唯一性的上限是 KYC，不是数学：一个人有多个实名身份，就可能有多个 ID。我们声称的是「一个身份一份」，不是「一个灵魂一份」。", wp6_3:"若币安重构或更换 Agentic Wallet，ID 如何迁移由币安决定，不由我们。我们的定位更窄、也更诚实：一个已被验证的模式的第一个可用接口——不是「标准」。",
+  wp7_h:"合约地址", wp7_p:"当前运行于 BSC 测试网；主网地址将在上线时替换此处，并已在 BscScan 验证。",
   skill_h:"不只给合约，也给 Agent",
   skill_p:"同一套核验也做成了技能：AI Agent 在报名、领取或付款之前，可以先问一句「这个地址背后是不是唯一真人？」——答案的证据在链上，不由我们签发，也不经我们存储。",
   kick_card:"只读身份", h_card:"身份卡",
@@ -1217,7 +1235,7 @@ async function loadDetail(){
       <p style="color:var(--muted)">${t("creator_by")} ${creatorHtmlD} · ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}${live || !ended ? ` · <span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span>` : ""}</p>
       <div style="margin:16px 0">${foot} <span class="camp-msg" id="msg-${id}"></span></div>
       ${postBtn ? `<div style="margin-bottom:6px">${postBtn}</div>` : ""}
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button></div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert(${id})">${t("cert_btn")}</button>` : ""}</div>
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
       <div class="panel">${entries.length ? entries.map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>
       ${proof}
@@ -1234,6 +1252,56 @@ async function loadDetail(){
     tickCountdowns();
   }catch(e){ box.innerHTML = `<div class="empty">${t("load_fail")}</div>`; }
 }
+function wrapTitle(ctx, text, maxW){
+  const lines = []; let cur = "";
+  for (const ch of text){
+    if (ctx.measureText(cur + ch).width > maxW && cur){ lines.push(cur); cur = ch; if (lines.length === 2) break; }
+    else cur += ch;
+  }
+  if (lines.length < 2 && cur) lines.push(cur);
+  return lines;
+}
+window.makeCert = async id => {
+  const msg = $("msg-" + id);
+  try{
+    if (msg) msg.textContent = "\u2026";
+    chain();
+    const c = await appsRead.getCampaign(id);
+    const entries = await appsRead.getEntries(id);
+    const winners = await appsRead.getWinners(id);
+    const cv = document.createElement("canvas"); cv.width = 1600; cv.height = 900;
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#0a0a0b"; ctx.fillRect(0, 0, 1600, 900);
+    ctx.strokeStyle = "rgba(240,185,11,.55)"; ctx.lineWidth = 3; ctx.strokeRect(22, 22, 1556, 856);
+    ctx.fillStyle = "#f0b90b"; ctx.font = "700 34px 'Space Grotesk', sans-serif";
+    ctx.fillText("HumanGate", 72, 96);
+    ctx.font = "500 19px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#9a9aa3";
+    ctx.fillText("VERIFIED DRAW \u00b7 \u5f00\u5956\u9a8c\u8bc1", 72, 132);
+    ctx.fillStyle = "#ececec"; ctx.font = "800 56px 'Space Grotesk', sans-serif";
+    const lines = wrapTitle(ctx, String(c.title), 1450);
+    lines.forEach((ln, i) => ctx.fillText(ln, 72, 232 + i * 68));
+    const keyY = 232 + lines.length * 68 + 26;
+    ctx.font = "600 30px 'Space Grotesk', sans-serif"; ctx.fillStyle = "#f0b90b";
+    let key = `${t("cert_entries")}: ${entries.length}  \u00b7  ${t("cert_winners")}: ${winners.length}`;
+    if (c.prizePerWinner > 0n) key += `  \u00b7  ${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)} ${t("cert_each")}`;
+    ctx.fillText(key, 72, keyY);
+    ctx.font = "500 20px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#9a9aa3";
+    ctx.fillText(`${t("d_proof_seedblock")}: ${c.seedBlock}${c.usedFallbackSeed ? " (fallback)" : ""}  \u00b7  ${t("cert_recompute")}`, 72, keyY + 44);
+    ctx.font = "500 22px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#ececec";
+    winners.slice(0, 10).forEach((w, i) => {
+      const col = i < 5 ? 0 : 1, row = i % 5;
+      ctx.fillText(`${i + 1}. ${w.slice(0, 10)}\u2026${w.slice(-8)}`, 72 + col * 740, keyY + 116 + row * 46);
+    });
+    if (winners.length > 10){ ctx.fillStyle = "#9a9aa3"; ctx.fillText(`+${winners.length - 10} \u2026`, 72, keyY + 116 + 5 * 46); }
+    ctx.font = "500 18px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#6d6d75";
+    ctx.fillText(SITE_URL + "  \u00b7  " + new Date().toISOString().slice(0, 10), 72, 900 - 54);
+    const a = document.createElement("a");
+    a.download = "humangate-draw-" + id + ".png";
+    a.href = cv.toDataURL("image/png");
+    a.click();
+    if (msg) msg.textContent = t("cert_done");
+  }catch(e){ if (msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0, 110); }
+};
 window.verifyDraw = async id => {
   const msg = $("proofMsg"); if(msg) msg.textContent = "…";
   try{
@@ -1415,6 +1483,27 @@ function drawIdenticon(addr, cvId){
 
 /* ---------- share card image (card page) ---------- */
 let lastRecord = null; // {addr, entered, voted, claimed, wins}
+function cardUrl(addr){ return location.origin + location.pathname + "?a=" + addr; }
+function qrModules(text){
+  if (typeof qrcode !== "function") return null;
+  try{ const q = qrcode(0, "M"); q.addData(text); q.make(); return q; }catch(e){ return null; }
+}
+function drawQrTo(ctx, text, x, y, size){
+  const q = qrModules(text); if (!q) return false;
+  const n = q.getModuleCount();
+  const cell = size / n;
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(x - cell * 2, y - cell * 2, size + cell * 4, size + cell * 4);
+  ctx.fillStyle = "#0a0a0b";
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) ctx.fillRect(x + c * cell, y + r * cell, cell, cell);
+  return true;
+}
+function renderCardQr(addr){
+  const panel = $("cardQrPanel"); if (!panel) return;
+  const cv = $("cardQr"); if (!cv) return;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height);
+  panel.style.display = drawQrTo(ctx, cardUrl(addr), 10, 10, 112) ? "flex" : "none";
+}
 function drawShareCard(){
   const cv = $("shareCanvas"); if(!cv || !lastRecord) return;
   const ctx = cv.getContext("2d");
@@ -1434,6 +1523,7 @@ function drawShareCard(){
   const stats = `${lastRecord.entered} ${t("img_entries")}   ·   ${lastRecord.wins} ${t("img_wins")}   ·   ${lastRecord.claimed} ${t("img_claims")}`;
   ctx.fillText(stats, 56, 372);
   ctx.font = "500 18px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#6d6d75";
+  drawQrTo(ctx, cardUrl(a), W - 190, H - 170, 118);
   ctx.fillText("Agent ID · BNB Chain · " + new Date().toISOString().slice(0, 10), 56, H - 52);
   $("shareDl").href = cv.toDataURL("image/png");
   $("shareCardBox").style.display = "";
@@ -1647,6 +1737,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const addr = $("cardInput").value.trim();
     if(!ethers.isAddress(addr)){ toast(t("card_invalid")); return; }
     $("cardAddr").textContent = addr;
+    renderCardQr(addr);
     if ($("cardName")) $("cardName").textContent = short(addr);
     drawIdenticon(addr);
     $("cardStatus").textContent = t("card_reading"); $("cardStatus").className = "status none";
