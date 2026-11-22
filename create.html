@@ -115,6 +115,13 @@
       <div class="f-sec" data-i18n="f_sec3"></div>
       <div class="f-row"><label data-i18n="f_posturl"></label><input type="text" id="fPostUrl" data-i18n-ph="post_ph" autocomplete="off"></div>
       <div class="f-row"><label data-i18n="f_series"></label><input type="text" id="fSeries" data-i18n-ph="series_ph" autocomplete="off"></div>
+      <div class="f-sec" data-i18n="cd_sec"></div>
+      <div class="f-row"><label><input type="checkbox" id="cdBind"> <span data-i18n="cd_bind"></span></label></div>
+      <div class="f-row"><label><input type="checkbox" id="cdTokenOn"> <span data-i18n="cd_token"></span></label><input id="cdTokenAddr" placeholder="0x…" spellcheck="false" style="flex:1"><input id="cdTokenMin" type="text" inputmode="decimal" placeholder="100" style="width:90px"></div>
+      <div class="f-row"><label></label><label style="font-weight:400"><input type="checkbox" id="cdToken721"> <span data-i18n="cd_721"></span></label></div>
+      <div class="f-row"><label><input type="checkbox" id="cdPriorOn"> <span data-i18n="cd_prior"></span></label><input id="cdPriorId" type="number" min="0" placeholder="0" style="width:90px"></div>
+      <div class="f-row"><label><input type="checkbox" id="cdStampOn"> <span data-i18n="cd_stamps"></span></label><input id="cdStampMin" type="number" min="1" max="7" value="5" style="width:90px"></div>
+      <div class="f-row"><div class="hint" data-i18n="cd_hint"></div></div>
       <div id="fErrors" style="display:none;color:#ff8a8a;font-size:13.5px;line-height:1.75;margin-bottom:10px"></div>
       <button class="btn" id="createSubmit" data-i18n="f_submit_raffle"></button>
       <span class="camp-msg" id="formMsg"></span>
@@ -132,6 +139,6 @@
 </footer>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1121m"></script>
+<script src="assets/app.js?v=1121n"></script>
 </body>
 </html>

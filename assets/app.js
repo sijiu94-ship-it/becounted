@@ -1,6 +1,6 @@
 /* HumanGate — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0xfFF120c006ceB3487AD61943E4022e15cc8eb923"; // OneIDCampaignsV5
+const APPS_TESTNET     = "0x90333a04b15952590f3e4084a91aa8297d57bda6"; // OneIDCampaignsV6
 const BINDINGS_TESTNET = "0xC76847F54Fe3C2ca6eB61e5dd998e11Bd7e5988C"; // IdentityBindings
 const PROFILE_TESTNET  = "0x03b4a3129199b16ccf144a100b1fc65f31d907c1"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
@@ -34,6 +34,7 @@ const SAMPLE_HOLDER    = "0x119B2Bf71856155b234f818476ae0610634A2aB9"; // 9nosin
 const ERC721_ABI = ["function balanceOf(address) view returns (uint256)"];
 const APPS_ABI = [
   "function campaignCount() view returns (uint256)",
+  "function conditionsOf(uint256) view returns (tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef))",
   "function getEntries(uint256) view returns (address[])",
   "function getWinners(uint256) view returns (address[])",
   "function getCampaign(uint256) view returns (tuple(address creator, uint8 kind, string title, uint64 startAt, uint64 endAt, uint32 winnerCount, uint64 seedBlock, bool drawn, bool usedFallbackSeed, uint8 optionCount, uint256 entryCount, address prizeToken, uint256 prizePerWinner, uint256 pool, uint256 claimAmount, uint32 maxClaims, bool claimRandom, uint256 paidOut, bool reclaimed))",
@@ -48,9 +49,9 @@ const APPS_ABI = [
   "function claim(uint256)",
   "function claimPrize(uint256)",
   "function reclaim(uint256)",
-  "function createRaffle(string, uint64, uint64, uint32, uint64, address, uint256) payable returns (uint256)",
-  "function createVote(string, uint64, uint64, uint8) returns (uint256)",
-  "function createClaim(string, uint64, uint64, uint32, address, uint256, bool) payable returns (uint256)",
+  "function createRaffle(string, uint64, uint64, uint32, uint64, address, uint256, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef)) payable returns (uint256)",
+  "function createVote(string, uint64, uint64, uint8, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef)) returns (uint256)",
+  "function createClaim(string, uint64, uint64, uint32, address, uint256, bool, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef)) payable returns (uint256)",
   "function postUrl(uint256) view returns (string)","function series(uint256) view returns (string)","function setSeries(uint256,string)",
   "function setPostUrl(uint256, string)",
   "event PostUrlSet(uint256 indexed id, string url)",
@@ -122,7 +123,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", nav_quest:"Expedition", q_kicker:"GENESIS EXPEDITION \u00b7 SEASON 0", q_title:"The Human Expedition", q_sub:"Seven days, seven stamps, one finale. Only verified humans can stamp - one per day, paid instantly in lucky shares. Collect at least 5 stamps to enter the finale draw.", q_stat_daypool:"stamp pool / day", q_stat_slots:"stamp slots / day", q_stat_finale:"finale pool", q_stat_min:"stamps to enter finale", q_my_h:"My expedition", q_day:"Day", q_today_claim:"Claim today's stamp", q_today_done:"Stamped today", q_today_full:"Today's stamps are gone", q_today_left:"left today:", q_notstarted:"Season starts", q_connect_hint:"Connect your wallet to play.", q_finale_h:"Finale", q_enter:"Enter the finale", q_entered:"Entered the finale", q_need_more:"stamps short:", q_eligible_yes:"Finale eligible", q_seed_lock:"Lock the draw seed", q_draw_btn:"Draw the finale", q_drawn_h:"Finale drawn", q_claim_prize:"Claim prize", q_prize_claimed:"Prize claimed", q_entries_h:"Finale entries", q_phase_entry:"entries close", q_winner_tag:"WINNER", q_rules_h:"How it works", q_rules_1:"One stamp per human per day. Each stamp pays a lucky share of the day's pool, instantly.", q_rules_2:"Collect at least 5 of 7 stamps to enter the finale. Entry is one per human.", q_rules_3:"The finale draw seed is locked on-chain after entries close; anyone can recompute the winners. Stamp randomness is entertainment-grade pseudo-randomness - small daily amounts by design.", q_card_h:"Expedition - Season 0", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", cd_sec:"4 \u00b7 Entry conditions (optional)", cd_bind:"Must have a bound X account", cd_token:"Token holding gate", cd_721:"This is an NFT (count by balance)", cd_prior:"Must have entered campaign #", cd_stamps:"Must hold expedition stamps \u2265", cd_hint:"Conditions are checked on-chain at entry. A follow on X cannot be verified on-chain - the binding condition is its trustless half: every entrant carries a public handle anyone can check.", cd_err_token:"Enter a valid gate token address.", cd_err_min:"Enter a minimum holding above zero.", cd_err_prior:"Enter the earlier campaign number.", cd_err_stamps:"Stamps required: 1 to 7.", chip_bind:"X bound", chip_token:"Hold", chip_nft:"NFT", chip_prior:"Entered", chip_stamps:"Stamps", m_cond_0:"This campaign requires a bound X account - bind yours from your identity card first.", m_cond_1:"You do not hold enough of the gate token for this campaign.", m_cond_2:"This campaign is for returning participants - enter the earlier campaign first.", m_cond_3:"You need more expedition stamps for this campaign.", nav_quest:"Expedition", q_kicker:"GENESIS EXPEDITION \u00b7 SEASON 0", q_title:"The Human Expedition", q_sub:"Seven days, seven stamps, one finale. Only verified humans can stamp - one per day, paid instantly in lucky shares. Collect at least 5 stamps to enter the finale draw.", q_stat_daypool:"stamp pool / day", q_stat_slots:"stamp slots / day", q_stat_finale:"finale pool", q_stat_min:"stamps to enter finale", q_my_h:"My expedition", q_day:"Day", q_today_claim:"Claim today's stamp", q_today_done:"Stamped today", q_today_full:"Today's stamps are gone", q_today_left:"left today:", q_notstarted:"Season starts", q_connect_hint:"Connect your wallet to play.", q_finale_h:"Finale", q_enter:"Enter the finale", q_entered:"Entered the finale", q_need_more:"stamps short:", q_eligible_yes:"Finale eligible", q_seed_lock:"Lock the draw seed", q_draw_btn:"Draw the finale", q_drawn_h:"Finale drawn", q_claim_prize:"Claim prize", q_prize_claimed:"Prize claimed", q_entries_h:"Finale entries", q_phase_entry:"entries close", q_winner_tag:"WINNER", q_rules_h:"How it works", q_rules_1:"One stamp per human per day. Each stamp pays a lucky share of the day's pool, instantly.", q_rules_2:"Collect at least 5 of 7 stamps to enter the finale. Entry is one per human.", q_rules_3:"The finale draw seed is locked on-chain after entries close; anyone can recompute the winners. Stamp randomness is entertainment-grade pseudo-randomness - small daily amounts by design.", q_card_h:"Expedition - Season 0", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -331,7 +332,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", nav_quest:"远征", q_kicker:"创世远征 \u00b7 第 0 季", q_title:"真人远征", q_sub:"七天，七枚印记，一场终章。只有真人能集印——每天一枚，拼手气即时到账。集满至少 5 枚，即可进入终章抽奖。", q_stat_daypool:"每日印记池", q_stat_slots:"每日名额", q_stat_finale:"终章奖池", q_stat_min:"终章门槛（印记）", q_my_h:"我的远征", q_day:"第", q_today_claim:"领取今日印记", q_today_done:"今日已集", q_today_full:"今日名额已领完", q_today_left:"今日剩余", q_notstarted:"赛季开始于", q_connect_hint:"连接钱包后参与。", q_finale_h:"终章", q_enter:"进入终章", q_entered:"已进入终章", q_need_more:"还差印记", q_eligible_yes:"已获终章资格", q_seed_lock:"锁定开奖种子", q_draw_btn:"终章开奖", q_drawn_h:"终章已开奖", q_claim_prize:"领取奖金", q_prize_claimed:"奖金已领", q_entries_h:"终章参加者", q_phase_entry:"报名截止", q_winner_tag:"中奖", q_rules_h:"玩法", q_rules_1:"每位真人每天可领一枚印记，每枚按拼手气分当日池，即时到账。", q_rules_2:"7 枚集满至少 5 枚可进入终章，报名一人一份。", q_rules_3:"终章种子在报名截止后链上锁定，任何人可复算中奖名单。印记随机为娱乐级伪随机——每日小额，设计如此。", q_card_h:"远征 · 第 0 季", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", cd_sec:"4 · 参加条件（可选）", cd_bind:"必须已绑定 X 账号", cd_token:"持币门槛", cd_721:"这是 NFT（按余额计数）", cd_prior:"必须参加过活动编号 #", cd_stamps:"必须持有远征印记 ≥", cd_hint:"条件在参加时由链上逐条检查。「关注」无法链上验证——绑定条件是它的无信任版本：每位参加者都带着公开账号，任何人可在 X 上对照核对。", cd_err_token:"请填入有效的门槛代币地址。", cd_err_min:"请填入大于零的最低持有量。", cd_err_prior:"请填入前置活动的编号。", cd_err_stamps:"印记门槛需在 1 到 7 之间。", chip_bind:"已绑定 X", chip_token:"持币", chip_nft:"NFT", chip_prior:"参加过", chip_stamps:"印记", m_cond_0:"本活动要求先绑定 X 账号——去身份卡页绑定后再来。", m_cond_1:"你持有的门槛代币不足，暂时参加不了本活动。", m_cond_2:"本活动只对老参加者开放——先去参加前置活动。", m_cond_3:"你的远征印记还不够，集满门槛再来。", nav_quest:"远征", q_kicker:"创世远征 \u00b7 第 0 季", q_title:"真人远征", q_sub:"七天，七枚印记，一场终章。只有真人能集印——每天一枚，拼手气即时到账。集满至少 5 枚，即可进入终章抽奖。", q_stat_daypool:"每日印记池", q_stat_slots:"每日名额", q_stat_finale:"终章奖池", q_stat_min:"终章门槛（印记）", q_my_h:"我的远征", q_day:"第", q_today_claim:"领取今日印记", q_today_done:"今日已集", q_today_full:"今日名额已领完", q_today_left:"今日剩余", q_notstarted:"赛季开始于", q_connect_hint:"连接钱包后参与。", q_finale_h:"终章", q_enter:"进入终章", q_entered:"已进入终章", q_need_more:"还差印记", q_eligible_yes:"已获终章资格", q_seed_lock:"锁定开奖种子", q_draw_btn:"终章开奖", q_drawn_h:"终章已开奖", q_claim_prize:"领取奖金", q_prize_claimed:"奖金已领", q_entries_h:"终章参加者", q_phase_entry:"报名截止", q_winner_tag:"中奖", q_rules_h:"玩法", q_rules_1:"每位真人每天可领一枚印记，每枚按拼手气分当日池，即时到账。", q_rules_2:"7 枚集满至少 5 枚可进入终章，报名一人一份。", q_rules_3:"终章种子在报名截止后链上锁定，任何人可复算中奖名单。印记随机为娱乐级伪随机——每日小额，设计如此。", q_card_h:"远征 · 第 0 季", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -836,6 +837,7 @@ async function loadCampaigns(){
         }catch(e){}
         let seriesTag = "";
         try{ seriesTag = await appsRead.series(i); }catch(e){}
+        let cond = null; try{ cond = await appsRead.conditionsOf(i); }catch(e){}
         const creatorHtml = await creatorLabel(c.creator);
         return `<div class="camp${ended ? " is-ended" : ""}" data-kind="${Number(c.kind)}" data-status="${live ? "live" : ended ? "ended" : "upcoming"}" data-title="${String(c.title).replace(/"/g, "").toLowerCase()}" data-series="${seriesTag.replace(/"/g, "").toLowerCase()}" data-slabel="${seriesTag.replace(/"/g, "")}">
           <div class="camp-top">
@@ -843,7 +845,7 @@ async function loadCampaigns(){
             <span class="chip ${live ? "live" : "ended"}">${live ? `<span class="livedot"></span>` : ""}${c.drawn ? t("c_drawn") : live ? t("c_live") : ended ? t("c_ended") : t("c_upcoming")}</span>${seriesTag ? `<span class="chip" style="color:var(--gold);border-color:rgba(240,185,11,.45)">${seriesTag.replace(/</g, "&lt;")}</span>` : ""}${myWin ? `<span class="chip" style="background:var(--gold);color:#000;border-color:var(--gold);font-weight:700">${t("c_you_won")}</span>` : entered ? `<span class="chip" style="color:var(--gold);border-color:rgba(240,185,11,.45)">${t(Number(c.kind) === 2 ? "c_claimed_done" : Number(c.kind) === 1 ? "c_voted" : "c_entered")}</span>` : ""}
           </div>
           <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
-          <div class="keyline">${keyline}</div>
+          <div class="keyline">${keyline}</div>${condChipsHtml(cond)}
           <div class="creator-line">${t("creator_by")} ${creatorHtml}${live || !ended ? ` \u00b7 <span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span>` : ` \u00b7 ${fmtTime(c.endAt)}`}</div>
           <div class="cta-zone">
             ${extra}
@@ -895,6 +897,32 @@ async function sendAndWait(msg, txP){
   return tx.wait();
 }
 function skeletonHTML(n){ return Array.from({length: n}, () => `<div class="camp skel"><div class="sk-bar w40"></div><div class="sk-bar w70"></div><div class="sk-bar w55"></div></div>`).join(""); }
+function condChipsHtml(cd){
+  if (!cd) return "";
+  const chips = [];
+  try{
+    if (cd.requireBinding) chips.push(t("chip_bind"));
+    if (cd.gateToken && cd.gateToken !== ethers.ZeroAddress) chips.push(cd.gateIs721 ? `${t("chip_nft")} \u2265 ${cd.gateMin}` : `${t("chip_token")} \u2265 ${fmtAmt(cd.gateMin)}`);
+    if (cd.requireEnteredId !== ethers.MaxUint256) chips.push(`${t("chip_prior")} #${cd.requireEnteredId}`);
+    if (Number(cd.minStamps) > 0) chips.push(`${t("chip_stamps")} \u2265 ${cd.minStamps}`);
+  }catch(e){}
+  return chips.length ? `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${chips.map(x => `<span class="chip" style="color:var(--gold);border-color:rgba(240,185,11,.45)">${x}</span>`).join("")}</div>` : "";
+}
+async function checkConditions(id, who){
+  // returns failing condition index 0..3, -1 when all pass, null on read error (fail-open)
+  try{
+    chain();
+    const cd = await appsRead.conditionsOf(id);
+    if (cd.requireBinding){ const ok = await bindingsRead.isBindingValid(who).catch(() => false); if (!ok) return 0; }
+    if (cd.gateToken && cd.gateToken !== ethers.ZeroAddress){
+      const bal = await new ethers.Contract(cd.gateToken, ["function balanceOf(address) view returns (uint256)"], providerTest).balanceOf(who);
+      if (bal < cd.gateMin) return 1;
+    }
+    if (cd.requireEnteredId !== ethers.MaxUint256){ const ok = await appsRead.hasEntered(cd.requireEnteredId, who); if (!ok) return 2; }
+    if (Number(cd.minStamps) > 0){ const n = await new ethers.Contract(cd.questRef, QUEST_ABI, providerTest).stampCount(who); if (Number(n) < Number(cd.minStamps)) return 3; }
+    return -1;
+  }catch(e){ return null; }
+}
 async function withSigner(fn, id, gated){
   const msg = $("msg-"+id);
   if(!signer){ toast(t("m_connect_first")); return; }
@@ -911,6 +939,12 @@ async function withSigner(fn, id, gated){
         toggleGuide(true);
         const g = document.querySelector(".claimGuide");
         if (g) g.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      const cf = await checkConditions(id, myAddr);
+      if (cf !== null && cf >= 0){
+        if(msg) msg.textContent = t("m_cond_" + cf);
+        toast(t("m_cond_" + cf));
         return;
       }
     }
@@ -1057,6 +1091,30 @@ function renderPreview(){
     <div class="cta-zone"><button class="cta-btn" disabled style="cursor:default">${cta}</button></div>
   </div>`;
 }
+async function buildCond(msg){
+  const cond = { requireBinding: !!$("cdBind")?.checked, gateToken: ethers.ZeroAddress, gateMin: 0n, gateIs721: false, requireEnteredId: ethers.MaxUint256, minStamps: 0, questRef: ethers.ZeroAddress };
+  if ($("cdTokenOn")?.checked){
+    const a = ($("cdTokenAddr")?.value || "").trim();
+    if (!ethers.isAddress(a)){ msg.textContent = t("cd_err_token"); return null; }
+    const min = ($("cdTokenMin")?.value || "").trim();
+    if (!min || Number(min) <= 0){ msg.textContent = t("cd_err_min"); return null; }
+    cond.gateToken = a;
+    cond.gateIs721 = !!$("cdToken721")?.checked;
+    cond.gateMin = cond.gateIs721 ? BigInt(Math.floor(Number(min))) : await parseAmount(a, min);
+  }
+  if ($("cdPriorOn")?.checked){
+    const v = parseInt($("cdPriorId")?.value, 10);
+    if (Number.isNaN(v) || v < 0){ msg.textContent = t("cd_err_prior"); return null; }
+    cond.requireEnteredId = BigInt(v);
+  }
+  if ($("cdStampOn")?.checked){
+    const v = parseInt($("cdStampMin")?.value, 10);
+    if (!v || v < 1 || v > 7){ msg.textContent = t("cd_err_stamps"); return null; }
+    cond.minStamps = v;
+    cond.questRef = QUEST_TESTNET;
+  }
+  return cond;
+}
 async function submitCreate(){
   if(!validateCreate()){ $("formMsg").textContent = ""; return; }
   const msg = $("formMsg");
@@ -1067,6 +1125,8 @@ async function submitCreate(){
   const nowS = Math.floor(Date.now()/1000);
   if(!title){ msg.textContent = t("f_err_title"); return; }
   if(!startAt || !endAt || endAt <= startAt || startAt < nowS - 120){ msg.textContent = t("f_err_time"); return; }
+  const cond = await buildCond(msg);
+  if (!cond) return;
   try{
     const apps = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer);
     if(createKind === 0){
@@ -1089,11 +1149,11 @@ async function submitCreate(){
       const secPerBlock = Math.max(0.3, (latest.timestamp - older.timestamp) / 200);
       const seedBlock = latest.number + Math.ceil((endAt - latest.timestamp) / secPerBlock) + 40;
       const value = (token === ethers.ZeroAddress) ? total : 0n;
-      await (await apps.createRaffle(title, startAt, endAt, winners, seedBlock, token, per, { value })).wait();
+      await (await apps.createRaffle(title, startAt, endAt, winners, seedBlock, token, per, cond, { value })).wait();
     } else if(createKind === 1){
       const options = parseInt($("fOptions").value, 10);
       msg.textContent = t("f_creating");
-      await (await apps.createVote(title, startAt, endAt, options)).wait();
+      await (await apps.createVote(title, startAt, endAt, options, cond)).wait();
     } else {
       let token = prizeTokenAddr();
       if (token === undefined || token === null){ msg.textContent = t("f_err_token"); return; }
@@ -1105,7 +1165,7 @@ async function submitCreate(){
       msg.textContent = t("f_creating");
       const value = (token === ethers.ZeroAddress) ? pool : 0n;
       const random = $("fModeRandom") && $("fModeRandom").classList.contains("on");
-      await (await apps.createClaim(title, startAt, endAt, maxClaims, token, pool, random, { value })).wait();
+      await (await apps.createClaim(title, startAt, endAt, maxClaims, token, pool, random, cond, { value })).wait();
     }
     // Optional: attach the creator's X post link right away (can also be
     // added or changed later from My Campaigns). A failed second tx must
@@ -1313,6 +1373,7 @@ async function loadDetail(){
   chain();
   try{
     const c = await appsRead.getCampaign(id);
+    let cond = null; try{ cond = await appsRead.conditionsOf(id); }catch(e){}
     window.__campTitles = window.__campTitles || {}; window.__campTitles[id] = String(c.title);
     const kind = Number(c.kind);
     const nowS = Math.floor(Date.now() / 1000);
@@ -1393,6 +1454,7 @@ async function loadDetail(){
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
       <div class="panel"><div id="partList">${entries.length ? entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}</div>
       ${proof}
+      ${condChipsHtml(cond)}
       <div class="trust-row">${t("d_contract")} <a href="https://testnet.bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 HumanGate <a href="https://testnet.bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(kind !== 1 && (c.prizePerWinner > 0n || c.pool > 0n)) ? t("d_escrow") : t("d_escrow_no")}</div>`;
     window.__partEntries = entries;
     const sb = $("stickyBar");
