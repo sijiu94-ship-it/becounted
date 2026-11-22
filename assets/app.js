@@ -9,6 +9,20 @@ const PROFILE_ABI = [
   "function profileOf(address who) view returns (string bio, tuple(string title, string url)[] links, uint64 updatedAt)"
 ];
 const GATE_TESTNET     = "0x4858c1c6a4428c65ee6f60aac21a3f404d85d598"; // HumanGate (testnet)
+const QUEST_TESTNET = "0x45e5027047173b948baee49b3cda03e91b8eda25";
+const QUEST_ABI = [
+  "function claimStamp()", "function enterFinale()", "function lockFinaleSeed()", "function drawFinale()", "function claimPrize()",
+  "function phase() view returns (uint8)", "function currentDay() view returns (uint32)",
+  "function startAt() view returns (uint64)", "function stampEnd() view returns (uint64)", "function entryEnd() view returns (uint64)",
+  "function slotsPerDay() view returns (uint32)", "function dayPool() view returns (uint256)", "function minStamps() view returns (uint32)",
+  "function finalePool() view returns (uint256)", "function prizePerWinner() view returns (uint256)", "function token() view returns (address)",
+  "function stampCount(address) view returns (uint32)", "function stampBitmap(address) view returns (uint8)",
+  "function dayClaims(uint32) view returns (uint32)", "function eligible(address) view returns (bool)",
+  "function hasEnteredFinale(address) view returns (bool)", "function isWinner(address) view returns (bool)",
+  "function prizeClaimed(address) view returns (bool)", "function finaleDrawn() view returns (bool)",
+  "function finaleSeedBlock() view returns (uint64)", "function finaleEntryCount() view returns (uint256)",
+  "function getFinaleEntries() view returns (address[])", "function getWinners() view returns (address[])"
+];
 const GATE_ABI = ["function isHuman(address) view returns (bool)"];
 const BINDINGS_ABI = [
   "function registerBinding(string,bytes)",
@@ -108,7 +122,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", nav_quest:"Expedition", q_kicker:"GENESIS EXPEDITION \u00b7 SEASON 0", q_title:"The Human Expedition", q_sub:"Seven days, seven stamps, one finale. Only verified humans can stamp - one per day, paid instantly in lucky shares. Collect at least 5 stamps to enter the finale draw.", q_stat_daypool:"stamp pool / day", q_stat_slots:"stamp slots / day", q_stat_finale:"finale pool", q_stat_min:"stamps to enter finale", q_my_h:"My expedition", q_day:"Day", q_today_claim:"Claim today's stamp", q_today_done:"Stamped today", q_today_full:"Today's stamps are gone", q_today_left:"left today:", q_notstarted:"Season starts", q_connect_hint:"Connect your wallet to play.", q_finale_h:"Finale", q_enter:"Enter the finale", q_entered:"Entered the finale", q_need_more:"stamps short:", q_eligible_yes:"Finale eligible", q_seed_lock:"Lock the draw seed", q_draw_btn:"Draw the finale", q_drawn_h:"Finale drawn", q_claim_prize:"Claim prize", q_prize_claimed:"Prize claimed", q_entries_h:"Finale entries", q_phase_entry:"entries close", q_winner_tag:"WINNER", q_rules_h:"How it works", q_rules_1:"One stamp per human per day. Each stamp pays a lucky share of the day's pool, instantly.", q_rules_2:"Collect at least 5 of 7 stamps to enter the finale. Entry is one per human.", q_rules_3:"The finale draw seed is locked on-chain after entries close; anyone can recompute the winners. Stamp randomness is entertainment-grade pseudo-randomness - small daily amounts by design.", q_card_h:"Expedition - Season 0", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -317,7 +331,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", nav_quest:"远征", q_kicker:"创世远征 \u00b7 第 0 季", q_title:"真人远征", q_sub:"七天，七枚印记，一场终章。只有真人能集印——每天一枚，拼手气即时到账。集满至少 5 枚，即可进入终章抽奖。", q_stat_daypool:"每日印记池", q_stat_slots:"每日名额", q_stat_finale:"终章奖池", q_stat_min:"终章门槛（印记）", q_my_h:"我的远征", q_day:"第", q_today_claim:"领取今日印记", q_today_done:"今日已集", q_today_full:"今日名额已领完", q_today_left:"今日剩余", q_notstarted:"赛季开始于", q_connect_hint:"连接钱包后参与。", q_finale_h:"终章", q_enter:"进入终章", q_entered:"已进入终章", q_need_more:"还差印记", q_eligible_yes:"已获终章资格", q_seed_lock:"锁定开奖种子", q_draw_btn:"终章开奖", q_drawn_h:"终章已开奖", q_claim_prize:"领取奖金", q_prize_claimed:"奖金已领", q_entries_h:"终章参加者", q_phase_entry:"报名截止", q_winner_tag:"中奖", q_rules_h:"玩法", q_rules_1:"每位真人每天可领一枚印记，每枚按拼手气分当日池，即时到账。", q_rules_2:"7 枚集满至少 5 枚可进入终章，报名一人一份。", q_rules_3:"终章种子在报名截止后链上锁定，任何人可复算中奖名单。印记随机为娱乐级伪随机——每日小额，设计如此。", q_card_h:"远征 · 第 0 季", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -508,7 +522,7 @@ function toast(msg){ const el = $("toast"); if(!el) return; el.textContent = msg
 function short(a){ return a.slice(0,6)+"…"+a.slice(-4); }
 function fmtTime(ts){ const d = new Date(Number(ts)*1000); return d.toLocaleString(LANG === "zh" ? "zh-CN" : "en-GB", {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"}); }
 
-let providerMain = null, providerTest = null, registry = null, appsRead = null, bindingsRead = null, profileRead = null, gateRead = null;
+let providerMain = null, providerTest = null, registry = null, appsRead = null, bindingsRead = null, profileRead = null, gateRead = null, questRead = null;
 function chain(){
   if (!providerMain){
     const fb = (urls, chainId) => new ethers.FallbackProvider(urls.map(u => new ethers.JsonRpcProvider(u, chainId, { staticNetwork: true })), chainId, { quorum: 1 });
@@ -518,6 +532,7 @@ function chain(){
     appsRead = new ethers.Contract(APPS_TESTNET, APPS_ABI, providerTest);
     bindingsRead = new ethers.Contract(BINDINGS_TESTNET, BINDINGS_ABI, providerTest);
     profileRead = new ethers.Contract(PROFILE_TESTNET, PROFILE_ABI, providerTest);
+    questRead = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, providerTest);
     gateRead = new ethers.Contract(GATE_TESTNET, GATE_ABI, providerTest);
   }
 }
@@ -637,7 +652,7 @@ async function connectWallet(){
     if ($("mineGrid")) loadMine();
   if ($("statHumans")) loadPlatformStats();
   if ($("creatorBox")) loadCreator();
-  if ($("detailBox")) loadDetail();
+  if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
   if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
   }catch(e){
     if(e && e.code === -32002) toast(t("m_pending"));
@@ -657,7 +672,7 @@ async function disconnectWallet(){
   if ($("mineGrid")) loadMine();
   if ($("statHumans")) loadPlatformStats();
   if ($("creatorBox")) loadCreator();
-  if ($("detailBox")) loadDetail();
+  if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
 }
 
 function renderConnectBtn(){
@@ -903,7 +918,7 @@ async function withSigner(fn, id, gated){
     await fn(msg);
     if(msg) msg.innerHTML = t("m_done") + " " + t("share_done_hint") + ` <a href="#" onclick="shareCampaign(${id});return false;">X</a>`;
     loadCampaigns();
-    if ($("detailBox")) loadDetail();
+    if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
   }
   catch(e){ if(msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0,110); }
   finally{ btns.forEach(b => b.disabled = false); }
@@ -916,7 +931,7 @@ window.setSeriesMine = id => withSigner(async (msg) => { const a = new ethers.Co
 window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claim(id)); }, id, true);
 window.claimPrize = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claimPrize(id)); }, id);
 window.reclaimCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.reclaim(id)); }, id);
-window.onLangChange = () => { renderConnectBtn(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); };
+window.onLangChange = () => { renderConnectBtn(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); if ($("questBox")) loadQuest(); };
 
 /* ---------- live gate feed ---------- */
 async function loadFeed(){
@@ -1178,6 +1193,119 @@ function populateSeriesFilters(){
 }
 
 /* ---------- campaign detail + draw proof ---------- */
+/* ---------- QuestPass expedition ---------- */
+const fmtWhen = ts => new Date(Number(ts) * 1000).toLocaleString(lang === "zh" ? "zh-CN" : "en-GB", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+async function withQuest(fn, gated){
+  const msg = $("questMsg");
+  try{
+    if (!signer){ await connectWallet(); if (!signer) return; }
+    if (gated){
+      if (msg) msg.textContent = t("m_checking");
+      const human = await readGateHuman(myAddr).catch(() => null);
+      if (human === false){ toast(t("m_need_human")); toggleGuide(true); if (msg) msg.textContent = ""; return; }
+    }
+    await fn(msg);
+    loadQuest();
+  }catch(e){ if (msg) msg.textContent = friendlyErr(e); }
+}
+window.questClaimStamp = () => withQuest(async msg => { const c = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, signer); await sendAndWait(msg, c.claimStamp()); }, true);
+window.questEnterFinale = () => withQuest(async msg => { const c = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, signer); await sendAndWait(msg, c.enterFinale()); }, true);
+window.questLockSeed = () => withQuest(async msg => { const c = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, signer); await sendAndWait(msg, c.lockFinaleSeed()); }, false);
+window.questDraw = () => withQuest(async msg => { const c = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, signer); await sendAndWait(msg, c.drawFinale()); }, false);
+window.questClaimPrize = () => withQuest(async msg => { const c = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, signer); await sendAndWait(msg, c.claimPrize()); }, false);
+window.showAllQuestEntries = () => {
+  const box = $("qPartList"); if (!box) return;
+  box.innerHTML = (window.__qEntries || []).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("");
+  const more = $("qPartMore"); if (more) more.style.display = "none";
+};
+async function loadQuest(){
+  const box = $("questBox"); if (!box) return;
+  chain();
+  try{
+    const [phase, day, startAt, stampEnd, entryEnd, slots, dayPool, minStamps, finalePool, ppw, tokenAddr, drawn, seedBlock, entryCount] = await Promise.all([
+      questRead.phase(), questRead.currentDay(), questRead.startAt(), questRead.stampEnd(), questRead.entryEnd(),
+      questRead.slotsPerDay(), questRead.dayPool(), questRead.minStamps(), questRead.finalePool(), questRead.prizePerWinner(),
+      questRead.token(), questRead.finaleDrawn(), questRead.finaleSeedBlock(), questRead.finaleEntryCount()
+    ]);
+    const ph = Number(phase);
+    const sym = tokenLabel(tokenAddr);
+    let my = null;
+    if (myAddr){
+      const [cnt, bm, elig, entered, winner, claimed] = await Promise.all([
+        questRead.stampCount(myAddr), questRead.stampBitmap(myAddr), questRead.eligible(myAddr),
+        questRead.hasEnteredFinale(myAddr), questRead.isWinner(myAddr), questRead.prizeClaimed(myAddr)
+      ]);
+      my = { cnt: Number(cnt), bm: Number(bm), elig, entered, winner, claimed };
+    }
+    const dayLeft = ph === 1 ? Number(await questRead.dayClaims(day)) : 0;
+    const dots = Array.from({ length: 7 }, (_, d) => {
+      const stamped = my && (my.bm >> d) & 1;
+      const isToday = ph === 1 && d === Number(day);
+      return `<span title="${t("q_day")} ${d + 1}" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;margin-right:6px;font-size:13px;${stamped ? "background:var(--gold);color:#111;font-weight:700" : isToday ? "border:2px solid var(--gold);color:var(--gold)" : "border:1px solid var(--line);color:var(--muted)"}">${stamped ? "\u2713" : d + 1}</span>`;
+    }).join("");
+    let action = "";
+    if (ph === 0) action = `<span class="count">${t("q_notstarted")} \u00b7 ${fmtWhen(startAt)}</span>`;
+    else if (ph === 1){
+      if (!myAddr) action = `<span class="count">${t("q_connect_hint")}</span>`;
+      else if ((my.bm >> Number(day)) & 1) action = `<button class="btn" disabled style="opacity:.5;cursor:default">${t("q_today_done")} \u2713</button>`;
+      else if (dayLeft >= Number(slots)) action = `<button class="btn" disabled style="opacity:.5;cursor:default">${t("q_today_full")}</button>`;
+      else action = `<button class="btn" onclick="questClaimStamp()">${t("q_today_claim")}</button>`;
+    } else if (ph === 2){
+      if (!myAddr) action = `<span class="count">${t("q_connect_hint")}</span>`;
+      else if (my.entered) action = `<button class="btn" disabled style="opacity:.5;cursor:default">${t("q_entered")} \u2713</button>`;
+      else if (my.elig) action = `<button class="btn" onclick="questEnterFinale()">${t("q_enter")}</button>`;
+      else action = `<span class="count">${t("q_need_more")} ${Number(minStamps) - (my ? my.cnt : 0)}</span>`;
+    } else if (ph === 3){
+      action = Number(seedBlock) === 0
+        ? `<button class="btn" onclick="questLockSeed()">${t("q_seed_lock")}</button>`
+        : `<button class="btn" onclick="questDraw()">${t("q_draw_btn")}</button>`;
+    } else {
+      if (myAddr && my.winner && !my.claimed) action = `<button class="btn" onclick="questClaimPrize()">${t("q_claim_prize")} ${fmtAmt(ppw)} ${sym}</button>`;
+      else if (myAddr && my.claimed) action = `<span class="count">${t("q_prize_claimed")}</span>`;
+      else action = `<span class="count">${t("q_drawn_h")}</span>`;
+    }
+    let finaleHtml = "";
+    if (ph >= 2){
+      const entries = await questRead.getFinaleEntries();
+      window.__qEntries = entries;
+      const winners = ph === 4 ? await questRead.getWinners() : [];
+      finaleHtml = `<div class="panel" style="margin-top:16px"><h3 style="margin-top:0">${t("q_finale_h")} \u00b7 ${fmtAmt(finalePool)} ${sym}</h3>
+        <div class="count">${t("q_entries_h")}: <b>${entryCount}</b>${ph === 2 ? ` \u00b7 ${t("q_phase_entry")} ${fmtWhen(entryEnd)}` : ""}</div>
+        ${entries.length ? `<div id="qPartList" style="margin-top:10px">${entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span>${winners.includes(a) ? ` <span class="tag" style="color:var(--gold)">${t("q_winner_tag")}</span>` : ""}</div>`).join("")}</div>${entries.length > 50 ? `<div id="qPartMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllQuestEntries()">${t("d_show_all")} (${entries.length})</button></div>` : ""}` : ""}
+      </div>`;
+    }
+    box.innerHTML = `
+      <div class="stats" style="margin-bottom:16px">
+        <div class="stat"><b>${fmtAmt(dayPool)} ${sym}</b><span>${t("q_stat_daypool")}</span></div>
+        <div class="stat"><b>${slots}</b><span>${t("q_stat_slots")}</span></div>
+        <div class="stat"><b>${fmtAmt(finalePool)} ${sym}</b><span>${t("q_stat_finale")}</span></div>
+        <div class="stat"><b>${minStamps} / 7</b><span>${t("q_stat_min")}</span></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-top:0">${t("q_my_h")}${my ? ` \u00b7 ${my.cnt} / 7` : ""}</h3>
+        <div style="margin:10px 0 14px">${dots}</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${action}<span class="msg" id="questMsg"></span></div>
+        ${ph === 1 ? `<div class="count" style="margin-top:10px">${t("q_day")} ${Number(day) + 1} \u00b7 ${t("q_today_left")} ${Math.max(0, Number(slots) - dayLeft)} / ${slots}</div>` : ""}
+        ${ph === 2 && my ? `<div class="count" style="margin-top:10px">${my.elig ? t("q_eligible_yes") : t("q_need_more") + " " + (Number(minStamps) - my.cnt)}</div>` : ""}
+      </div>
+      ${finaleHtml}
+      <div class="panel" style="margin-top:16px"><h3 style="margin-top:0">${t("q_rules_h")}</h3>
+        <ol style="margin:0;padding-left:18px;line-height:1.9"><li>${t("q_rules_1")}</li><li>${t("q_rules_2")}</li><li>${t("q_rules_3")}</li></ol>
+      </div>`;
+  }catch(e){ box.innerHTML = `<div class="empty">${t("v_err")}</div>`; }
+}
+async function loadCardQuest(addr){
+  const box = $("questCardBox"); if (!box) return;
+  try{
+    chain();
+    const [cnt, bm, elig] = await Promise.all([questRead.stampCount(addr), questRead.stampBitmap(addr), questRead.eligible(addr)]);
+    const n = Number(cnt), bits = Number(bm);
+    const dots = Array.from({ length: 7 }, (_, d) => `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;${(bits >> d) & 1 ? "background:var(--gold)" : "border:1px solid var(--line)"}"></span>`).join("");
+    $("questCardBody").innerHTML = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span>${dots}</span><b>${n} / 7</b>${elig ? `<span class="tag" style="color:var(--gold)">${t("q_eligible_yes")}</span>` : ""}</div>`;
+    box.style.display = "";
+  }catch(e){ box.style.display = "none"; }
+}
+
 async function loadDetail(){
   const box = $("detailBox"); if(!box) return;
   const id = Number(new URLSearchParams(location.search).get("id"));
@@ -1807,7 +1935,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderConnectBtn();
       readHuman(myAddr).then(h => { myHuman = h; renderConnectBtn(); }).catch(() => {});
       if ($("campGrid") || $("soonGrid")) loadCampaigns();
-      if ($("detailBox")) loadDetail();
+      if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
       if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
     }catch(e){}
   })();
@@ -1836,6 +1964,7 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleGuide(human === false);
     loadRecord(addr);
     loadProfile(addr);
+    loadCardQuest(addr);
     const hbEl = $("cardBinding");
     if (hbEl){ hbEl.innerHTML = ""; creatorBinding(addr).then(hb => { const be = $("bindEntryStatus"); if (be) be.textContent = hb ? "@" + hb + " \u2713" : t("card_bind_none"); if (hb) { const nm = $("cardName"); if (nm) nm.textContent = "@" + hb; hbEl.innerHTML = `<a href="https://x.com/${hb}" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;font-family:var(--mono);font-size:15px">@${hb}</a> <span style="color:var(--gold);font-size:12px;border:1px solid rgba(240,185,11,.45);border-radius:99px;padding:2px 8px">${t("bind_bound")}</span>`; } }); }
   };
@@ -1865,7 +1994,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if ($("mineGrid")) loadMine();
   if ($("statHumans")) loadPlatformStats();
   if ($("creatorBox")) loadCreator();
-  if ($("detailBox")) loadDetail();
+  if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
   const scb = $("makeCardBtn");
   if (scb) scb.addEventListener("click", drawShareCard);
   if ($("feedList")){ loadFeed(); setInterval(loadFeed, 25000); }
