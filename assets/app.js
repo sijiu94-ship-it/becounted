@@ -106,7 +106,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -306,7 +306,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -579,6 +579,7 @@ async function checkAddress(addr, verdictEl){
 
 /* ---------- wallet ---------- */
 let signer = null, myAddr = null;
+let myHuman = null, walletMenu = null;
 async function connectWallet(){
   if(!window.ethereum){ toast(t("m_nowallet")); return; }
   try{
@@ -598,10 +599,10 @@ async function connectWallet(){
         }
       }
     }catch(chainErr){ toast(t("m_wrongnet")); }
-    document.querySelectorAll(".connectBtn").forEach(b => { b.textContent = short(myAddr); b.title = t("nav_disconnect"); });
+    renderConnectBtn();
     try{
-      const h = await readHuman(myAddr);
-      if (h) document.querySelectorAll(".connectBtn").forEach(b => { b.textContent = short(myAddr) + " \u2713"; b.title = t("nav_human") + " \u00b7 " + t("nav_disconnect"); });
+      myHuman = await readHuman(myAddr);
+      renderConnectBtn();
     }catch(e){}
     toast(t("m_connected") + myAddr);
     if ($("campGrid")) loadCampaigns();
@@ -610,33 +611,18 @@ async function connectWallet(){
   if ($("creatorBox")) loadCreator();
   if ($("detailBox")) loadDetail();
   if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
-  const rbb = $("registerBindBtn");
-  if (rbb) rbb.onclick = async () => {
-    if(!lastBind){ toast(t("bind_need_sig")); return; }
-    rbb.disabled = true;
-    try{
-      await connectWallet();
-      const bw = new ethers.Contract(BINDINGS_TESTNET, BINDINGS_ABI, signer);
-      await (await bw.registerBinding(lastBind.handle, lastBind.sig)).wait();
-      __bindCache[signer.address.toLowerCase()] = Promise.resolve(lastBind.handle);
-      if ($("bindRegStatus")) $("bindRegStatus").textContent = t("bind_registered");
-      toast(t("bind_registered"));
-    }catch(e){ if ($("bindRegStatus")) $("bindRegStatus").textContent = (e.shortMessage || e.message || "").slice(0, 140); }
-    rbb.disabled = false;
-  };
-  if ($("cardAvatar")) drawIdenticon("0x0000000000000000000000000000000000000000");
-  const scb = $("makeCardBtn");
-  if (scb) scb.addEventListener("click", drawShareCard);
   }catch(e){
     if(e && e.code === -32002) toast(t("m_pending"));
     else toast(t("m_rejected") + " [" + ((e && (e.shortMessage || e.message)) || "unknown").slice(0, 110) + "]");
   }
 }
 
-function disconnectWallet(){
-  signer = null; myAddr = null;
+async function disconnectWallet(){
+  if (window.ethereum && window.ethereum.request){ try{ await window.ethereum.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] }); }catch(e){} }
+  signer = null; myAddr = null; myHuman = null;
   try{ sessionStorage.setItem("hg_dc", "1"); }catch(e){}
-  document.querySelectorAll(".connectBtn").forEach(b => { b.textContent = t("connect"); b.title = ""; });
+  closeWalletMenu();
+  renderConnectBtn();
   toast(t("m_disconnected"));
   const pe = $("profileEdit"); if (pe) pe.style.display = "none";
   if ($("campGrid")) loadCampaigns();
@@ -644,6 +630,48 @@ function disconnectWallet(){
   if ($("statHumans")) loadPlatformStats();
   if ($("creatorBox")) loadCreator();
   if ($("detailBox")) loadDetail();
+}
+
+function renderConnectBtn(){
+  document.querySelectorAll(".connectBtn").forEach(b => {
+    if (!myAddr){ b.textContent = t("connect"); b.title = ""; return; }
+    b.textContent = short(myAddr) + (myHuman ? " \u2713" : "");
+    b.title = myHuman ? t("nav_human") : "";
+  });
+}
+function buildWalletMenu(){
+  if (walletMenu) return;
+  walletMenu = document.createElement("div");
+  walletMenu.className = "wallet-menu";
+  walletMenu.innerHTML = '<div class="wm-addr mono" id="wmAddr"></div><button type="button" id="wmSwitch"></button><button type="button" id="wmExit"></button>';
+  document.body.appendChild(walletMenu);
+  $("wmSwitch").addEventListener("click", () => { closeWalletMenu(); switchAccount(); });
+  $("wmExit").addEventListener("click", () => { closeWalletMenu(); disconnectWallet(); });
+  document.addEventListener("click", e => { if (walletMenu && walletMenu.style.display === "block" && !walletMenu.contains(e.target) && !e.target.closest(".connectBtn")) closeWalletMenu(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeWalletMenu(); });
+}
+function openWalletMenu(btn){
+  buildWalletMenu();
+  $("wmAddr").textContent = myAddr;
+  $("wmSwitch").textContent = t("nav_switch");
+  $("wmExit").textContent = t("nav_exit");
+  const r = btn.getBoundingClientRect();
+  walletMenu.style.top = (r.bottom + 6) + "px";
+  walletMenu.style.right = Math.max(8, window.innerWidth - r.right) + "px";
+  walletMenu.style.display = "block";
+}
+function closeWalletMenu(){ if (walletMenu) walletMenu.style.display = "none"; }
+async function switchAccount(){
+  if (!window.ethereum) return;
+  try{
+    await window.ethereum.request({ method: "wallet_requestPermissions", params: [{ eth_accounts: {} }] });
+    const accs = await window.ethereum.request({ method: "eth_accounts" });
+    if (accs && accs[0] && (!myAddr || accs[0].toLowerCase() !== myAddr.toLowerCase())){
+      try{ sessionStorage.removeItem("hg_dc"); }catch(e){}
+      myAddr = accs[0];
+      location.reload();
+    }
+  }catch(e){ toast(t("m_switch_hint")); }
 }
 
 /* ---------- countdowns ---------- */
@@ -832,7 +860,7 @@ window.setSeriesMine = id => withSigner(async () => { const a = new ethers.Contr
 window.claimShare = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.claim(id)).wait(); }, id);
 window.claimPrize = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.claimPrize(id)).wait(); }, id);
 window.reclaimCampaign = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.reclaim(id)).wait(); }, id);
-window.onLangChange = () => { if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); };
+window.onLangChange = () => { renderConnectBtn(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); };
 
 /* ---------- live gate feed ---------- */
 async function loadFeed(){
@@ -1507,7 +1535,22 @@ window.copyWinners = async (id, btn) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   applyI18n();
-  document.querySelectorAll(".connectBtn").forEach(b => b.addEventListener("click", () => { if (myAddr) disconnectWallet(); else connectWallet(); }));
+  document.querySelectorAll(".connectBtn").forEach(b => b.addEventListener("click", () => { if (myAddr) { if (walletMenu && walletMenu.style.display === "block") closeWalletMenu(); else openWalletMenu(b); } else connectWallet(); }));
+  const rbb = $("registerBindBtn");
+  if (rbb) rbb.onclick = async () => {
+    if(!lastBind){ toast(t("bind_need_sig")); return; }
+    rbb.disabled = true;
+    try{
+      await connectWallet();
+      const bw = new ethers.Contract(BINDINGS_TESTNET, BINDINGS_ABI, signer);
+      await (await bw.registerBinding(lastBind.handle, lastBind.sig)).wait();
+      __bindCache[signer.address.toLowerCase()] = Promise.resolve(lastBind.handle);
+      if ($("bindRegStatus")) $("bindRegStatus").textContent = t("bind_registered");
+      toast(t("bind_registered"));
+    }catch(e){ if ($("bindRegStatus")) $("bindRegStatus").textContent = (e.shortMessage || e.message || "").slice(0, 140); }
+    rbb.disabled = false;
+  };
+  if ($("cardAvatar")) drawIdenticon("0x0000000000000000000000000000000000000000");
   const ldd = $("learnDd");
   if (ldd){
     const lbtn = $("learnBtn");
@@ -1523,14 +1566,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const accs = await window.ethereum.request({ method: "eth_accounts" });
       if(!accs || !accs[0]) return;
       myAddr = accs[0];
-      document.querySelectorAll(".connectBtn").forEach(b => { b.textContent = short(myAddr); b.title = t("nav_disconnect"); });
-      readHuman(myAddr).then(h => { if(h) document.querySelectorAll(".connectBtn").forEach(b => { b.textContent = short(myAddr) + " \u2713"; b.title = t("nav_human") + " \u00b7 " + t("nav_disconnect"); }); }).catch(() => {});
+      renderConnectBtn();
+      readHuman(myAddr).then(h => { myHuman = h; renderConnectBtn(); }).catch(() => {});
       if ($("campGrid") || $("soonGrid")) loadCampaigns();
       if ($("detailBox")) loadDetail();
       if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
     }catch(e){}
   })();
-  if (window.ethereum && window.ethereum.on) window.ethereum.on("accountsChanged", accs => { if (myAddr && (!accs || !accs[0] || accs[0].toLowerCase() !== myAddr.toLowerCase())) disconnectWallet(); });
+  if (window.ethereum && window.ethereum.on) window.ethereum.on("accountsChanged", accs => { if (!accs || !accs[0]){ if (myAddr) disconnectWallet(); return; } if (myAddr && accs[0].toLowerCase() !== myAddr.toLowerCase()){ try{ sessionStorage.removeItem("hg_dc"); }catch(e){} myAddr = accs[0]; location.reload(); } });
   const cb = $("checkBtn");
   if (cb) cb.onclick = () => checkAddress($("checkInput").value.trim(), $("verdict"));
   const ci = $("checkInput");
