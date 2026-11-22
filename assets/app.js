@@ -108,7 +108,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -317,7 +317,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -1634,7 +1634,61 @@ async function renderMineSummary(createdCount){
     setN("msWon", won);
   }catch(e){}
 }
+async function loadJoined(){
+  const grid = $("joinedGrid"); if (!grid) return;
+  if (!myAddr){ grid.innerHTML = `<div class="empty">${t("mine_connect")}</div>`; return; }
+  chain();
+  try{
+    const latest = await providerTest.getBlockNumber();
+    const topicAddr = ethers.zeroPadValue(myAddr, 32);
+    const iface = new ethers.Interface(APPS_ABI);
+    const mineMap = new Map();
+    const scans = [
+      ["Entered(uint256,address)", p => ({ entered: true })],
+      ["Voted(uint256,address,uint8)", p => ({ voted: true, option: Number(p.args.option) })],
+      ["Claimed(uint256,address,uint256)", p => ({ claimed: true, amount: p.args.amount })]
+    ];
+    for (const [sig, mk] of scans){
+      const logs = await getLogsChunked({ address: APPS_TESTNET, topics: [ethers.id(sig), null, topicAddr] }, APPS_DEPLOY_BLOCK, latest);
+      for (const l of logs){
+        const parsed = iface.parseLog(l); if (!parsed) continue;
+        const id = Number(parsed.args[0]);
+        mineMap.set(id, { ...(mineMap.get(id) || {}), ...mk(parsed) });
+      }
+    }
+    if (!mineMap.size){ grid.innerHTML = `<div class="empty">${t("j_none")}</div>`; return; }
+    const ids = [...mineMap.keys()].sort((a, b) => b - a);
+    const cards = [];
+    for (const id of ids){
+      const c = await appsRead.getCampaign(id);
+      if (String(c.creator).toLowerCase() === myAddr.toLowerCase()) continue;
+      const kind = Number(c.kind);
+      const now = Math.floor(Date.now() / 1000);
+      const live = now >= Number(c.startAt) && now <= Number(c.endAt);
+      const ended = now > Number(c.endAt);
+      const st = mineMap.get(id);
+      let status = "";
+      if (kind === 0){
+        if (!c.drawn) status = t("j_entered");
+        else if (await appsRead.isWinner(id, myAddr)) status = (await appsRead.prizeClaimed(id, myAddr)) ? t("j_won_claimed") : `<b style="color:var(--gold)">${t("j_winner")}</b>`;
+        else status = t("j_notwon");
+      } else if (kind === 1){
+        status = `${t("j_voted")} \u00b7 ${t("c_option")} ${(st.option ?? 0) + 1}`;
+      } else {
+        status = st.claimed ? `${t("j_claimed")} \u00b7 ${fmtAmt(st.amount)} ${tokenLabel(c.prizeToken)}` : t("j_entered");
+      }
+      cards.push(`<div class="camp">
+        <div class="camp-top"><span class="chip ${kind === 0 ? "raffle" : ""}">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")}</span><span class="count">${live ? t("c_live") : ended ? t("c_ended") : t("c_upcoming")}</span></div>
+        <h3>${String(c.title).replace(/</g, "&lt;")}</h3>
+        <div class="meta"><b>${t("j_mystatus")}</b> ${status}<br><b>${t("c_window")}</b> ${fmtTime(c.startAt)} \u2192 ${fmtTime(c.endAt)}</div>
+        <div class="foot"><a class="btn sm" href="campaign.html?id=${id}" style="text-decoration:none">${t("d_details")}</a></div>
+      </div>`);
+    }
+    grid.innerHTML = cards.length ? cards.join("") : `<div class="empty">${t("j_none")}</div>`;
+  }catch(e){ grid.innerHTML = `<div class="empty">${t("load_fail")}</div>`; }
+}
 async function loadMine(){
+  loadJoined();
   const grid = $("mineGrid"); if(!grid) return;
   if(!myAddr){ grid.innerHTML = `<div class="empty">${t("mine_connect")}</div>`; return; }
   chain();
@@ -1773,6 +1827,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if ($("campGrid")){ $("campGrid").innerHTML = skeletonHTML(6); restoreFilters(); }
   if ($("soonGrid")) $("soonGrid").innerHTML = skeletonHTML(3);
   if ($("mineGrid")) $("mineGrid").innerHTML = skeletonHTML(3);
+  if ($("joinedGrid")) $("joinedGrid").innerHTML = skeletonHTML(3);
   if ($("detailBox")) $("detailBox").innerHTML = skeletonHTML(1);
   if ($("campGrid") || $("statCampaigns")) loadCampaigns();
   if ($("mineGrid")) loadMine();
