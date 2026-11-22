@@ -266,3 +266,15 @@ footer .mono{font-family:var(--mono);font-size:12px}
 .wallet-menu .wm-addr{font-size:12px;color:var(--muted);padding:8px 10px;word-break:break-all;border-bottom:1px solid var(--line);margin-bottom:6px}
 .wallet-menu button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--text);font-size:14px;padding:10px;border-radius:8px;cursor:pointer;font-family:var(--sans)}
 .wallet-menu button:hover{background:rgba(240,185,11,.12);color:var(--gold)}
+
+.skel{pointer-events:none}
+.skel .sk-bar{height:14px;border-radius:6px;background:var(--line);animation:skpulse 1.2s ease-in-out infinite}
+.skel .sk-bar.w40{width:40%}
+.skel .sk-bar.w70{width:70%}
+.skel .sk-bar.w55{width:55%}
+@keyframes skpulse{0%,100%{opacity:.3}50%{opacity:.65}}
+.flt-chip{background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--muted);padding:10px 14px;font:inherit;cursor:pointer;white-space:nowrap}
+.flt-chip.on{background:var(--gold);border-color:var(--gold);color:#0a0a0b;font-weight:700}
+.nav-links a,.nav-dd-btn{white-space:nowrap}
+.cta-btn{white-space:nowrap}
+.camp h3{overflow-wrap:anywhere}

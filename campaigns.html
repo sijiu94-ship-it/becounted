@@ -68,8 +68,18 @@
       <select id="fltSeries" onchange="applyFilters()" style="background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font:inherit">
         <option value="all" data-i18n="series_all"></option>
       </select>
+      <button type="button" id="fltLive" class="flt-chip" onclick="toggleLiveOnly()" data-i18n="f_live_only"></button>
     </div>
     <div class="camp-grid" id="campGrid"><div class="empty" data-i18n="loading"></div></div>
+    <div class="guide claimGuide" style="display:none;margin-top:18px">
+      <h3 data-i18n="guide_h"></h3>
+      <ol>
+        <li data-i18n="guide_1"></li>
+        <li data-i18n="guide_2"></li>
+        <li data-i18n="guide_3"></li>
+        <li data-i18n="guide_4"></li>
+      </ol>
+    </div>
   </div>
 </section>
 
@@ -81,6 +91,6 @@
 </footer>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1121f"></script>
+<script src="assets/app.js?v=1121g"></script>
 </body>
 </html>

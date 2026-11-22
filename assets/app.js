@@ -8,6 +8,8 @@ const PROFILE_ABI = [
   "function removeProfile()",
   "function profileOf(address who) view returns (string bio, tuple(string title, string url)[] links, uint64 updatedAt)"
 ];
+const GATE_TESTNET     = "0x4858c1c6a4428c65ee6f60aac21a3f404d85d598"; // HumanGate (testnet)
+const GATE_ABI = ["function isHuman(address) view returns (bool)"];
 const BINDINGS_ABI = [
   "function registerBinding(string,bytes)",
   "function removeBinding()",
@@ -106,7 +108,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -306,7 +308,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -488,7 +490,7 @@ function toast(msg){ const el = $("toast"); if(!el) return; el.textContent = msg
 function short(a){ return a.slice(0,6)+"…"+a.slice(-4); }
 function fmtTime(ts){ const d = new Date(Number(ts)*1000); return d.toLocaleString(LANG === "zh" ? "zh-CN" : "en-GB", {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"}); }
 
-let providerMain = null, providerTest = null, registry = null, appsRead = null, bindingsRead = null, profileRead = null;
+let providerMain = null, providerTest = null, registry = null, appsRead = null, bindingsRead = null, profileRead = null, gateRead = null;
 function chain(){
   if (!providerMain){
     const fb = (urls, chainId) => new ethers.FallbackProvider(urls.map(u => new ethers.JsonRpcProvider(u, chainId, { staticNetwork: true })), chainId, { quorum: 1 });
@@ -498,6 +500,7 @@ function chain(){
     appsRead = new ethers.Contract(APPS_TESTNET, APPS_ABI, providerTest);
     bindingsRead = new ethers.Contract(BINDINGS_TESTNET, BINDINGS_ABI, providerTest);
     profileRead = new ethers.Contract(PROFILE_TESTNET, PROFILE_ABI, providerTest);
+    gateRead = new ethers.Contract(GATE_TESTNET, GATE_ABI, providerTest);
   }
 }
 
@@ -563,6 +566,13 @@ async function removeProfileFn(){
 async function readHuman(addr){
   chain();
   return (await registry.balanceOf(addr)) > 0n;
+}
+async function readGateHuman(addr){
+  chain();
+  try{ return await gateRead.isHuman(addr); }catch(e){ return null; }
+}
+function toggleGuide(show){
+  document.querySelectorAll(".claimGuide").forEach(g => g.style.display = show ? "" : "none");
 }
 async function checkAddress(addr, verdictEl){
   if(!ethers.isAddress(addr)){ verdictEl.className = "verdict show no"; verdictEl.innerHTML = `<span class="tag">${t("v_invalid_t")}</span>${t("v_invalid")}`; return; }
@@ -846,20 +856,48 @@ function renderSoon(all){
     </div>`).join("") : `<div class="empty">${t("no_camp")}</div>`;
   tickCountdowns();
 }
-async function withSigner(fn, id){
+async function sendAndWait(msg, txP){
+  const tx = await txP;
+  if (msg) msg.textContent = t("m_waiting");
+  return tx.wait();
+}
+function skeletonHTML(n){ return Array.from({length: n}, () => `<div class="camp skel"><div class="sk-bar w40"></div><div class="sk-bar w70"></div><div class="sk-bar w55"></div></div>`).join(""); }
+async function withSigner(fn, id, gated){
   const msg = $("msg-"+id);
   if(!signer){ toast(t("m_connect_first")); return; }
-  try{ if(msg) msg.textContent = t("m_signing"); await fn(); if(msg) msg.innerHTML = t("m_done") + " " + t("share_done_hint") + ` <a href="#" onclick="shareCampaign(${id});return false;">X</a>`; loadCampaigns(); }
+  const scope = msg ? msg.closest(".camp, #detailBox") : null;
+  const btns = scope ? [...scope.querySelectorAll("button")] : [];
+  btns.forEach(b => b.disabled = true);
+  try{
+    if (gated){
+      if(msg) msg.textContent = t("m_checking");
+      const h = await readGateHuman(myAddr);
+      if (h === false){
+        if(msg) msg.textContent = t("m_need_human");
+        toast(t("m_need_human"));
+        toggleGuide(true);
+        const g = document.querySelector(".claimGuide");
+        if (g) g.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+    }
+    if(msg) msg.textContent = t("m_signing");
+    await fn(msg);
+    if(msg) msg.innerHTML = t("m_done") + " " + t("share_done_hint") + ` <a href="#" onclick="shareCampaign(${id});return false;">X</a>`;
+    loadCampaigns();
+    if ($("detailBox")) loadDetail();
+  }
   catch(e){ if(msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0,110); }
+  finally{ btns.forEach(b => b.disabled = false); }
 }
-window.enterRaffle = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.enterRaffle(id)).wait(); }, id);
-window.voteCampaign = (id,o) => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.castVote(id,o)).wait(); }, id);
-window.drawCampaign = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.draw(id)).wait(); }, id);
-window.setPostUrlMine = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("posturl-" + id)?.value || "").trim(); await (await a.setPostUrl(id, v)).wait(); loadMine(); }, id);
-window.setSeriesMine = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("series-" + id)?.value || "").trim(); await (await a.setSeries(id, v)).wait(); loadMine(); }, id);
-window.claimShare = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.claim(id)).wait(); }, id);
-window.claimPrize = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.claimPrize(id)).wait(); }, id);
-window.reclaimCampaign = id => withSigner(async () => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await (await a.reclaim(id)).wait(); }, id);
+window.enterRaffle = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.enterRaffle(id)); }, id, true);
+window.voteCampaign = (id,o) => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.castVote(id,o)); }, id, true);
+window.drawCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.draw(id)); }, id);
+window.setPostUrlMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("posturl-" + id)?.value || "").trim(); await sendAndWait(msg, a.setPostUrl(id, v)); loadMine(); }, id);
+window.setSeriesMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("series-" + id)?.value || "").trim(); await sendAndWait(msg, a.setSeries(id, v)); loadMine(); }, id);
+window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claim(id)); }, id, true);
+window.claimPrize = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claimPrize(id)); }, id);
+window.reclaimCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.reclaim(id)); }, id);
 window.onLangChange = () => { renderConnectBtn(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); };
 
 /* ---------- live gate feed ---------- */
@@ -1071,10 +1109,32 @@ async function getLogsChunked(base, from, to){
 
 
 /* ---------- filters (campaigns page) ---------- */
+let liveOnly = false;
+window.toggleLiveOnly = () => {
+  liveOnly = !liveOnly;
+  const b = $("fltLive"); if (b) b.classList.toggle("on", liveOnly);
+  applyFilters();
+};
+function saveFilters(){
+  if (!$("fltKind")) return;
+  try{ sessionStorage.setItem("hg_filters", JSON.stringify({ q: $("fltQ")?.value || "", k: $("fltKind")?.value || "all", s: $("fltStatus")?.value || "all", sr: $("fltSeries")?.value || "all", live: liveOnly })); }catch(e){}
+}
+function restoreFilters(){
+  if (!$("fltKind")) return;
+  try{
+    const f = JSON.parse(sessionStorage.getItem("hg_filters") || "null"); if (!f) return;
+    if ($("fltQ")) $("fltQ").value = f.q || "";
+    $("fltKind").value = f.k || "all";
+    if ($("fltStatus")) $("fltStatus").value = f.s || "all";
+    if ($("fltSeries") && f.sr && f.sr !== "all") $("fltSeries").dataset.want = f.sr;
+    liveOnly = !!f.live;
+    const b = $("fltLive"); if (b) b.classList.toggle("on", liveOnly);
+  }catch(e){}
+}
 window.applyFilters = () => {
   const q = ($("fltQ")?.value || "").trim().toLowerCase();
   const k = $("fltKind")?.value || "all";
-  const s = $("fltStatus")?.value || "all";
+  const s = liveOnly ? "live" : ($("fltStatus")?.value || "all");
   const sr = $("fltSeries")?.value || "all";
   document.querySelectorAll("#campGrid .camp").forEach(el => {
     const ok = (!q || (el.dataset.title || "").includes(q))
@@ -1083,6 +1143,7 @@ window.applyFilters = () => {
       && (sr === "all" || (el.dataset.series || "") === sr);
     el.style.display = ok ? "" : "none";
   });
+  saveFilters();
 };
 
 function populateSeriesFilters(){
@@ -1092,9 +1153,10 @@ function populateSeriesFilters(){
     const v = el.dataset.series || "";
     if (v && !seen.has(v)) seen.set(v, el.dataset.slabel || v);
   });
-  const cur = sel.value;
+  const cur = sel.dataset.want || sel.value;
   sel.innerHTML = `<option value="all">${t("series_all")}</option>` + [...seen.entries()].map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
   if ([...seen.keys()].includes(cur)) sel.value = cur;
+  delete sel.dataset.want;
 }
 
 /* ---------- campaign detail + draw proof ---------- */
@@ -1159,7 +1221,7 @@ async function loadDetail(){
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
       <div class="panel">${entries.length ? entries.map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>
       ${proof}
-      <div class="trust-row">${t("d_contract")} <a href="https://testnet.bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 HumanGate <a href="https://testnet.bscscan.com/address/0x4858c1c6a4428c65ee6f60aac21a3f404d85d598" target="_blank" rel="noopener">${short("0x4858c1c6a4428c65ee6f60aac21a3f404d85d598")} \u2197</a> \u00b7 ${(kind !== 1 && (c.prizePerWinner > 0n || c.pool > 0n)) ? t("d_escrow") : t("d_escrow_no")}</div>`;
+      <div class="trust-row">${t("d_contract")} <a href="https://testnet.bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 HumanGate <a href="https://testnet.bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(kind !== 1 && (c.prizePerWinner > 0n || c.pool > 0n)) ? t("d_escrow") : t("d_escrow_no")}</div>`;
     const sb = $("stickyBar");
     if (sb){
       let sAct = "", sInfo = "";
@@ -1617,6 +1679,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!ethers.isAddress(a2)) return;
     try{ await navigator.clipboard.writeText(location.origin + location.pathname + "?a=" + a2); toast(t("m_copied")); }catch(e){}
   };
+  if ($("campGrid")){ $("campGrid").innerHTML = skeletonHTML(6); restoreFilters(); }
+  if ($("soonGrid")) $("soonGrid").innerHTML = skeletonHTML(3);
+  if ($("mineGrid")) $("mineGrid").innerHTML = skeletonHTML(3);
+  if ($("detailBox")) $("detailBox").innerHTML = skeletonHTML(1);
   if ($("campGrid") || $("statCampaigns")) loadCampaigns();
   if ($("mineGrid")) loadMine();
   if ($("statHumans")) loadPlatformStats();
