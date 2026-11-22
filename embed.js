@@ -60,6 +60,7 @@
       var a = inp.value.trim();
       out.style.display = "";
       if (!isAddr(a)) { out.style.color = "#e5534b"; out.textContent = s.invalid; return; }
+      if (a.toLowerCase() === "0x0000000000000000000000000000000000000000") { out.style.color = "#e5534b"; out.textContent = s.no; return; }
       out.style.color = "#9a9aa3"; out.textContent = s.reading;
       call(a).then(function (h) {
         out.style.color = h ? "#f0b90b" : "#e5534b";

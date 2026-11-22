@@ -108,7 +108,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -317,7 +317,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -596,7 +596,7 @@ async function checkAddress(addr, verdictEl){
   if(!ethers.isAddress(addr)){ verdictEl.className = "verdict show no"; verdictEl.innerHTML = `<span class="tag">${t("v_invalid_t")}</span>${t("v_invalid")}`; return; }
   verdictEl.className = "verdict show"; verdictEl.innerHTML = t("v_reading");
   try{
-    const human = await readHuman(addr);
+    const human = addr.toLowerCase() === "0x0000000000000000000000000000000000000000" ? false : await readHuman(addr);
     verdictEl.className = "verdict show " + (human ? "yes" : "no");
     verdictEl.innerHTML = human
       ? `<span class="tag">${t("v_yes_t")}</span>${t("v_yes")}<small>${t("v_yes_s")}</small>`
@@ -1191,21 +1191,47 @@ async function loadDetail(){
     const live = nowS >= Number(c.startAt) && nowS <= Number(c.endAt);
     const ended = nowS > Number(c.endAt);
     const entries = await appsRead.getEntries(id);
+    const myState = { entered: false, voted: false, option: 0, claimed: false, winner: false, prizeClaimed: false };
+    if (myAddr){
+      try{
+        if (kind === 0){
+          myState.entered = await appsRead.hasEntered(id, myAddr);
+          if (c.drawn){ myState.winner = await appsRead.isWinner(id, myAddr); myState.prizeClaimed = await appsRead.prizeClaimed(id, myAddr); }
+        } else {
+          const latestB = await providerTest.getBlockNumber();
+          const topicMe = ethers.zeroPadValue(myAddr, 32);
+          const topicId = ethers.zeroPadValue(ethers.toBeHex(id), 32);
+          const ifaceS = new ethers.Interface(APPS_ABI);
+          if (kind === 1){
+            const vl = await getLogsChunked({ address: APPS_TESTNET, topics: [ethers.id("Voted(uint256,address,uint8)"), topicId, topicMe] }, APPS_DEPLOY_BLOCK, latestB);
+            if (vl.length){ const pv = ifaceS.parseLog(vl[vl.length - 1]); if (pv){ myState.voted = true; myState.option = Number(pv.args.option); } }
+          } else {
+            const cl = await getLogsChunked({ address: APPS_TESTNET, topics: [ethers.id("Claimed(uint256,address,uint256)"), topicId, topicMe] }, APPS_DEPLOY_BLOCK, latestB);
+            myState.claimed = cl.length > 0;
+          }
+        }
+      }catch(e){}
+    }
     let foot = "";
     if (kind === 0){
-      if (live) foot = `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`;
+      if (live) foot = myState.entered ? `<button class="btn" disabled style="opacity:.5;cursor:default">${t("j_entered")} \u2713</button>` : `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`;
       else if (ended && !c.drawn) foot = `<button class="btn" onclick="drawCampaign(${id})">${t("m_draw")}</button>`;
       else if (c.drawn) foot = `<span class="count">${t("m_drawn")}</span>`;
-      if (c.drawn && c.prizePerWinner > 0n) foot += ` <button class="btn ghost" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`;
+      if (c.drawn && c.prizePerWinner > 0n){
+        if (!myAddr || (myState.winner && !myState.prizeClaimed)) foot += ` <button class="btn ghost" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`;
+        else if (myState.prizeClaimed) foot += ` <span class="count">${t("j_won_claimed")}</span>`;
+      }
     } else if (kind === 1){
       const counts = new Array(Number(c.optionCount)).fill(0);
       const latest = await providerTest.getBlockNumber();
       const vlogs = await getLogsChunked({ address: APPS_TESTNET, topics: [ethers.id("Voted(uint256,address,uint8)"), ethers.zeroPadValue(ethers.toBeHex(id), 32)] }, APPS_DEPLOY_BLOCK, latest);
       const iface = new ethers.Interface(APPS_ABI);
       for (const l of vlogs){ const p = iface.parseLog(l); if (p) counts[Number(p.args.option)]++; }
-      foot = `<div class="tally">` + counts.map((n, oi) => `<button class="opt" onclick="voteCampaign(${id}, ${oi})">${t("c_option")} ${oi + 1} · <b>${n}</b></button>`).join("") + `</div>`;
+      const tallyBtns = counts.map((n, oi) => `<button class="opt" onclick="voteCampaign(${id}, ${oi})">${t("c_option")} ${oi + 1} · <b>${n}</b></button>`).join("");
+      const tallyStatic = counts.map((n, oi) => `<span class="opt">${t("c_option")} ${oi + 1} · <b>${n}</b></span>`).join("");
+      foot = (live && !myState.voted) ? `<div class="tally">${tallyBtns}</div>` : `<div class="tally">${tallyStatic}</div>` + (myState.voted ? `<div class="count" style="margin-top:8px">${t("j_voted")} \u00b7 ${t("c_option")} ${myState.option + 1} \u2713</div>` : "");
     } else {
-      if (live && Number(c.entryCount) < Number(c.maxClaims)) foot = `<button class="btn" onclick="claimShare(${id})">${t("c_claim_btn")}${c.claimRandom ? "" : " " + fmtAmt(c.claimAmount) + " " + tokenLabel(c.prizeToken)}</button>`;
+      if (live && Number(c.entryCount) < Number(c.maxClaims)) foot = myState.claimed ? `<button class="btn" disabled style="opacity:.5;cursor:default">${t("j_claimed")} \u2713</button>` : `<button class="btn" onclick="claimShare(${id})">${t("c_claim_btn")}${c.claimRandom ? "" : " " + fmtAmt(c.claimAmount) + " " + tokenLabel(c.prizeToken)}</button>`;
       else foot = `<span class="count"><b>${c.entryCount}/${c.maxClaims}</b> ${t("c_claimed_n")}</span>`;
     }
     let proof = "";
@@ -1237,16 +1263,17 @@ async function loadDetail(){
       ${postBtn ? `<div style="margin-bottom:6px">${postBtn}</div>` : ""}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert(${id})">${t("cert_btn")}</button>` : ""}</div>
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
-      <div class="panel">${entries.length ? entries.map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>
+      <div class="panel"><div id="partList">${entries.length ? entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}</div>
       ${proof}
       <div class="trust-row">${t("d_contract")} <a href="https://testnet.bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 HumanGate <a href="https://testnet.bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(kind !== 1 && (c.prizePerWinner > 0n || c.pool > 0n)) ? t("d_escrow") : t("d_escrow_no")}</div>`;
+    window.__partEntries = entries;
     const sb = $("stickyBar");
     if (sb){
       let sAct = "", sInfo = "";
-      if (kind === 0 && live){ sAct = `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`; sInfo = c.prizePerWinner > 0n ? `${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}` : String(c.title).replace(/</g, "&lt;"); }
+      if (kind === 0 && live && !myState.entered){ sAct = `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`; sInfo = c.prizePerWinner > 0n ? `${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}` : String(c.title).replace(/</g, "&lt;"); }
       else if (kind === 0 && ended && !c.drawn){ sAct = `<button class="btn" onclick="drawCampaign(${id})">${t("m_draw")}</button>`; sInfo = String(c.title).replace(/</g, "&lt;"); }
-      else if (kind === 0 && c.drawn && c.prizePerWinner > 0n){ sAct = `<button class="btn" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}`; }
-      else if (kind === 2 && live && Number(c.entryCount) < Number(c.maxClaims)){ sAct = `<button class="btn" onclick="claimShare(${id})">${t("c_claim_btn")}</button>`; sInfo = `${fmtAmt(c.pool)} ${tokenLabel(c.prizeToken)}`; }
+      else if (kind === 0 && c.drawn && c.prizePerWinner > 0n && (!myAddr || (myState.winner && !myState.prizeClaimed))){ sAct = `<button class="btn" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}`; }
+      else if (kind === 2 && live && Number(c.entryCount) < Number(c.maxClaims) && !myState.claimed){ sAct = `<button class="btn" onclick="claimShare(${id})">${t("c_claim_btn")}</button>`; sInfo = `${fmtAmt(c.pool)} ${tokenLabel(c.prizeToken)}`; }
       if (sAct){ sb.innerHTML = `<span class="sb-info">${sInfo}</span>${sAct}`; sb.classList.add("on"); }
     }
     tickCountdowns();
@@ -1301,6 +1328,11 @@ window.makeCert = async id => {
     a.click();
     if (msg) msg.textContent = t("cert_done");
   }catch(e){ if (msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0, 110); }
+};
+window.showAllParticipants = () => {
+  const box = $("partList"); if (!box) return;
+  box.innerHTML = (window.__partEntries || []).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("");
+  const more = $("partMore"); if (more) more.style.display = "none";
 };
 window.verifyDraw = async id => {
   const msg = $("proofMsg"); if(msg) msg.textContent = "…";
