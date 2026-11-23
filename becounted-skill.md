@@ -61,7 +61,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
    的活动;没点名的,一个都不碰。
 6. **金额以 preview 为准,绝不改数重试。** preview 报错或被风险拦截时,
    立即停下,把原因原文告诉用户。不得换金额、换参数、换合约重试。
-7. **`--value` 恒为 0。** 本文件四个动作都不附带 BNB,也不需要任何代币
+7. **`--value` 恒为 0。** 本文件的全部动作都不附带 BNB,也不需要任何代币
    授权(approve)。任何一步若要求你发送 BNB、做 approve 或签消息,
    立即停下并报告——那不是本流程的一部分。
 8. **不索要秘密。** 绝不向用户索要或经手助记词、私钥、配对码。配对与
@@ -88,7 +88,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 
 ```bash
 cast call {{APPS_MAINNET_ADDRESS}} \
-  "getCampaign(uint256)(address,uint8,string,uint64,uint64,uint32,uint64,bool,bool,uint8,uint256,address,uint256,uint256,uint256,uint32,bool,uint256,bool)" \
+  "getCampaign(uint256)(address,uint8,string,uint64,uint64,uint32,uint64,bool,bool,uint8,uint256,address,uint256,uint256,uint256,uint32,bool,uint256,bool,string)" \
   <CAMPAIGN_ID> --rpc-url https://bsc-dataseed.binance.org
 ```
 
@@ -113,6 +113,7 @@ curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
 | `prizePerWinner` | 抽奖每位中奖者奖金(最小单位,展示时按代币 decimals 换算) |
 | `claimAmount` | 领取活动每人金额(等额模式)。拼手气模式(`claimRandom = true`)金额由合约决定,以链上结果为准 |
 | `drawn` | 抽奖是否已开奖。领奖前必须为 `true` |
+| `prizeLabel` | 自定义链下奖品说明(仅抽奖)。非空 = 本场奖品不是代币,而是白名单、实物等链下奖品,由发起人按链上中奖名单发放;向用户确认时必须**原文展示**这段说明,**不得显示「奖金 0」**,也不要按 `prizePerWinner` 换算 |
 
 参加前再做两项只读预检(同样用 `eth_call` / `cast call`):
 

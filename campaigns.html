@@ -9,15 +9,15 @@
 <meta property="og:description" content="Raffles, votes and claim drops gated by Binance Agent ID. One KYC, one ID, zero bot farms. Draws anyone can recompute.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://becounted.9nosing.com/assets/og.png">
-<meta property="og:url" content="https://becounted.9nosing.com/">
-<meta name="twitter:image" content="assets/og.png">
+<meta property="og:url" content="https://becounted.9nosing.com/campaigns.html">
+<meta name="twitter:image" content="https://becounted.9nosing.com/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1122j">
+<link rel="stylesheet" href="assets/style.css?v=1122k">
 </head>
 <body>
 <nav>
@@ -67,14 +67,14 @@
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
-      <input type="text" id="fltQ" data-i18n-ph="flt_search_ph" oninput="applyFilters()" style="flex:1;min-width:180px;background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font:inherit">
-      <select id="fltKind" onchange="applyFilters()" style="background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font:inherit">
+      <input type="text" id="fltQ" class="flt" data-i18n-ph="flt_search_ph" oninput="applyFilters()" style="flex:1;min-width:180px">
+      <select id="fltKind" class="flt" onchange="applyFilters()">
         <option value="all" data-i18n="flt_all"></option><option value="0" data-i18n="c_raffle"></option><option value="1" data-i18n="c_vote"></option><option value="2" data-i18n="c_claim"></option>
       </select>
-      <select id="fltStatus" onchange="applyFilters()" style="background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font:inherit">
+      <select id="fltStatus" class="flt" onchange="applyFilters()">
         <option value="all" data-i18n="flt_all"></option><option value="live" data-i18n="flt_live"></option><option value="upcoming" data-i18n="flt_upcoming"></option><option value="ended" data-i18n="flt_ended"></option>
       </select>
-      <select id="fltSeries" onchange="applyFilters()" style="background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font:inherit">
+      <select id="fltSeries" class="flt" onchange="applyFilters()">
         <option value="all" data-i18n="series_all"></option>
       </select>
       <button type="button" id="fltLive" class="flt-chip" onclick="toggleLiveOnly()" data-i18n="f_live_only"></button>
@@ -100,6 +100,6 @@
 </footer>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1122j"></script>
+<script src="assets/app.js?v=1122k"></script>
 </body>
 </html>

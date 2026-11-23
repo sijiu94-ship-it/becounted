@@ -9,15 +9,15 @@
 <meta property="og:description" content="Raffles, votes and claim drops gated by Binance Agent ID. One KYC, one ID, zero bot farms. Draws anyone can recompute.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://becounted.9nosing.com/assets/og.png">
-<meta property="og:url" content="https://becounted.9nosing.com/">
-<meta name="twitter:image" content="assets/og.png">
+<meta property="og:url" content="https://becounted.9nosing.com/whitepaper.html">
+<meta name="twitter:image" content="https://becounted.9nosing.com/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1122j">
+<link rel="stylesheet" href="assets/style.css?v=1122k">
 </head>
 <body>
 <nav>
@@ -72,8 +72,8 @@
   <div class="wrap">
     <div class="sec-head"><span class="sec-no">03</span><h2 data-i18n="wp3_h"></h2></div>
     <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px" data-i18n="wp3_p"></p>
-    <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">The first boundary shapes even the allowlist. Entry condition 5 (OneIDCampaignsV10) lets a creator restrict a campaign to a list of Agent ID names: the Merkle leaves are hashes of the names themselves, and at entry the contract reads the entrant's own handle from the registry — address → handle, the permitted direction — and verifies the proof against the committed root. No name → address resolution happens anywhere in the flow. The allowlist holds identities, never wallets: it stores hashes of names, and not even the creator needs anyone's wallet address. Because the check reads the handle live, the list binds the identity, not an address snapshot — rename away from a listed name and you are off the list.</p>
-    <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">第一条边界连白名单的形状都决定了。参加条件 5（OneIDCampaignsV10）允许发起人把活动限定给一份 Agent ID 名字名单：默克尔叶是名字本身的哈希，参加时合约从注册表实时读取参加者本人的名字——「地址 → 名字」，是允许的方向——再验其证明与链上根是否对得上；全流程不发生任何「名字 → 地址」解析。**白名单里只有身份、没有地址——名单存的是名字的哈希，连发起人也不需要任何人的钱包地址**。又因为校验是实时读名字，名单绑的是身份而不是地址快照：改名离开名单上的名字，就等于离开名单。</p>
+    <p class="lang-en" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">The first boundary shapes even the allowlist. Entry condition 5 (OneIDCampaignsV10) lets a creator restrict a campaign to a list of Agent ID names: the Merkle leaves are hashes of the names themselves, and at entry the contract reads the entrant's own handle from the registry — address → handle, the permitted direction — and verifies the proof against the committed root. No name → address resolution happens anywhere in the flow. <b>The allowlist holds identities, never wallets: it stores hashes of names, and not even the creator needs anyone's wallet address.</b> Because the check reads the handle live, the list binds the identity, not an address snapshot — rename away from a listed name and you are off the list.</p>
+    <p class="lang-zh" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">第一条边界连白名单的形状都决定了。参加条件 5（OneIDCampaignsV10）允许发起人把活动限定给一份 Agent ID 名字名单：默克尔叶是名字本身的哈希，参加时合约从注册表实时读取参加者本人的名字——「地址 → 名字」，是允许的方向——再验其证明与链上根是否对得上；全流程不发生任何「名字 → 地址」解析。<b>白名单里只有身份、没有地址——名单存的是名字的哈希，连发起人也不需要任何人的钱包地址</b>。又因为校验是实时读名字，名单绑的是身份而不是地址快照：改名离开名单上的名字，就等于离开名单。</p>
 
   </div>
 </section>
@@ -101,8 +101,8 @@
     <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px" data-i18n="wp6_1"></p>
     <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px" data-i18n="wp6_2"></p>
     <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px" data-i18n="wp6_3"></p>
-    <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">Agent-native by design: Binance's Agentic Wallet never connects to third-party websites — that is Binance's own design — so holders take part through their own AI agent. The participation Skill, the is-human CLI and the MCP server are the product's front door; this website is the creator console and the public transparency layer, and any ordinary wallet can connect to it. X binding comes in two honestly labelled tiers: a wallet signature (strong proof), and — for Agentic Wallet addresses, which cannot sign arbitrary messages — a public-post attestation: the holder posts their address from their own X account, a registrar verifies the post and records the binding on-chain, marked "attested" (weak proof, revocable, never able to overwrite a signature binding). The registrar is a named trust point, disclosed here rather than hidden.</p>
-    <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">Agent 原生是这个产品的设计前提：币安 Agentic Wallet 按其自身设计不直连任何第三方网站，持有人只能通过自己的 AI Agent 参与——参与 Skill、is-human CLI 与 MCP server 才是产品正门；本网站是发起人的控制台与公开透明层，普通钱包可以连接它。X 绑定分两级、如实标注：钱包签名是强证明；Agentic Wallet 地址无法任意签名，走帖文见证——本人用自己的 X 账号公开发帖写明地址，登记员核对后上链登记，标注为「见证」（弱证明、可撤销、不得覆盖签名绑定）。登记员是一个具名的信任点，我们写在这里，而不是藏起来。</p>
+    <p class="lang-en" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">Agent-native by design: Binance's Agentic Wallet never connects to third-party websites — that is Binance's own design — so holders take part through their own AI agent. The participation Skill, the is-human CLI and the MCP server are the product's front door; this website is the creator console and the public transparency layer, and any ordinary wallet can connect to it. X binding comes in two honestly labelled tiers: a wallet signature (strong proof), and — for Agentic Wallet addresses, which cannot sign arbitrary messages — a public-post attestation: the holder posts their address from their own X account, a registrar verifies the post and records the binding on-chain, marked "attested" (weak proof, revocable, never able to overwrite a signature binding). The registrar is a named trust point, disclosed here rather than hidden.</p>
+    <p class="lang-zh" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">Agent 原生是这个产品的设计前提：币安 Agentic Wallet 按其自身设计不直连任何第三方网站，持有人只能通过自己的 AI Agent 参与——参与 Skill、is-human CLI 与 MCP server 才是产品正门；本网站是发起人的控制台与公开透明层，普通钱包可以连接它。X 绑定分两级、如实标注：钱包签名是强证明；Agentic Wallet 地址无法任意签名，走帖文见证——本人用自己的 X 账号公开发帖写明地址，登记员核对后上链登记，标注为「见证」（弱证明、可撤销、不得覆盖签名绑定）。登记员是一个具名的信任点，我们写在这里，而不是藏起来。</p>
 
   </div>
 </section>
@@ -114,6 +114,7 @@
       <tr><td data-i18n="a_gate"></td><td><a href="https://testnet.bscscan.com/address/0x0cb41f96c84df7bed5db273e77b62414b1a80cbd" target="_blank" rel="noopener">0x0cb41f96c84df7bed5db273e77b62414b1a80cbd</a></td></tr>
       <tr><td data-i18n="a_apps"></td><td><a href="https://testnet.bscscan.com/address/0x5c6bd30ead292b97e910d761209736A440f4bA3e" target="_blank" rel="noopener">0x5c6bd30ead292b97e910d761209736A440f4bA3e</a></td></tr>
       <tr><td data-i18n="a_bind"></td><td><a href="https://testnet.bscscan.com/address/0x3b5a6cd4ae21cf100da21197a58be6d6d406f843" target="_blank" rel="noopener">0x3b5a6cd4ae21cf100da21197a58be6d6d406f843</a></td></tr>
+      <tr><td data-i18n="a_quest">QuestPass — BSC testnet</td><td><a href="https://testnet.bscscan.com/address/0x90c3320557db7540a5899e7d3bc0577e399ec378" target="_blank" rel="noopener">0x90c3320557db7540a5899e7d3bc0577e399ec378</a> (rehearsal)</td></tr>
       <tr><td data-i18n="a_profile"></td><td><a href="https://testnet.bscscan.com/address/0x03b4a3129199b16ccf144a100b1fc65f31d907c1" target="_blank" rel="noopener">0x03b4a3129199b16ccf144a100b1fc65f31d907c1</a></td></tr>
       <tr><td data-i18n="a_reg"></td><td><a href="https://bscscan.com/address/0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F" target="_blank" rel="noopener">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</a> (SPACE ID Agent ID)</td></tr>
     </table>
@@ -140,6 +141,6 @@
 </footer>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1122j"></script>
+<script src="assets/app.js?v=1122k"></script>
 </body>
 </html>
