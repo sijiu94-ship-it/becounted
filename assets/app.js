@@ -1091,7 +1091,7 @@ async function loadFeed(){
   try{
     const latest = await providerTest.getBlockNumber();
     if ($("feedBlock")) $("feedBlock").textContent = t("feed_blk") + " " + latest.toLocaleString();
-    const logs = await providerTest.getLogs({ address: APPS_TESTNET, fromBlock: Math.max(0, latest - 30000), toBlock: latest });
+    const logs = await getLogsChunked({ address: APPS_TESTNET }, Math.max(0, latest - 30000), latest);
     const iface = new ethers.Interface(APPS_ABI);
     const items = [];
     for (const log of logs.slice(-40).reverse()){
@@ -1373,14 +1373,25 @@ async function submitCreate(){
 
 
 /* publicnode caps eth_getLogs at 50k blocks per call — chunk wider scans. */
+const _logProviders = {};
+function logsProvider(url){
+  if (!_logProviders[url]) _logProviders[url] = new ethers.JsonRpcProvider(url, NETWORK.appsChainId, { staticNetwork: true });
+  return _logProviders[url];
+}
 async function getLogsChunked(base, from, to){
   const out = [];
+  const urls = NETWORK.appsRpcs;
   for (let s = from; s <= to; s += 45000){
     const e = Math.min(to, s + 44999);
     let logs = null, lastErr = null;
-    for (let attempt = 0; attempt < 3 && !logs; attempt++){
-      try{ logs = await providerTest.getLogs({ ...base, fromBlock: s, toBlock: e }); }
-      catch(err){ lastErr = err; await new Promise(r => setTimeout(r, 900 * (attempt + 1))); }
+    for (let attempt = 0; attempt < 6 && !logs; attempt++){
+      const p = logsProvider(urls[attempt % urls.length]);
+      try{
+        logs = await Promise.race([
+          p.getLogs({ ...base, fromBlock: s, toBlock: e }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("logs timeout")), 20000))
+        ]);
+      }catch(err){ lastErr = err; await new Promise(r => setTimeout(r, 800 * (attempt + 1))); }
     }
     if (!logs) throw lastErr;
     out.push(...logs);
@@ -1818,8 +1829,10 @@ window.verifyBinding = async () => {
 };
 
 /* ---------- platform stats (unique humans, payouts) ---------- */
+let _statsLoading = false;
 async function loadPlatformStats(){
-  if(!$("statHumans")) return;
+  if(!$("statHumans") || _statsLoading) return;
+  _statsLoading = true;
   chain();
   try{
     const latest = await providerTest.getBlockNumber();
@@ -1837,6 +1850,7 @@ async function loadPlatformStats(){
     $("statHumans").textContent = humans.size;
     if($("statPayouts")) $("statPayouts").textContent = payouts;
   }catch(e){ /* keep last rendered values */ }
+  _statsLoading = false;
 }
 
 /* ---------- campaign poster (16:9) ---------- */
@@ -2234,19 +2248,27 @@ function demoSetRow(li, ok, text){
   li.querySelector(".demo-state").textContent = text;
 }
 async function mainnetBatchBalance(addrs){
+  // dataseed rejects oversized JSON-RPC batches — read in slices of 20,
+  // rotating endpoints per slice.
   const data = a => "0x70a08231" + "000000000000000000000000" + a.slice(2).toLowerCase();
-  const payload = addrs.map((a, i) => ({ jsonrpc: "2.0", id: i, method: "eth_call", params: [{ to: REGISTRY_MAINNET, data: data(a) }, "latest"] }));
-  for (const url of NETWORK.mainRpcs){
-    try{
-      const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-      const j = await r.json();
-      if (!Array.isArray(j)) continue;
-      const out = new Array(addrs.length);
-      for (const item of j){ if (item && typeof item.id === "number" && item.result) out[item.id] = BigInt(item.result); }
-      if (out.every(v => v !== undefined)) return out;
-    }catch(e){}
+  const out = new Array(addrs.length);
+  for (let s = 0; s < addrs.length; s += 20){
+    const slice = addrs.slice(s, s + 20);
+    const payload = slice.map((a, i) => ({ jsonrpc: "2.0", id: i, method: "eth_call", params: [{ to: REGISTRY_MAINNET, data: data(a) }, "latest"] }));
+    let done = false;
+    for (let u = 0; u < NETWORK.mainRpcs.length && !done; u++){
+      try{
+        const r = await fetch(NETWORK.mainRpcs[(s / 20 + u) % NETWORK.mainRpcs.length], { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+        const j = await r.json();
+        if (!Array.isArray(j)) continue;
+        const part = new Array(slice.length);
+        for (const item of j){ if (item && typeof item.id === "number" && item.result) part[item.id] = BigInt(item.result); }
+        if (part.every(v => v !== undefined)){ part.forEach((v, i) => { out[s + i] = v; }); done = true; }
+      }catch(e){}
+    }
+    if (!done) throw new Error("registry batch read failed");
   }
-  throw new Error("registry batch read failed");
+  return out;
 }
 window.demoBots = async () => {
   if (demoState.running) return;

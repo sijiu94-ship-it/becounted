@@ -304,3 +304,17 @@ footer .mono{font-family:var(--mono);font-size:12px}
 .demo-row.no .demo-state{color:var(--bad)}
 @media(max-width:760px){.demo{grid-template-columns:1fr}.demo-list{height:260px}}
 @media(max-width:640px){.addr-table td{display:block;width:auto}.addr-table td:first-child{padding-bottom:0;border-bottom:0}.addr-table td:last-child{padding-top:2px}}
+
+/* visual QA fixes (2026-11-23) */
+.stats{display:grid;grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+.create-grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:22px;align-items:start}
+.create-grid .form{max-width:none}
+.create-side{position:sticky;top:84px}
+.create-side .f-sec{margin-top:0}
+@media(max-width:900px){.create-grid{grid-template-columns:1fr}.create-side{position:static}}
+.f-row input[type="checkbox"],.f-row input[type="radio"]{width:auto;padding:0;accent-color:var(--gold);vertical-align:-2px}
+.demo-list{scrollbar-width:thin;scrollbar-color:#2c2c31 transparent}
+.demo-list::-webkit-scrollbar{width:8px}
+.demo-list::-webkit-scrollbar-thumb{background:#2c2c31;border-radius:4px}
+.demo-list::-webkit-scrollbar-track{background:transparent}
