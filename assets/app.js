@@ -1355,7 +1355,13 @@ async function getLogsChunked(base, from, to){
   const out = [];
   for (let s = from; s <= to; s += 45000){
     const e = Math.min(to, s + 44999);
-    out.push(...await providerTest.getLogs({ ...base, fromBlock: s, toBlock: e }));
+    let logs = null, lastErr = null;
+    for (let attempt = 0; attempt < 3 && !logs; attempt++){
+      try{ logs = await providerTest.getLogs({ ...base, fromBlock: s, toBlock: e }); }
+      catch(err){ lastErr = err; await new Promise(r => setTimeout(r, 900 * (attempt + 1))); }
+    }
+    if (!logs) throw lastErr;
+    out.push(...logs);
   }
   return out;
 }
