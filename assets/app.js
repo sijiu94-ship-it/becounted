@@ -100,6 +100,17 @@ en: {
   check_try:"Try a known holder:", check_try_link:"9nosing.ai's wallet", check_try2:"— or paste your own Agentic Wallet address.",
   stat_campaigns:"campaigns on testnet", stat_entries:"verified-human entries",
   stat_per:"Agent IDs per human — structural, not policy", stat_funds:"funds held by the contracts, ever",
+  demo_h:"Watch the gate work \u2014 no wallet needed", demo_sub:"A live-fire demo against the real Agent ID registry on BNB mainnet. Send a bot farm at the gate, then send one real human. Same entrance, same one-line check.",
+  demo_btn_bots:"Send 100 bots", demo_btn_human:"Send 1 human", demo_btn_reset:"Reset",
+  demo_c_try:"attempted", demo_c_pass:"passed", demo_c_reject:"rejected",
+  demo_stage:"DEMO RAFFLE \u2014 ENTRY GATE", demo_empty:"Nobody has tried the gate yet. Pick a side.",
+  demo_checking:"checking registry\u2026", demo_rejected:"REJECTED \u00b7 not in registry", demo_passed:"PASSED \u00b7 ticket #1 issued",
+  demo_bot_tag:"BOT", demo_human_tag:"HUMAN \u00b7 sample holder 9nosing.ai",
+  demo_cap0:"Bots don\u2019t lose on speed, budget or numbers \u2014 they lose because the registry has never heard of them.",
+  demo_cap_bots:"100 fresh addresses, 100 registry lookups, 0 found. On-chain, every one of these entries reverts NotHuman before it can touch the prize pool.",
+  demo_cap_human:"One address, one lookup, found instantly. That is the whole trick: the gate asks the registry, not the crowd.",
+  demo_note:"Live reads against the BNB mainnet Agent ID registry. Bot addresses are generated locally in your browser \u2014 none of them has ever held an Agent ID.",
+  demo_err:"Registry read failed (RPC busy) \u2014 reset and try again.",
   t1_no:"01 / Campaigns", t1_h:"Enter with your one ID", t1_p:"Live raffles and votes gated by BeCounted. One Agent ID, one entry — duplicates and second wallets are rejected on-chain.", t_go:"Open →",
   t2_no:"02 / How it works", t2_h:"Two questions, two keys", t2_p:"Why the gate is stateless, why dedup belongs to each campaign, and the three things BeCounted will never do.", t_go2:"Read →",
   t3_no:"03 / Builders", t3_h:"One read call is the API", t3_p:"Contract addresses, the integration snippet, and the is-human skill any AI agent can run before it acts.", t_go3:"Build →",
@@ -310,6 +321,17 @@ zh: {
   check_try:"试试已知持有者：", check_try_link:"9nosing.ai 的钱包", check_try2:"——也可以粘贴你自己的 Agentic Wallet 地址。",
   stat_campaigns:"测试网上的活动", stat_entries:"真人报名人次",
   stat_per:"每个真人可领的 Agent ID——结构决定，非规则", stat_funds:"合约经手的资金，永远为零",
+  demo_h:"不用连钱包，看闸门怎么工作", demo_sub:"对着 BNB 主网真实的 Agent ID 注册表实弹演示。先放一群机器人进场，再放一个真人\u2014\u2014同一个入口，同一行检查。",
+  demo_btn_bots:"放 100 个机器人进场", demo_btn_human:"放 1 个真人进场", demo_btn_reset:"重置",
+  demo_c_try:"尝试进场", demo_c_pass:"通过", demo_c_reject:"被拒",
+  demo_stage:"演示抽奖 \u2014 进场闸门", demo_empty:"还没有人试过这道门。选一边开始。",
+  demo_checking:"查注册表中\u2026", demo_rejected:"被拒 \u00b7 注册表查无此人", demo_passed:"通过 \u00b7 已发 1 号票",
+  demo_bot_tag:"机器人", demo_human_tag:"真人 \u00b7 样例持有人 9nosing.ai",
+  demo_cap0:"机器人输的不是手速、预算或数量\u2014\u2014是注册表里根本没有它们。",
+  demo_cap_bots:"100 个全新地址，100 次注册表查询，0 个查到。在链上，这每一次进场都会在碰到奖池之前就 revert NotHuman。",
+  demo_cap_human:"一个地址，查一次，立刻查到。全部诀窍就在这里：闸门问的是注册表，不是人群。",
+  demo_note:"本演示实时读取 BNB 主网 Agent ID 注册表；机器人地址由你的浏览器本地随机生成，从未持有过 Agent ID。",
+  demo_err:"注册表读取失败（RPC 繁忙），请重置后重试。",
   t1_no:"01 / 活动", t1_h:"用你的唯一 ID 报名", t1_p:"正在进行的抽奖与投票，全部由 BeCounted 把关。一个 Agent ID 一张票——重复报名和第二个钱包都会在链上被拒。", t_go:"进入 →",
   t2_no:"02 / 原理", t2_h:"两个问题，两把钥匙", t2_p:"为什么门禁本身无状态、为什么去重状态归每个活动自己管，以及 BeCounted 永远不会做的三件事。", t_go2:"查看 →",
   t3_no:"03 / 开发者", t3_h:"一次只读调用就是 API", t3_p:"合约地址、接入代码片段，以及任何 AI Agent 动手前都能先跑一遍的 is-human 技能。", t_go3:"接入 →",
@@ -2190,6 +2212,102 @@ document.addEventListener("DOMContentLoaded", () => {
   if (ci) ci.addEventListener("keydown", e => { if(e.key === "Enter") cb.click(); });
   const ts = $("trySample");
   if (ts) ts.onclick = () => { $("checkInput").value = SAMPLE_HOLDER; cb.click(); };
+  const db = $("demoBots"); if (db) db.onclick = () => window.demoBots();
+  const dh = $("demoHuman"); if (dh) dh.onclick = () => window.demoHuman();
+  const dr = $("demoReset"); if (dr) dr.onclick = () => window.demoReset();
+
+/* ---------- anti-sybil live demo (no wallet; live mainnet registry reads) ---------- */
+const demoState = { tried: 0, passed: 0, rejected: 0, running: false, humanIn: false };
+function demoCounts(){
+  if ($("demoTried")) $("demoTried").textContent = demoState.tried;
+  if ($("demoPassed")) $("demoPassed").textContent = demoState.passed;
+  if ($("demoRejected")) $("demoRejected").textContent = demoState.rejected;
+}
+function demoRow(addr, tag){
+  const li = document.createElement("li");
+  li.className = "demo-row";
+  li.innerHTML = `<span class="demo-addr">${addr.slice(0, 10)}\u2026${addr.slice(-6)}</span><span class="demo-tag">${tag}</span><span class="demo-state">${t("demo_checking")}</span>`;
+  return li;
+}
+function demoSetRow(li, ok, text){
+  li.classList.add(ok ? "ok" : "no");
+  li.querySelector(".demo-state").textContent = text;
+}
+async function mainnetBatchBalance(addrs){
+  const data = a => "0x70a08231" + "000000000000000000000000" + a.slice(2).toLowerCase();
+  const payload = addrs.map((a, i) => ({ jsonrpc: "2.0", id: i, method: "eth_call", params: [{ to: REGISTRY_MAINNET, data: data(a) }, "latest"] }));
+  for (const url of NETWORK.mainRpcs){
+    try{
+      const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+      const j = await r.json();
+      if (!Array.isArray(j)) continue;
+      const out = new Array(addrs.length);
+      for (const item of j){ if (item && typeof item.id === "number" && item.result) out[item.id] = BigInt(item.result); }
+      if (out.every(v => v !== undefined)) return out;
+    }catch(e){}
+  }
+  throw new Error("registry batch read failed");
+}
+window.demoBots = async () => {
+  if (demoState.running) return;
+  const list = $("demoList"); if (!list) return;
+  demoState.running = true;
+  $("demoBots").disabled = true; $("demoHuman").disabled = true;
+  const empty = list.querySelector(".demo-empty"); if (empty) empty.remove();
+  const addrs = [], rows = [];
+  for (let i = 0; i < 100; i++){
+    const b = new Uint8Array(20); crypto.getRandomValues(b);
+    addrs.push("0x" + [...b].map(x => x.toString(16).padStart(2, "0")).join(""));
+  }
+  for (let i = 0; i < 100; i += 10){
+    for (let k = i; k < Math.min(i + 10, 100); k++){ const li = demoRow(addrs[k], t("demo_bot_tag")); list.prepend(li); rows.push(li); demoState.tried++; }
+    demoCounts();
+    await new Promise(r => setTimeout(r, 70));
+  }
+  try{
+    const bals = await mainnetBatchBalance(addrs);
+    for (let i = 0; i < 100; i++){
+      if (bals[i] > 0n){ demoSetRow(rows[i], true, t("demo_passed")); demoState.passed++; }
+      else { demoSetRow(rows[i], false, t("demo_rejected")); demoState.rejected++; }
+      if (i % 5 === 0){ demoCounts(); await new Promise(r => setTimeout(r, 30)); }
+    }
+    demoCounts();
+    $("demoCap").textContent = t("demo_cap_bots");
+  }catch(e){
+    rows.forEach(li => demoSetRow(li, false, t("demo_err")));
+    $("demoCap").textContent = t("demo_err");
+  }
+  demoState.running = false;
+  $("demoBots").disabled = false; $("demoHuman").disabled = demoState.humanIn;
+};
+window.demoHuman = async () => {
+  if (demoState.running || demoState.humanIn) return;
+  const list = $("demoList"); if (!list) return;
+  demoState.running = true;
+  $("demoBots").disabled = true; $("demoHuman").disabled = true;
+  const empty = list.querySelector(".demo-empty"); if (empty) empty.remove();
+  const li = demoRow(SAMPLE_HOLDER, t("demo_human_tag"));
+  list.prepend(li);
+  demoState.tried++; demoCounts();
+  try{
+    chain();
+    const bal = await registry.balanceOf(SAMPLE_HOLDER);
+    if (bal > 0n){ demoSetRow(li, true, t("demo_passed")); demoState.passed++; demoState.humanIn = true; $("demoCap").textContent = t("demo_cap_human"); }
+    else { demoSetRow(li, false, t("demo_rejected")); demoState.rejected++; }
+  }catch(e){ demoSetRow(li, false, t("demo_err")); }
+  demoCounts();
+  demoState.running = false;
+  $("demoBots").disabled = false; $("demoHuman").disabled = demoState.humanIn;
+};
+window.demoReset = () => {
+  if (demoState.running) return;
+  const list = $("demoList"); if (!list) return;
+  demoState.tried = 0; demoState.passed = 0; demoState.rejected = 0; demoState.humanIn = false;
+  list.innerHTML = `<li class="demo-empty" data-i18n="demo_empty">${t("demo_empty")}</li>`;
+  $("demoCap").textContent = t("demo_cap0");
+  $("demoHuman").disabled = false;
+  demoCounts();
+};
   const kb = $("cardBtn");
   if (kb) kb.onclick = async () => {
     const addr = $("cardInput").value.trim();
