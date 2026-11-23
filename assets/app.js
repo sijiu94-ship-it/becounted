@@ -1,14 +1,14 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0x5c6bd30ead292b97e910d761209736A440f4bA3e"; // OneIDCampaignsV10 trial stack (own gate + MockRegistryV2 with handleOf; bindings = IdentityBindingsV2)
-const BINDINGS_TESTNET = "0x3b5a6cd4ae21cf100da21197a58be6d6d406f843"; // IdentityBindings
+const APPS_TESTNET     = "0x8Ce3052c7CcAFd29a58306981D2235433d386d32"; // OneIDCampaignsV11 trial stack (own gate + MockRegistryV2 with handleOf; bindings = IdentityBindingsV3)
+const BINDINGS_TESTNET = "0x727dfCc0d86bD58B16Ed607c8CEa146AC396bf30"; // IdentityBindingsV3
 const PROFILE_TESTNET  = "0x03b4a3129199b16ccf144a100b1fc65f31d907c1"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
   "function setProfile(string bio, tuple(string title, string url)[] links)",
   "function removeProfile()",
   "function profileOf(address who) view returns (string bio, tuple(string title, string url)[] links, uint64 updatedAt)"
 ];
-const GATE_TESTNET     = "0x0cb41f96c84df7bed5db273e77b62414b1a80cbd"; // BeCounted (testnet)
+const GATE_TESTNET     = "0x2464F16146EA45C8b30fe3FED5E8f536C5344296"; // BeCounted (testnet, V11 trial stack gate)
 const QUEST_TESTNET = "0x90c3320557db7540a5899e7d3bc0577e399ec378";
 const QUEST_ABI = [
   "function claimStamp()", "function enterFinale()", "function lockFinaleSeed()", "function drawFinale()", "function claimPrize()",
@@ -48,11 +48,13 @@ const APPS_ABI = [
   "function enterRaffle(uint256, bytes32[], bytes32[])",
   "function castVote(uint256, uint8, bytes32[], bytes32[])",
   "function draw(uint256)",
+  "function lockDraw(uint256)",
+  "error InsufficientReceived()", "error ClaimExpired()", "error SeedNotLocked()", "error SeedExpired()", "error SeedLocked()",
   "function claim(uint256, bytes32[], bytes32[])",
   "function claimPrize(uint256)",
   "function reclaim(uint256)",
-  "function createRaffle(string, uint64, uint64, uint32, uint64, address, uint256, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string) payable returns (uint256)",
-  "function createVote(string, uint64, uint64, uint8, address, uint256, uint32, uint64, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string[]) payable returns (uint256)",
+  "function createRaffle(string, uint64, uint64, uint32, address, uint256, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string) payable returns (uint256)",
+  "function createVote(string, uint64, uint64, uint8, address, uint256, uint32, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string[]) payable returns (uint256)",
   "function optionLabelsOf(uint256) view returns (string[])",
   "function createClaim(string, uint64, uint64, uint32, address, uint256, bool, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot)) payable returns (uint256)",
   "function postUrl(uint256) view returns (string)","function series(uint256) view returns (string)","function setSeries(uint256,string)",
@@ -75,7 +77,7 @@ const NETWORK = {
   appsRpcs: ["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet-dataseed.bnbchain.org", "https://data-seed-prebsc-1-s1.bnbchain.org:8545"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com", "https://rpc.ankr.com/bsc", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 144378510; // V10 deployment block: event scans start here
+const APPS_DEPLOY_BLOCK = 144405789; // V11 deployment block: event scans start here
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-25: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
@@ -157,14 +159,14 @@ en: {
   kick_build:"Integration", h_build:"For builders",
   build_sub:"One read call is the whole integration. If your contract can call a view function, you have sybil resistance.",
   code_note:"Gate any function with one line. The primitive is stateless — your contract keeps its own per-campaign dedup, keyed by the human.",
-  a_gate:"BeCounted — BSC testnet", a_apps:"OneIDCampaigns — BSC testnet", a_bind:"IdentityBindingsV2 (testnet)", a_quest:"QuestPass — BSC testnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
+  a_gate:"BeCounted — BSC testnet", a_apps:"OneIDCampaigns — BSC testnet", a_bind:"IdentityBindingsV3 (testnet)", a_quest:"QuestPass — BSC testnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
   a_skill_v:"is-human — a zero-dependency checker any AI agent can run before it acts. Source in the project repo.",
   a_profile:"IdentityProfile (bio + links)", embed_h:"Embed the check on your site", embed_p:"Two lines of code put a live Agent ID check on any web page. It reads the registry directly - no API key, no backend, read-only. For on-chain gating, use the contract interface or the template instead.",
   nav_white:"Whitepaper", kick_wp:"WHITEPAPER", h_wp:"The BeCounted Whitepaper", wp_sub:"What this is, how it works, what it refuses to do, and where its limits are - in one page.",
   wp1_h:"Thesis: addresses are transport, identity is the person", wp1_p:"Sybil attacks are not a verification problem, they are a structure problem: minting addresses is free, so any defense priced per address eventually loses. Agent ID changes the unit - one KYC, one ID, non-transferable. BeCounted turns that fact into a single question any contract can ask: isHuman(address).",
   wp2_h:"The two-key principle", wp2_p:"Key one - 'is this a unique human?' - is asked by address, on every call, and answered by the primitive. Key two - 'has this human been counted in this activity?' - is keyed by the holder, and its state lives with the caller. The primitive itself stores nothing: no lists, no scores, no history. That is deliberate - a gate that remembers nothing has nothing to leak, sell, or misuse.",
   wp3_h:"Three boundaries", wp3_p:"Three refusals, by design: no reverse lookup (a name never resolves to a wallet), no character judgment (the gate proves sameness, never trustworthiness), and no small-account hunting (no clustering, no labeling). Each refusal gives up a business we could have had - and keeps the one question we answer clean.",
-  wp4_h:"Security model", wp4_1:"The gate is read-only: a view function with no owner, no upgrade path, and no pause switch. Nobody can change its answer, including us.", wp4_2:"Prizes are escrowed by the campaign contract the moment a campaign is created. Winners claim for themselves; a prize unclaimed after 30 days returns to the creator.", wp4_3:"Draws are reproducible: the seed block is fixed at creation, and anyone can recompute the winner list from public data - the campaign page does it in one click.", wp4_4:"Honest randomness: the lucky-claim mode uses blockhash pseudo-randomness, labelled in the contract and the UI as entertainment-grade, for small pools only.", wp4_5:"The site never asks for unlimited approvals: token escrow approves the exact amount, once.",
+  wp4_h:"Security model", wp4_1:"The gate is read-only: a view function with no owner, no upgrade path, and no pause switch. Nobody can change its answer, including us.", wp4_2:"Prizes are escrowed by the campaign contract the moment a campaign is created. Winners claim for themselves; a prize unclaimed after 30 days returns to the creator.", wp4_3:"Draws are reproducible: after a campaign ends, anyone can lock the seed on-chain — the hash of the second block after locking, unknowable in advance because entries are already closed — and anyone can recompute the winner list from public data - the campaign page does it in one click.", wp4_4:"Honest randomness: the lucky-claim mode uses blockhash pseudo-randomness, labelled in the contract and the UI as entertainment-grade, for small pools only.", wp4_5:"The site never asks for unlimited approvals: token escrow approves the exact amount, once.",
   wp5_h:"Built to the contest's security red lines", wp5_p:"No third-party Agentic Wallet login (participation happens through the user's own agent with per-call confirmation \u2014 the Agentic Wallet never connects to this or any third-party site). No silent or bundled transfers. No unlimited approvals. Contracts are open source, with owner powers disclosed - there are none. No name impersonates Binance or BNB. And no mnemonics, private keys, or pairing codes are ever collected. Our own agent tooling is read-only by design.",
   wp6_h:"Known limitations", wp6_1:"The gate is not narrow in supply: Agent ID holders already number over 263,000 (registry count, November 2026) and issuance keeps growing. The real limit is reach - most holders have never heard of any given campaign, so every gated campaign still starts from a zero audience. The contract does not change; the discovery does.", wp6_2:"Uniqueness is capped by KYC, not by mathematics: one person holding several verified identities could hold several IDs. We claim 'one identity, one entry' - not 'one soul, one entry'.", wp6_3:"If Binance rebuilds or replaces the Agentic Wallet, how an ID carries over is Binance's call, not ours. Our claim is narrower, and honest: the first working interface for a proven pattern - not 'the standard'.",
   wp7_h:"Contracts", wp7_p:"Currently live on BSC testnet. Mainnet addresses replace these at launch, verified on BscScan.", wp8_h:"The Mark", wp8_1:"At the center stands the human. BeCounted verifies one thing — that a participant is a unique real human — so the human stands in front, and everything else serves them.", wp8_2:"Behind the human, two keys are crossed like a swordsman's blades: the two-key principle. One key answers 'is this a unique human?' — checked on every entry. The other answers 'has this human been counted in this campaign?' — once per campaign, never twice. Together they guard the fairness of every campaign: one human, one entry, no bot farms.", wp8_3:"The disc is a golden seal. To be counted is to be stamped — the same stamp a participant earns each day of the Genesis Expedition. Gold is the color of the ecosystem we build on; the circle means no one missing, no one counted twice.",
@@ -189,7 +191,13 @@ en: {
   d_proof_fallback:"Fallback seed used (original seed block aged out)", d_proof_verify:"Recompute winners",
   d_proof_ok:"Recomputed winners match the on-chain winners exactly.", d_proof_bad:"Mismatch — do not trust this draw.",
   d_proof_how:"Winners are picked by a partial Fisher–Yates shuffle: for each slot i, j = i + keccak256(seed, i) mod (n − i) over the entry list, in entry order. Anyone can redo this math.",
-  d_notdrawn:"Not drawn yet — the draw can be triggered by anyone after the end time.",
+  d_notdrawn:"Not drawn yet — after the end time, anyone can lock the draw seed and then trigger the draw.",
+  d_lock_seed:"Lock the draw seed", d_lock_hint:"Seed = the hash of the 2nd block after locking. Entries are closed, so nobody can predict it — anyone may lock.",
+  d_seed_wait:"Seed locked — waiting for the seed block", d_seed_block:"seed block", d_cur_block:"current block",
+  d_relock_seed:"Seed expired — lock again", d_seed_expired:"The locked seed block aged out (over 256 blocks). Lock a fresh one to draw.",
+  m_err_claim_expired:"The 30-day claim window has closed — this prize can no longer be claimed.",
+  m_err_insufficient:"The prize token arrived short — tokens with a transfer tax (fee-on-transfer) cannot be used as prizes. Use a standard token or BNB.",
+  m_err_seed_notlocked:"No draw seed is locked yet — lock the seed first.", m_err_seed_expired:"The locked seed has expired — lock it again, then draw.", m_err_seed_locked:"A draw seed is already locked and still valid.",
   bind_kick:"Social binding", bind_h:"Bind your X account",
   bind_sub:"A public, verifiable statement — not a trust score. It proves this X account and this wallet are the same person, nothing more. The tweet itself is the record; there is no database and no way to look anyone up by name.",
   bind_handle_ph:"Your X handle (without @)", bind_make:"Sign the binding statement",
@@ -320,12 +328,18 @@ en: {
   f_title:"Title", f_title_ph:"e.g. Community airdrop draw — 20 USDC",
   f_start:"Starts at", f_end:"Ends at", f_winners:"Number of winners",
   f_options:"Number of options (2–16)", f_opt_labels:"Option texts", e_opt_label:"Fill in every option text (1-60 bytes each).",
-  f_seed_hint:"The draw's seed block is fixed automatically at creation — a future block right after the end time, whose hash nobody can know in advance. Results are reproducible by anyone.",
+  f_seed_hint:"No seed is set at creation. After the campaign ends, anyone can lock the draw seed on-chain — the hash of the second block after locking, which nobody can know in advance because entries are already closed. Results are reproducible by anyone.",
   f_prize_hint:"The prize is escrowed in the contract in full when you create the campaign. Winners claim on-chain; anything unclaimed for 30 days can be reclaimed by you.",
   f_submit_raffle:"Create raffle", f_submit_vote:"Create vote",
   f_tab_raffle:"Raffle", f_tab_vote:"Vote",
   f_err_title:"Give the campaign a title.", f_err_time:"End time must be after the start time, and the start cannot be in the past.",
   f_err_winners:"Winners must be at least 1.",
+  flt_empty:"No campaigns match — try different filters", flt_clear:"Clear filters",
+  rec_prompt:"Enter an address to see its participation record",
+  j_connect:"Connect your wallet to see the campaigns you joined.",
+  bind_f_x:"X account", bind_f_addr:"Address", bind_f_sig:"Signature",
+  err_read:"Could not read this campaign's conditions — check your connection and try again.",
+  stat_fail:"unavailable",
   f_ok:"Campaign created — it's live on the Campaigns page now. Share it!",
   f_creating:"Creating on-chain…",
 },
@@ -400,7 +414,7 @@ zh: {
   wp1_h:"论点：地址是运输工具，身份才是人", wp1_p:"女巫攻击不是验证问题，是结构问题：造地址免费，任何按地址收费的防御最终都会输。Agent ID 换了计量单位——一次 KYC、一个 ID、不可转让。BeCounted 把这个事实变成任何合约都能问的一句话：isHuman（地址）。",
   wp2_h:"两键原则", wp2_p:"第一把钥匙——「这是不是唯一的真人」——按地址问、每次都问、由原语回答。第二把钥匙——「这个人这次活动算过没有」——按持有者记、状态存在调用方那里。原语本身什么都不存：没有名单、没有分数、没有历史。这是刻意的——一道什么都不记的门，没有可泄露、可出售、可滥用的东西。",
   wp3_h:"三条边界", wp3_p:"三条拒绝，写进设计：不反查（名字永远解不出钱包）、不判人品（门只证明「同一个人」，从不证明「可信」）、不查小号（不聚类、不贴标签）。每条拒绝都放弃了一门本可做的生意——换来的是我们回答的那个问题始终干净。",
-  wp4_h:"安全模型", wp4_1:"门禁只读：一个 view 函数，无 owner、不可升级、没有暂停开关。没人能改它的答案，包括我们自己。", wp4_2:"奖品在活动创建时就托管进活动合约。中奖者自助领取；30 天无人领的奖金才退回创作者。", wp4_3:"开奖可复算：种子区块在创建时定死，任何人都能用公开数据重算中奖名单——活动页一键就能验。", wp4_4:"诚实的随机：拼手气用的是区块哈希伪随机，合约与页面都明示为娱乐级，只适合小额奖池。", wp4_5:"网站从不要无限授权：代币托管只批准确切金额、只批一次。",
+  wp4_h:"安全模型", wp4_1:"门禁只读：一个 view 函数，无 owner、不可升级、没有暂停开关。没人能改它的答案，包括我们自己。", wp4_2:"奖品在活动创建时就托管进活动合约。中奖者自助领取；30 天无人领的奖金才退回创作者。", wp4_3:"开奖可复算：活动结束后，任何人都能在链上锁定种子——锁定后第 2 个区块的哈希，报名已关闭、无人能提前知道——任何人都能用公开数据重算中奖名单，活动页一键就能验。", wp4_4:"诚实的随机：拼手气用的是区块哈希伪随机，合约与页面都明示为娱乐级，只适合小额奖池。", wp4_5:"网站从不要无限授权：代币托管只批准确切金额、只批一次。",
   wp5_h:"按比赛安全红线建造", wp5_p:"不在第三方站点做 Agentic Wallet 登录（参与由用户自己的 Agent 逐笔确认完成——Agentic Wallet 不连接本站或任何第三方网站）；没有静默或捆绑转账；没有无限授权；合约开源且 owner 权限如实披露——答案是：没有；任何名称不冒充币安或 BNB；永不收集助记词、私钥或配对码。我们自己的 Agent 工具按设计就是只读的。",
   wp6_h:"已知局限", wp6_1:"门的供给并不窄：Agent ID 持有人已超 26.3 万（2026 年 11 月注册表数据），且仍在增长。真正的局限是触达——绝大多数持有人没听说过任何一场具体的门禁活动，每场活动仍要从零开始找人。合约不用改，要变的是被看见的程度。", wp6_2:"唯一性的上限是 KYC，不是数学：一个人有多个实名身份，就可能有多个 ID。我们声称的是「一个身份一份」，不是「一个灵魂一份」。", wp6_3:"若币安重构或更换 Agentic Wallet，ID 如何迁移由币安决定，不由我们。我们的定位更窄、也更诚实：一个已被验证的模式的第一个可用接口——不是「标准」。",
   wp7_h:"合约地址", wp7_p:"当前运行于 BSC 测试网；主网地址将在上线时替换此处，并已在 BscScan 验证。", wp8_h:"标志", wp8_1:"中央是真人。BeCounted 验的始终只有一件事——参加者是不是独一无二的真人；所以人站在最前面，其余一切为他服务。", wp8_2:"人身后交叉着两把钥匙，如侠客背后的双剑，即两键原则。一把回答「是不是唯一的真人」，每次参加都查；一把回答「这个人算没算过」，每场活动只数一次。两把钥匙守的是公平：一人一次，机器人进不来。", wp8_3:"金盘是一枚印。被数上，即为印记——与真人远征中每日盖下的印记同一枚。金色是所建生态的颜色；圆，取一个不多、一个不少之意。",
@@ -424,7 +438,13 @@ zh: {
   d_proof_fallback:"用了备用种子（原种子区块已过期）", d_proof_verify:"复算中奖名单",
   d_proof_ok:"复算结果与链上中奖名单完全一致。", d_proof_bad:"对不上——这次开奖不可信。",
   d_proof_how:"中奖者由部分 Fisher–Yates 洗牌决定：第 i 个名额 j = i + keccak256(种子, i) 对 (n − i) 取模，按报名顺序在名单上换位。任何人都能重算这笔账。",
-  d_notdrawn:"尚未开奖——结束时间过后，任何人都能触发开奖。",
+  d_notdrawn:"尚未开奖——结束时间过后，任何人都能先锁定开奖种子、再触发开奖。",
+  d_lock_seed:"锁定开奖种子", d_lock_hint:"种子 = 锁定后第 2 个区块的哈希。报名已关闭，无人能预测——任何人都可以锁定。",
+  d_seed_wait:"种子已锁定——等待种子块出块", d_seed_block:"种子块", d_cur_block:"当前块",
+  d_relock_seed:"种子已过期，重新锁定", d_seed_expired:"锁定的种子块已超过 256 块有效期，重新锁定一个即可开奖。",
+  m_err_claim_expired:"已超过 30 天领取期，这份奖金不能再领了。",
+  m_err_insufficient:"奖品代币实际到账金额不符——带转账税的代币不能用作奖品，请换标准代币或 BNB。",
+  m_err_seed_notlocked:"开奖种子还没锁定——先锁定种子再开奖。", m_err_seed_expired:"锁定的种子已过期——重新锁定后即可开奖。", m_err_seed_locked:"开奖种子已经锁定且仍在有效期内。",
   bind_kick:"社交绑定", bind_h:"绑定你的 X 账号",
   bind_sub:"一份公开可验的声明——不是信誉分。它只证明这个 X 账号和这个钱包是同一个人，仅此而已。推文本身就是记录；没有数据库，也不能拿名字反查任何人。",
   bind_handle_ph:"你的 X 账号（不带 @）", bind_make:"签名生成绑定声明",
@@ -555,12 +575,18 @@ zh: {
   f_title:"标题", f_title_ph:"例如：社区空投抽奖 — 20 USDC",
   f_start:"开始时间", f_end:"结束时间", f_winners:"中奖人数",
   f_options:"选项数量（2–16）", f_opt_labels:"选项文字", e_opt_label:"请把每个选项的文字都填好（每个 1–60 字节）。",
-  f_seed_hint:"开奖的种子区块会在创建时自动定死——取结束时间之后的一个未来区块，它的哈希无人能提前知道。开奖结果任何人可复算。",
+  f_seed_hint:"创建时不设种子。活动结束后，任何人都能在链上锁定开奖种子——锁定后第 2 个区块的哈希；此时报名已关闭，无人能提前知道。开奖结果任何人可复算。",
   f_prize_hint:"奖品在创建时全额托管进合约，中奖者链上自助领取；30 天未领的部分可由你回收。",
   f_submit_raffle:"创建抽奖", f_submit_vote:"创建投票",
   f_tab_raffle:"抽奖", f_tab_vote:"投票",
   f_err_title:"给活动起个标题。", f_err_time:"结束时间必须晚于开始时间，开始时间不能是过去。",
   f_err_winners:"中奖人数至少为 1。",
+  flt_empty:"没有符合条件的活动，换个筛选试试", flt_clear:"清除筛选",
+  rec_prompt:"输入地址，查看它的参与记录",
+  j_connect:"先连接钱包，才能看到你参加的活动。",
+  bind_f_x:"X 账号", bind_f_addr:"地址", bind_f_sig:"签名",
+  err_read:"读不到本活动的参加条件——检查网络后重试。",
+  stat_fail:"暂不可用",
   f_ok:"活动创建成功——已经出现在活动页了。快分享出去！",
   f_creating:"正在上链创建…",
 }};
@@ -573,7 +599,7 @@ function applyI18n(){
   document.documentElement.lang = LANG === "zh" ? "zh-CN" : "en";
   document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = t(el.dataset.i18n); });
   document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
-  document.querySelectorAll(".lang button").forEach(b => b.classList.toggle("on", b.dataset.lang === LANG));
+  document.querySelectorAll(".lang button").forEach(b => { const on = b.dataset.lang === LANG; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
   if (typeof window.__mqFill === "function") window.__mqFill();
   if (typeof window.onLangChange === "function") window.onLangChange();
 }
@@ -832,10 +858,10 @@ async function decimalsOf(token){
   if (!token || token === ethers.ZeroAddress) return 18;
   const k = String(token).toLowerCase();
   if (__decCache.has(k)) return __decCache.get(k);
-  let d = 18;
-  try{ chain(); d = Number(await new ethers.Contract(token, ERC20_ABI, providerTest).decimals()); }catch(e){}
-  __decCache.set(k, d);
-  return d;
+  // Only a successful read may be cached: caching the 18 fallback after a
+  // transient RPC failure would misformat every amount of a non-18-decimal
+  // token for the rest of the session.
+  try{ chain(); const d = Number(await new ethers.Contract(token, ERC20_ABI, providerTest).decimals()); __decCache.set(k, d); return d; }catch(e){ return 18; }
 }
 function fmtAmt(v, token){ // bigint amount -> short decimal, in the token's own units
   let dec = 18;
@@ -847,16 +873,20 @@ function fmtAmt(v, token){ // bigint amount -> short decimal, in the token's own
 const LABELS = {};
 async function voteLabels(appsRead, i){
   if (LABELS[i]) return LABELS[i];
-  try { LABELS[i] = Array.from(await appsRead.optionLabelsOf(i)); } catch(e){ LABELS[i] = []; }
-  return LABELS[i];
+  // A failed read is NOT cached: caching the empty fallback would degrade
+  // every option label to "Option N" for the rest of the session.
+  try { const ls = Array.from(await appsRead.optionLabelsOf(i)); LABELS[i] = ls; return ls; } catch(e){ return []; }
 }
-function optText(i, o){ const ls = LABELS[i]; return (ls && ls[o]) ? ls[o] : `${t("c_option")} ${o + 1}`; }
+function optText(i, o){ const ls = LABELS[i]; return (ls && ls[o]) ? escHtml(ls[o]) : `${t("c_option")} ${o + 1}`; }
+let __campSeq = 0;
 async function loadCampaigns(){
+  const seq = ++__campSeq; // a newer load supersedes this round; a stale round must not render over it
   const grid = $("campGrid");
   if(!grid && !$("soonGrid") && !$("statCampaigns")) return;
   chain();
   try{
     const n = Number(await appsRead.campaignCount());
+    if (seq !== __campSeq) return;
     let totalEntries = 0;
     let all = [];
     if(n === 0){ if(grid) grid.innerHTML = `<div class="empty">${t("no_camp")}</div>`; }
@@ -867,6 +897,7 @@ async function loadCampaigns(){
       if (grid) await Promise.all(order.map((ci, ix) => Number(fetched[ix].kind) === 1 ? voteLabels(appsRead, ci) : null));
       fetched.forEach((c, pos) => { const i = order[pos]; all.push([i, c]); window.__campTitles[i] = String(c.title); window.__campKinds[i] = Number(c.kind); window.__campTokens = window.__campTokens || {}; window.__campTokens[i] = c.prizeToken; totalEntries += Number(c.entryCount); });
       if (grid){
+        let curBlock = 0; try{ curBlock = await providerTest.getBlockNumber(); }catch(e){}
         const cards = await Promise.all(order.map(async (i, pos) => {
           const c = fetched[pos];
           await decimalsOf(c.prizeToken);
@@ -905,7 +936,7 @@ async function loadCampaigns(){
                 ? `<button class="cta-btn" disabled style="opacity:.5;cursor:default">${t("c_entered")} \u2713</button>`
                 : `<button class="cta-btn" onclick="enterRaffle(${i})">${t("c_enter")}</button>`;
             } else if(ended){
-              primary = `<button class="cta-btn outline" onclick="drawCampaign(${i})">${t("c_draw")}</button>`;
+              primary = drawFlowHtml(i, c, curBlock, "cta-btn outline", "c_draw");
             }
           } else if(Number(c.kind) === 2){
             const claimed = Number(c.entryCount), max = Number(c.maxClaims);
@@ -945,7 +976,7 @@ async function loadCampaigns(){
                 else extra += `<span class="count">${t("c_prize_claimed")}</span>`;
               }
             } else if (ended){
-              primary = `<button class="cta-btn outline" onclick="drawCampaign(${i})">${t("c_draw")}</button>`;
+              primary = drawFlowHtml(i, c, curBlock, "cta-btn outline", "c_draw");
             }
           }
           let postBtn = "";
@@ -969,21 +1000,24 @@ async function loadCampaigns(){
             <div class="cta-zone">
               ${extra}
               ${primary}
-              <span class="camp-msg" id="msg-${i}"></span>
+              <span class="camp-msg" role="status" id="msg-${i}"></span>
               <div class="subrow"><button class="btn sm ghost" onclick="shareCampaign(${i})">${t("share_btn")}</button>${postBtn}<a class="btn sm ghost" href="campaign.html?id=${i}" style="text-decoration:none">${t("d_details")}</a></div>
             </div>
           </div>`;
         }));
+        if (seq !== __campSeq) return;
         grid.innerHTML = cards.join("");
         populateSeriesFilters();
       }
     }
+    if (seq !== __campSeq) return;
     if($("statCampaigns")) $("statCampaigns").textContent = n;
     if($("statEntries")) $("statEntries").textContent = totalEntries;
     renderHot(all);
     renderSoon(all);
     tickCountdowns();
   }catch(e){
+    if (seq !== __campSeq) return;
     if(grid) grid.innerHTML = `<div class="empty">${t("load_fail")}</div>`;
   }
 }
@@ -995,8 +1029,8 @@ function renderHot(all){
   const topCreators = Object.entries(creators).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const kindName = k => k === 0 ? t("c_raffle") : k === 2 ? t("c_claim") : t("c_vote");
   box.innerHTML = `<div class="hot-grid">
-    <div class="hot-col"><h4>${t("hot_camps")}</h4>${byEntries.map(([i,c],r)=>`<div class="hot-row"><span class="rank">${r+1}</span><span class="hot-title">${String(c.title).replace(/</g,"&lt;")}</span><span class="hot-n">${c.entryCount} ${t("hot_entries")}</span></div>`).join("") || `<div class="hot-row">${t("no_camp")}</div>`}</div>
-    <div class="hot-col"><h4>${t("hot_creators")}</h4>${topCreators.map(([addr,n],r)=>`<div class="hot-row"><span class="rank">${r+1}</span><span class="hot-title"><a href="creator.html?a=${addr}" style="color:inherit">${short(addr)}</a></span><span class="hot-n">${n} ${t("hot_entries")}</span></div>`).join("")}</div>
+    <div class="hot-col"><h3>${t("hot_camps")}</h3>${byEntries.map(([i,c],r)=>`<div class="hot-row"><span class="rank">${r+1}</span><span class="hot-title">${String(c.title).replace(/</g,"&lt;")}</span><span class="hot-n">${c.entryCount} ${t("hot_entries")}</span></div>`).join("") || `<div class="hot-row">${t("no_camp")}</div>`}</div>
+    <div class="hot-col"><h3>${t("hot_creators")}</h3>${topCreators.map(([addr,n],r)=>`<div class="hot-row"><span class="rank">${r+1}</span><span class="hot-title"><a href="creator.html?a=${addr}" style="color:inherit">${short(addr)}</a></span><span class="hot-n">${n} ${t("hot_entries")}</span></div>`).join("") || `<div class="hot-row">${t("no_camp")}</div>`}</div>
   </div>`;
 }
 function renderSoon(all){
@@ -1060,8 +1094,24 @@ function parseNameList(text){
   for (const x of raw){ const s = normName(x); if (!validName(s)) return null; if (!seen.has(s)){ seen.add(s); out.push(s); } }
   return out;
 }
-function storedIdList(id){ try{ const j = JSON.parse(localStorage.getItem("hg_idlist_" + id) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
-function storeIdList(id, list){ try{ localStorage.setItem("hg_idlist_" + id, JSON.stringify(list)); }catch(e){} }
+/* List storage keys are namespaced by the apps contract address: after
+   the mainnet flip the contract changes and campaign ids restart at 0,
+   so a bare per-id key would feed a testnet list into a mainnet campaign
+   with the same id. (The on-chain root check would still reject a wrong
+   list — this keeps the prefill honest instead of merely safe.) */
+const LIST_NS = String(APPS_TESTNET).toLowerCase();
+function listKey(id){ return "hg_list_" + LIST_NS + "_" + id; }
+function idListKey(id){ return "hg_idlist_" + LIST_NS + "_" + id; }
+// One-time purge of the pre-namespace bare keys (hg_list_<id> / hg_idlist_<id>).
+(function purgeLegacyListKeys(){
+  try{
+    const dead = [];
+    for (let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if (k && /^hg_(id)?list_\d+$/.test(k)) dead.push(k); }
+    dead.forEach(k => localStorage.removeItem(k));
+  }catch(e){}
+})();
+function storedIdList(id){ try{ const j = JSON.parse(localStorage.getItem(idListKey(id)) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
+function storeIdList(id, list){ try{ localStorage.setItem(idListKey(id), JSON.stringify(list)); }catch(e){} }
 function dlIdListJson(list, id){
   try{
     const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
@@ -1089,8 +1139,8 @@ function parseAddrList(text){
   for (const a of raw){ if (!ethers.isAddress(a)) return null; const k = a.toLowerCase(); if (!seen.has(k)){ seen.add(k); out.push(ethers.getAddress(a)); } }
   return out;
 }
-function storedList(id){ try{ const j = JSON.parse(localStorage.getItem("hg_list_" + id) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
-function storeList(id, list){ try{ localStorage.setItem("hg_list_" + id, JSON.stringify(list)); }catch(e){} }
+function storedList(id){ try{ const j = JSON.parse(localStorage.getItem(listKey(id)) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
+function storeList(id, list){ try{ localStorage.setItem(listKey(id), JSON.stringify(list)); }catch(e){} }
 function dlListJson(list, id){
   try{
     const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
@@ -1115,10 +1165,15 @@ async function proofsFor(id, who){
   // { p4, p5 }: each is [] (condition off), a proof array, or null
   // (condition on but unprovable from here: list missing / not on the
   // list / no handle). Callers map null to m_cond_4 / m_cond_5.
-  const out = { p4: [], p5: [] };
+  // readErr separates "the conditions read itself failed" (RPC trouble —
+  // callers surface err_read) from "a condition is not met": blaming a
+  // list condition for a network failure sends the user fixing the
+  // wrong thing.
+  const out = { p4: [], p5: [], readErr: false };
+  let cd;
+  try{ chain(); cd = await appsRead.conditionsOf(id); }
+  catch(e){ out.readErr = true; out.p4 = null; out.p5 = null; return out; }
   try{
-    chain();
-    const cd = await appsRead.conditionsOf(id);
     if (cd.allowRoot && cd.allowRoot !== ethers.ZeroHash){
       const list = storedList(id);
       // The local list must reproduce the on-chain root; a stale or wrong
@@ -1133,7 +1188,7 @@ async function proofsFor(id, who){
         out.p5 = h ? idProofOf(list, h) : null;
       }
     }
-  }catch(e){ /* read failure: fail closed — callers surface m_cond_4/5 instead of sending an empty proof on-chain */ out.p4 = null; out.p5 = null; }
+  }catch(e){ /* proof construction failed: fail closed — callers surface m_cond_4/5 instead of sending an empty proof on-chain */ out.p4 = null; out.p5 = null; }
   return out;
 }
 function addrListPanelHtml(id, cd){
@@ -1146,7 +1201,7 @@ function addrListPanelHtml(id, cd){
     if (myAddr) mine = mkProof(list, myAddr) ? t("lst_in") : t("lst_out");
     status = `<div class="count" style="margin-top:6px">${rootOk ? t("lst_root_ok") : t("lst_root_bad")}${mine}</div>`;
   }
-  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("lst_h")}</h2><p>${t("lst_hint")}</p></div><textarea id="lstText-${id}" rows="3" placeholder="${t("lst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveList(${id})">${t("lst_save")}</button> <span class="camp-msg" id="lstMsg-${id}"></span></div>${status}</div>`;
+  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("lst_h")}</h2><p>${t("lst_hint")}</p></div><textarea id="lstText-${id}" rows="3" placeholder="${t("lst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveList(${id})">${t("lst_save")}</button> <span class="camp-msg" role="status" id="lstMsg-${id}"></span></div>${status}</div>`;
 }
 function listPanelHtml(id, cd){ return addrListPanelHtml(id, cd) + idListPanelHtml(id, cd); }
 function idListPanelHtml(id, cd){
@@ -1157,7 +1212,7 @@ function idListPanelHtml(id, cd){
     const rootOk = idRootOf(list).toLowerCase() === String(cd.idListRoot).toLowerCase();
     status = `<div class="count" style="margin-top:6px">${rootOk ? t("lst_root_ok") : t("lst_root_bad")}<span id="idlstMine-${id}"></span></div>`;
   }
-  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("idlst_h")}</h2><p>${t("idlst_hint")}</p></div><textarea id="idlstText-${id}" rows="3" placeholder="${t("idlst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveIdList(${id})">${t("lst_save")}</button> <span class="camp-msg" id="idlstMsg-${id}"></span></div>${status}</div>`;
+  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("idlst_h")}</h2><p>${t("idlst_hint")}</p></div><textarea id="idlstText-${id}" rows="3" placeholder="${t("idlst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveIdList(${id})">${t("lst_save")}</button> <span class="camp-msg" role="status" id="idlstMsg-${id}"></span></div>${status}</div>`;
 }
 window.saveIdList = id => {
   const list = parseNameList($("idlstText-" + id)?.value || "");
@@ -1242,15 +1297,60 @@ async function withSigner(fn, id, gated){
     loadCampaigns();
     if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
   }
-  catch(e){ if(msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0,110); }
+  catch(e){ if(msg) msg.textContent = mappedErr(e) || (e.shortMessage || e.message || "Failed").slice(0,110); }
   finally{ btns.forEach(b => b.disabled = false); }
 }
-window.enterRaffle = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.enterRaffle(id, pf.p4, pf.p5)); }, id, true);
-window.voteCampaign = (id,o) => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.castVote(id, o, pf.p4, pf.p5)); }, id, true);
+window.enterRaffle = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.enterRaffle(id, pf.p4, pf.p5)); }, id, true);
+window.voteCampaign = (id,o) => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.castVote(id, o, pf.p4, pf.p5)); }, id, true);
+/* V11 custom errors → human text. Without a mapping these surface as
+   opaque revert data; match the decoded e.revert name (the APPS_ABI
+   error fragments let ethers decode it) or the 4-byte selector in the
+   revert data, whichever the wallet/RPC hands back. */
+const ERR_TEXT = [
+  ["ClaimExpired()", "m_err_claim_expired"],
+  ["InsufficientReceived()", "m_err_insufficient"],
+  ["SeedNotLocked()", "m_err_seed_notlocked"],
+  ["SeedExpired()", "m_err_seed_expired"],
+  ["SeedLocked()", "m_err_seed_locked"]
+];
+function mappedErr(e){
+  try{
+    if (e && e.revert && e.revert.name){
+      const hit = ERR_TEXT.find(([s]) => s.indexOf(e.revert.name + "(") === 0);
+      if (hit) return t(hit[1]);
+    }
+    const datas = [e && e.data, e && e.error && e.error.data, e && e.info && e.info.error && e.info.error.data];
+    for (const d of datas){
+      if (typeof d === "string" && d.length >= 10){
+        const sel = d.slice(0, 10).toLowerCase();
+        const hit = ERR_TEXT.find(([s]) => ethers.id(s).slice(0, 10).toLowerCase() === sel);
+        if (hit) return t(hit[1]);
+      }
+    }
+  }catch(_){ }
+  return null;
+}
+/* V11 two-step draw: once a campaign has ended, anyone locks the seed
+   (seedBlock = lock block + 2, entries already closed so its hash is
+   unknowable at lock time); the draw itself only runs while that
+   block's hash sits inside the 256-block blockhash window. An aged-out
+   lock is re-locked — V11 has no fallback seed. curBlock = 0 means the
+   block number could not be read: fall back to the plain draw button
+   (its revert is mapped to human text by mappedErr). */
+function drawFlowHtml(id, c, curBlock, btnCls, drawKey){
+  const cls = btnCls || "btn";
+  const sb = Number(c.seedBlock);
+  if (sb === 0) return `<button class="${cls}" onclick="lockDrawCampaign(${id})">${t("d_lock_seed")}</button> <span class="count">${t("d_lock_hint")}</span>`;
+  if (!curBlock) return `<button class="${cls}" onclick="drawCampaign(${id})">${t(drawKey || "m_draw")}</button>`;
+  if (curBlock <= sb) return `<span class="count">${t("d_seed_wait")} · ${t("d_seed_block")} #${sb} · ${t("d_cur_block")} #${curBlock}</span>`;
+  if (curBlock > sb + 256) return `<button class="${cls}" onclick="lockDrawCampaign(${id})">${t("d_relock_seed")}</button> <span class="count">${t("d_seed_expired")}</span>`;
+  return `<button class="${cls}" onclick="drawCampaign(${id})">${t(drawKey || "m_draw")}</button>`;
+}
 window.drawCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.draw(id)); }, id);
+window.lockDrawCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.lockDraw(id)); }, id);
 window.setPostUrlMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("posturl-" + id)?.value || "").trim(); await sendAndWait(msg, a.setPostUrl(id, v)); loadMine(); }, id);
 window.setSeriesMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("series-" + id)?.value || "").trim(); await sendAndWait(msg, a.setSeries(id, v)); loadMine(); }, id);
-window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.claim(id, pf.p4, pf.p5)); }, id, true);
+window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.claim(id, pf.p4, pf.p5)); }, id, true);
 window.claimPrize = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claimPrize(id)); }, id);
 window.reclaimCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.reclaim(id)); }, id);
 window.onLangChange = () => { renderConnectBtn(); labelPresetOptions(); if (typeof window.__refillSampleMask === "function") window.__refillSampleMask(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); if ($("questBox")) loadQuest(); if ($("detailBox")) loadDetail(); if ($("creatorBox")) loadCreator(); };
@@ -1264,8 +1364,10 @@ function labelPresetOptions(){
 }
 
 /* ---------- live gate feed ---------- */
+let __feedLoading = false;
 async function loadFeed(){
-  const ul = $("feedList"); if(!ul) return;
+  const ul = $("feedList"); if(!ul || __feedLoading) return;
+  __feedLoading = true;
   chain();
   try{
     const latest = await providerTest.getBlockNumber();
@@ -1286,6 +1388,7 @@ async function loadFeed(){
     }
     ul.innerHTML = items.length ? items.join("") : `<li>${t("feed_empty")}</li>`;
   }catch(e){ ul.innerHTML = `<li>${t("feed_fail")}</li>`; }
+  finally{ __feedLoading = false; }
 }
 
 /* ---------- create campaign ---------- */
@@ -1307,7 +1410,7 @@ function collectOptLabels(){ return Array.from(document.querySelectorAll("#fOptL
 function switchCreateTab(k){
   createKind = k;
   const _tsel0 = $("fTokenSel"); if (_tsel0 && k !== 0 && _tsel0.value === "custom") _tsel0.value = "none";
-  document.querySelectorAll(".form > .tabs > button").forEach((b,i)=>b.classList.toggle("on", i===k));
+  document.querySelectorAll(".form > .tabs > button").forEach((b,i)=>{ const on = i===k; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
   $("fWinnersRow").style.display = k===0 ? "" : "none";
   $("fOptionsRow").style.display = k===1 ? "" : "none";
   $("fOptLabelsRow").style.display = k===1 ? "" : "none";
@@ -1387,6 +1490,7 @@ function validateCreate(){
   }
   const box = $("fErrors");
   if (box){ box.style.display = errs.length ? "" : "none"; box.innerHTML = errs.map(e => `<div>\u00b7 ${e}</div>`).join(""); }
+  if (box && errs.length){ box.setAttribute("tabindex", "-1"); box.focus(); }
   return errs.length === 0;
 }
 function renderPreview(){
@@ -1475,6 +1579,7 @@ async function submitCreate(){
   if (!cond) return;
   try{
     const apps = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer);
+    let createRcpt = null;
     if(createKind === 0){
       const winners = parseInt($("fWinners").value, 10);
       if(!winners || winners < 1){ msg.textContent = t("f_err_winners"); return; }
@@ -1490,13 +1595,9 @@ async function submitCreate(){
       await fundApprove(token, total, msg);
       msg.textContent = t("f_creating");
       chain();
-      const latest = await providerTest.getBlock("latest");
-      const older = await providerTest.getBlock(latest.number - 200);
-      const secPerBlock = Math.max(0.3, (latest.timestamp - older.timestamp) / 200);
-      const seedBlock = latest.number + Math.ceil((endAt - latest.timestamp) / secPerBlock) + 40;
       const value = (token === ethers.ZeroAddress) ? total : 0n;
       const prizeLabel = ($("fTokenSel").value === "custom") ? ($("fPrizeLabel").value || "").trim() : "";
-      await (await apps.createRaffle(title, startAt, endAt, winners, seedBlock, token, per, cond, prizeLabel, { value })).wait();
+      createRcpt = await (await apps.createRaffle(title, startAt, endAt, winners, token, per, cond, prizeLabel, { value })).wait();
     } else if(createKind === 1){
       const options = parseInt($("fOptions").value, 10);
       if ($("fVPrizeOn")?.checked){
@@ -1509,15 +1610,11 @@ async function submitCreate(){
         await fundApprove(token, total, msg);
         msg.textContent = t("f_creating");
         chain();
-        const latest = await providerTest.getBlock("latest");
-        const older = await providerTest.getBlock(latest.number - 200);
-        const secPerBlock = Math.max(0.3, (latest.timestamp - older.timestamp) / 200);
-        const seedBlock = latest.number + Math.ceil((endAt - latest.timestamp) / secPerBlock) + 40;
         const value = (token === ethers.ZeroAddress) ? total : 0n;
-        await (await apps.createVote(title, startAt, endAt, options, token, total, winners, seedBlock, cond, collectOptLabels(), { value })).wait();
+        createRcpt = await (await apps.createVote(title, startAt, endAt, options, token, total, winners, cond, collectOptLabels(), { value })).wait();
       } else {
         msg.textContent = t("f_creating");
-        await (await apps.createVote(title, startAt, endAt, options, ethers.ZeroAddress, 0n, 0, 0, cond, collectOptLabels())).wait();
+        createRcpt = await (await apps.createVote(title, startAt, endAt, options, ethers.ZeroAddress, 0n, 0, cond, collectOptLabels())).wait();
       }
     } else {
       let token = prizeTokenAddr();
@@ -1530,43 +1627,54 @@ async function submitCreate(){
       msg.textContent = t("f_creating");
       const value = (token === ethers.ZeroAddress) ? pool : 0n;
       const random = $("fModeRandom") && $("fModeRandom").classList.contains("on");
-      await (await apps.createClaim(title, startAt, endAt, maxClaims, token, pool, random, cond, { value })).wait();
+      createRcpt = await (await apps.createClaim(title, startAt, endAt, maxClaims, token, pool, random, cond, { value })).wait();
     }
+    // The new campaign's real id comes from the create receipt's
+    // CampaignCreated log — guessing campaignCount()-1 breaks the moment
+    // someone else creates in between (the follow-up writes would land
+    // on a stranger's campaign or silently fail). The count is only a
+    // last-resort fallback if the log cannot be parsed.
+    let newId = null;
+    try{
+      const ciface = new ethers.Interface(APPS_ABI);
+      for (const lg of (createRcpt && createRcpt.logs) || []){
+        try{ const p = ciface.parseLog(lg); if (p && p.name === "CampaignCreated"){ newId = Number(p.args[0]); break; } }catch(e){}
+      }
+    }catch(e){}
+    if (newId === null){ try{ newId = Number(await appsRead.campaignCount()) - 1; }catch(e){} }
     // Optional: attach the creator's X post link right away (can also be
     // added or changed later from My Campaigns). A failed second tx must
     // not fail the creation itself.
     const postUrlInput = ($("fPostUrl")?.value || "").trim();
-    if (postUrlInput){
+    if (postUrlInput && newId !== null){
       try{
-        const nid = Number(await appsRead.campaignCount()) - 1;
-        await (await apps.setPostUrl(nid, postUrlInput)).wait();
+        await (await apps.setPostUrl(newId, postUrlInput)).wait();
       }catch(e){ /* link can be set later in My Campaigns */ }
     }
     const seriesInput = ($("fSeries")?.value || "").trim();
-    if (seriesInput){
+    if (seriesInput && newId !== null){
       try{
-        const nid = Number(await appsRead.campaignCount()) - 1;
-        await (await apps.setSeries(nid, seriesInput)).wait();
+        await (await apps.setSeries(newId, seriesInput)).wait();
       }catch(e){ /* series can be set later in My Campaigns */ }
     }
     if (window.__newList){
       try{
-        const nid = Number(await appsRead.campaignCount()) - 1;
-        storeList(nid, window.__newList);
-        dlListJson(window.__newList, nid);
+        if (newId === null) throw new Error("new campaign id unknown");
+        storeList(newId, window.__newList);
+        dlListJson(window.__newList, newId);
       }catch(e){ /* list stays in the create form */ }
       window.__newList = null;
     }
     if (window.__newIdList){
       try{
-        const nid = Number(await appsRead.campaignCount()) - 1;
-        storeIdList(nid, window.__newIdList);
-        dlIdListJson(window.__newIdList, nid);
+        if (newId === null) throw new Error("new campaign id unknown");
+        storeIdList(newId, window.__newIdList);
+        dlIdListJson(window.__newIdList, newId);
       }catch(e){ /* list stays in the create form */ }
       window.__newIdList = null;
     }
     msg.textContent = t("f_ok");
-  }catch(e){ msg.textContent = (e.shortMessage || e.message || "Failed").slice(0,130); }
+  }catch(e){ msg.textContent = mappedErr(e) || (e.shortMessage || e.message || "Failed").slice(0,130); }
 }
 
 
@@ -1612,7 +1720,7 @@ async function getLogsChunked(base, from, to){
 const __serLog = l => ({ a: l.address, b: l.blockNumber, h: l.transactionHash, i: l.index, t: l.topics, d: l.data });
 const __deLog = o => ({ address: o.a, blockNumber: o.b, transactionHash: o.h, index: o.i, topics: o.t, data: o.d });
 async function getLogsCached(base, from, to){
-  const key = "hg_logs_" + String(base.address || "").toLowerCase() + "_" + (base.topics ? base.topics.map(x => x == null ? "_" : String(x)).join(",") : "all");
+  const key = "hg_logs_" + String(base.address || "").toLowerCase() + "_" + (base.topics ? base.topics.map(x => x == null ? "_" : String(x).toLowerCase()).join(",") : "all");
   let hit = null;
   try{
     const j = JSON.parse(localStorage.getItem(key) || "null");
@@ -1624,7 +1732,9 @@ async function getLogsCached(base, from, to){
     return logs;
   }
   if (to <= hit.toBlock) return hit.logs.filter(o => o.b <= to).map(__deLog);
-  const fresh = await getLogsChunked(base, hit.toBlock + 1, to);
+  let fresh;
+  try{ fresh = await getLogsChunked(base, hit.toBlock + 1, to); }
+  catch(e){ return hit.logs.map(__deLog); } // delta fetch failed: serve the cached segment instead of failing the whole read
   try{ localStorage.setItem(key, JSON.stringify({ fromBlock: from, toBlock: to, logs: hit.logs.concat(fresh.map(__serLog)) })); }catch(e){}
   return hit.logs.map(__deLog).concat(fresh);
 }
@@ -1635,7 +1745,7 @@ async function getLogsCached(base, from, to){
 let liveOnly = false;
 window.toggleLiveOnly = () => {
   liveOnly = !liveOnly;
-  const b = $("fltLive"); if (b) b.classList.toggle("on", liveOnly);
+  const b = $("fltLive"); if (b){ b.classList.toggle("on", liveOnly); b.setAttribute("aria-pressed", liveOnly ? "true" : "false"); }
   applyFilters();
 };
 function saveFilters(){
@@ -1651,7 +1761,7 @@ function restoreFilters(){
     if ($("fltStatus")) $("fltStatus").value = f.s || "all";
     if ($("fltSeries") && f.sr && f.sr !== "all") $("fltSeries").dataset.want = f.sr;
     liveOnly = !!f.live;
-    const b = $("fltLive"); if (b) b.classList.toggle("on", liveOnly);
+    const b = $("fltLive"); if (b){ b.classList.toggle("on", liveOnly); b.setAttribute("aria-pressed", liveOnly ? "true" : "false"); }
   }catch(e){}
 }
 window.applyFilters = () => {
@@ -1659,13 +1769,18 @@ window.applyFilters = () => {
   const k = $("fltKind")?.value || "all";
   const s = liveOnly ? "live" : ($("fltStatus")?.value || "all");
   const sr = $("fltSeries")?.value || "all";
+  let total = 0, visible = 0;
   document.querySelectorAll("#campGrid .camp").forEach(el => {
+    total++;
     const ok = (!q || (el.dataset.title || "").includes(q))
       && (k === "all" || el.dataset.kind === k)
       && (s === "all" || el.dataset.status === s)
       && (sr === "all" || (el.dataset.series || "") === sr);
     el.style.display = ok ? "" : "none";
+    if (ok) visible++;
   });
+  const fe = $("fltEmpty");
+  if (fe) fe.style.display = (total > 0 && visible === 0) ? "" : "none";
   saveFilters();
 };
 
@@ -1677,7 +1792,17 @@ function populateSeriesFilters(){
     if (v && !seen.has(v)) seen.set(v, el.dataset.slabel || v);
   });
   const cur = sel.dataset.want || sel.value;
-  sel.innerHTML = `<option value="all">${t("series_all")}</option>` + [...seen.entries()].map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+  // Options are built as DOM nodes: series labels are creator-supplied
+  // on-chain strings, so they must never be parsed as HTML.
+  sel.innerHTML = "";
+  const allOpt = document.createElement("option");
+  allOpt.value = "all"; allOpt.textContent = t("series_all");
+  sel.appendChild(allOpt);
+  for (const [v, l] of seen){
+    const o = document.createElement("option");
+    o.value = v; o.textContent = l;
+    sel.appendChild(o);
+  }
   if ([...seen.keys()].includes(cur)) sel.value = cur;
   delete sel.dataset.want;
 }
@@ -1819,6 +1944,8 @@ async function loadDetail(){
     const nowS = Math.floor(Date.now() / 1000);
     const live = nowS >= Number(c.startAt) && nowS <= Number(c.endAt);
     const ended = nowS > Number(c.endAt);
+    let curBlock = 0;
+    if (ended && !c.drawn && (kind === 0 || (kind === 1 && c.pool > 0n))){ try{ curBlock = await providerTest.getBlockNumber(); }catch(e){} }
     const entries = await appsRead.getEntries(id);
     const myState = { entered: false, voted: false, option: 0, claimed: false, winner: false, prizeClaimed: false };
     if (myAddr){
@@ -1845,7 +1972,7 @@ async function loadDetail(){
     let foot = "";
     if (kind === 0){
       if (live) foot = myState.entered ? `<button class="btn" disabled style="opacity:.5;cursor:default">${t("j_entered")} \u2713</button>` : `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`;
-      else if (ended && !c.drawn) foot = `<button class="btn" onclick="drawCampaign(${id})">${t("m_draw")}</button>`;
+      else if (ended && !c.drawn) foot = drawFlowHtml(id, c, curBlock, "btn", "m_draw");
       else if (c.drawn) foot = `<span class="count">${t("m_drawn")}</span>`;
       if (c.drawn && c.prizePerWinner > 0n){
         if (!myAddr || (myState.winner && !myState.prizeClaimed)) foot += ` <button class="btn ghost" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`;
@@ -1861,7 +1988,7 @@ async function loadDetail(){
       const tallyStatic = counts.map((n, oi) => `<span class="opt">${optText(id, oi)} · <b>${n}</b></span>`).join("");
       foot = (live && !myState.voted) ? `<div class="tally">${tallyBtns}</div>` : `<div class="tally">${tallyStatic}</div>` + (myState.voted ? `<div class="count" style="margin-top:8px">${t("j_voted")} \u00b7 ${optText(id, myState.option)} \u2713</div>` : "");
       if (c.pool > 0n){
-        if (ended && !c.drawn) foot += ` <button class="btn" onclick="drawCampaign(${id})">${t("m_draw")}</button>`;
+        if (ended && !c.drawn) foot += " " + drawFlowHtml(id, c, curBlock, "btn", "m_draw");
         else if (c.drawn && myState.winner && !myState.prizeClaimed) foot += ` <button class="btn ghost" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`;
         else if (c.drawn && myState.prizeClaimed) foot += ` <span class="count">${t("j_won_claimed")}</span>`;
       }
@@ -1879,7 +2006,7 @@ async function loadDetail(){
           <div class="row"><span>${t("d_proof_seedblock")}</span><b>${c.seedBlock}</b></div>
           <div class="row"><span>${t("d_proof_fallback")}</span><b>${c.usedFallbackSeed ? "✓" : "—"}</b></div>
         </div>
-        <div style="margin-top:14px"><button class="btn sm" onclick="verifyDraw(${id})">${t("d_proof_verify")}</button> <span class="camp-msg" id="proofMsg"></span></div>
+        <div style="margin-top:14px"><button class="btn sm" onclick="verifyDraw(${id})">${t("d_proof_verify")}</button> <span class="camp-msg" role="status" id="proofMsg"></span></div>
         <div class="rows" style="margin-top:14px"><div class="row"><span>${t("d_winners")}</span><b>${winners.length}</b></div></div>
         <div style="margin-top:8px">${winners.map(w => `<div class="feed-item"><span class="addr">${w}</span></div>`).join("")}</div></div>`;
       }
@@ -1894,7 +2021,7 @@ async function loadDetail(){
       <div class="kicker">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")} · #${id}</div>
       <h1 style="font-size:clamp(26px,4.4vw,40px);margin:10px 0 6px">${String(c.title).replace(/</g,"&lt;")}</h1>
       <p style="color:var(--muted)">${t("creator_by")} ${creatorHtmlD} · ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}${live || !ended ? ` · <span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span>` : ""}</p>
-      <div style="margin:16px 0">${foot} <span class="camp-msg" id="msg-${id}"></span></div>
+      <div style="margin:16px 0">${foot} <span class="camp-msg" role="status" id="msg-${id}"></span></div>
       ${postBtn ? `<div style="margin-bottom:6px">${postBtn}</div>` : ""}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert(${id})">${t("cert_btn")}</button>` : ""}</div>
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
@@ -1908,7 +2035,7 @@ async function loadDetail(){
     if (sb){
       let sAct = "", sInfo = "";
       if (kind === 0 && live && !myState.entered){ sAct = `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`; sInfo = c.prizePerWinner > 0n ? `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : (c.prizeLabel ? String(c.prizeLabel).replace(/</g, "&lt;") : String(c.title).replace(/</g, "&lt;")); }
-      else if (kind === 0 && ended && !c.drawn){ sAct = `<button class="btn" onclick="drawCampaign(${id})">${t("m_draw")}</button>`; sInfo = String(c.title).replace(/</g, "&lt;"); }
+      else if (kind === 0 && ended && !c.drawn){ sAct = drawFlowHtml(id, c, curBlock, "btn", "m_draw"); sInfo = String(c.title).replace(/</g, "&lt;"); }
       else if (kind === 0 && c.drawn && c.prizePerWinner > 0n && (!myAddr || (myState.winner && !myState.prizeClaimed))){ sAct = `<button class="btn" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
       else if (kind === 1 && c.pool > 0n && c.drawn && myState.winner && !myState.prizeClaimed){ sAct = `<button class="btn" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
       else if (kind === 2 && live && Number(c.entryCount) < Number(c.maxClaims) && !myState.claimed){ sAct = `<button class="btn" onclick="claimShare(${id})">${t("c_claim_btn")}</button>`; sInfo = `${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
@@ -2010,7 +2137,7 @@ const __bindCache = {};
 async function creatorBinding(addr){
   const k = String(addr).toLowerCase();
   if(!(k in __bindCache)){
-    __bindCache[k] = (async () => {
+    const p = (async () => {
       try{
         if(!bindingsRead) chain();
         const b = await bindingsRead.bindingOf(addr);
@@ -2020,15 +2147,22 @@ async function creatorBinding(addr){
         return { h: b[0], pt };
       }catch(e){ return null; }
     })();
+    __bindCache[k] = p;
+    // A null result (RPC failure, or simply not bound yet) must not poison
+    // the cache for the whole session: drop it so the next read retries.
+    p.then(v => { if (v === null && __bindCache[k] === p) delete __bindCache[k]; }, () => { if (__bindCache[k] === p) delete __bindCache[k]; });
   }
   return __bindCache[k];
 }
+/* A binding handle is an arbitrary on-chain string: render it raw only
+   when it is plain handle-shaped, otherwise HTML-escape it. Shared by
+   every surface that prints a handle (creator labels, identity card). */
+function shownHandle(h){ h = String(h); return /^[a-z0-9_.]+$/.test(h) ? h : escHtml(h); }
 async function creatorLabel(addr){
   const cb = await creatorBinding(addr);
   if(!cb) return `<a href="creator.html?a=${addr}" style="color:inherit;text-decoration:none">${short(addr)}</a>`;
   const mark = cb.pt === 1 ? ` \u00b7 ${t("bind_attested_tag")}` : " \u2713";
-  const h = String(cb.h);
-  const shown = /^[a-z0-9_.]+$/.test(h) ? h : escHtml(h);
+  const shown = shownHandle(cb.h);
   return `<a href="creator.html?a=${addr}" style="color:var(--gold);text-decoration:none">@${shown}${mark}</a>`;
 }
 let lastBind = null;
@@ -2050,7 +2184,8 @@ Sig: ${sig}
       <div class="row"><span>${t("bind_stmt")}</span><b style="white-space:pre-wrap;text-align:right">${stmt.split("\n").join("<br>")}</b></div>
       <div class="row"><span>${t("bind_sig")}</span><b style="word-break:break-all;text-align:right;max-width:60%">${sig}</b></div></div>
       <p style="margin-top:14px;color:var(--muted)">${t("bind_tweet")}</p>
-      <button class="btn sm" onclick="window.open('${tweetUrl}', '_blank')">${t("bind_post")}</button>`;
+      <button class="btn sm" id="bindPostBtn">${t("bind_post")}</button>`;
+    const bpb = $("bindPostBtn"); if (bpb) bpb.addEventListener("click", () => window.open(tweetUrl, "_blank"));
   }catch(e){ if(out) out.innerHTML = `<span style="color:#ff7a7a">${t("tx_fail")}</span>`; }
 };
 window.makeAttestation = async () => {
@@ -2066,7 +2201,8 @@ window.makeAttestation = async () => {
       <div class="row"><span>Address</span><b style="word-break:break-all;text-align:right;max-width:60%">${address}</b></div>
       <div class="row"><span>Code</span><b>${code}</b></div></div>
       <p style="margin-top:14px;color:var(--muted)">${t("bind_attest_note")}</p>
-      <button class="btn sm" onclick="window.open('${tweetUrl}', '_blank')">${t("bind_attest_post")}</button>`;
+      <button class="btn sm" id="attestPostBtn">${t("bind_attest_post")}</button>`;
+    const apb = $("attestPostBtn"); if (apb) apb.addEventListener("click", () => window.open(tweetUrl, "_blank"));
   }catch(e){ if(out) out.innerHTML = `<span style="color:#ff7a7a">${t("tx_fail")}</span>`; }
 };
 window.attestStatus = async () => {
@@ -2095,7 +2231,7 @@ window.verifyBinding = async () => {
       const b = await bindingsRead.bindingOf(address);
       if (b[0] === handle && await bindingsRead.isBindingValid(address)) onchain = `<br><span style="color:var(--gold)">✓ ${t("bind_onchain")}</span>`;
     }catch(e){}
-    out.innerHTML = `<span style="color:var(--gold)">✓ ${t("bind_ok").replace("{h}", handle)}</span><br>` +
+    out.innerHTML = `<span style="color:var(--gold)">✓ ${t("bind_ok").replace("{h}", escHtml(handle))}</span><br>` +
       (bal > 0n ? `<span style="color:var(--gold)">✓ ${t("bind_ok_human")}</span>` : `<span style="color:var(--muted)">${t("bind_not_human")}</span>`) + onchain;
   }catch(e){ if(out) out.innerHTML = `<span style="color:#ff7a7a">✗ ${t("bind_bad")}</span>`; }
 };
@@ -2127,7 +2263,15 @@ async function loadPlatformStats(){
     for (const r of per){ for (const a of r.entries) humans.add(a); payouts += r.pay; }
     $("statHumans").textContent = humans.size;
     if($("statPayouts")) $("statPayouts").textContent = payouts;
-  }catch(e){ /* keep last rendered values */ }
+  }catch(e){
+    // Never fail silently: a placeholder dash that never resolves reads
+    // as "zero". Mark every stat cell still showing its placeholder as
+    // unavailable instead (cells already holding real numbers keep them).
+    for (const cid of ["statCampaigns", "statEntries", "statHumans", "statPayouts"]){
+      const el = $(cid);
+      if (el && (el.textContent.trim() === "–" || el.textContent.trim() === "")) el.textContent = t("stat_fail");
+    }
+  }
   _statsLoading = false;
 }
 
@@ -2243,6 +2387,8 @@ function drawShareCard(){
   ctx.font = "500 18px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#6d6d75";
   drawQrTo(ctx, cardUrl(a), W - 190, H - 170, 118);
   ctx.fillText("Agent ID · BNB Chain · " + new Date().toISOString().slice(0, 10), 56, H - 52);
+  cv.setAttribute("role", "img");
+  cv.setAttribute("aria-label", "BeCounted · " + t("img_verified") + " · " + a + " · " + stats);
   $("shareDl").href = cv.toDataURL("image/png");
   $("shareCardBox").style.display = "";
 }
@@ -2355,7 +2501,7 @@ async function renderMineSummary(createdCount){
 }
 async function loadJoined(){
   const grid = $("joinedGrid"); if (!grid) return;
-  if (!myAddr){ grid.innerHTML = `<div class="empty">${t("mine_connect")}</div>`; return; }
+  if (!myAddr){ grid.innerHTML = `<div class="empty">${t("j_connect")}</div>`; return; }
   chain();
   try{
     const latest = await providerTest.getBlockNumber();
@@ -2394,7 +2540,7 @@ async function loadJoined(){
         else status = t("j_notwon");
       } else if (kind === 1){
         const ls = await voteLabels(appsRead, id);
-        status = `${t("j_voted")} \u00b7 ${ls[st.option ?? 0] ? ls[st.option ?? 0] : t("c_option") + " " + ((st.option ?? 0) + 1)}`;
+        status = `${t("j_voted")} \u00b7 ${ls[st.option ?? 0] ? escHtml(ls[st.option ?? 0]) : t("c_option") + " " + ((st.option ?? 0) + 1)}`;
       } else {
         status = st.claimed ? `${t("j_claimed")} \u00b7 ${fmtAmt(st.amount, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : t("j_entered");
       }
@@ -2428,7 +2574,7 @@ async function loadMine(){
       const kind = Number(c.kind);
       await decimalsOf(c.prizeToken);
       let actions = "";
-      if (kind === 0 && ended && !c.drawn) actions += `<button class="btn sm" onclick="drawCampaign(${id})">${t("c_draw")}</button>`;
+      if (kind === 0 && ended && !c.drawn) actions += drawFlowHtml(id, c, latest, "btn sm", "c_draw");
       if (kind === 0 && c.drawn) actions += `<button class="btn sm ghost" onclick="copyWinners(${id}, this)">${t("m_copy")}</button>`;
       if ((kind === 2 && ended && !c.reclaimed) || (kind === 0 && c.drawn && !c.reclaimed && now > Number(c.endAt) + 2592000)) actions += `<button class="btn sm ghost" onclick="reclaimCampaign(${id})">${t("m_reclaim")}</button>`;
       const curPost = await appsRead.postUrl(id).catch(() => "");
@@ -2437,7 +2583,7 @@ async function loadMine(){
         <div class="camp-top"><span class="chip ${kind === 0 ? "raffle" : ""}">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")}</span><span class="chip ${ended ? "ended" : "live"}">${ended ? t("c_ended") : t("c_live")}</span></div>
         <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
         <div class="meta"><b>${t("c_window")}</b> ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}<br><b>${t("c_entries")}</b> ${c.entryCount}${kind === 0 && c.prizePerWinner > 0n ? `<br><b>${t("c_prize")}</b> ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)} · ${t("paid_out")} ${fmtAmt(c.paidOut, c.prizeToken)}` : ""}${kind === 2 ? `<br><b>${t("c_pool")}</b> ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)} · ${t("paid_out")} ${fmtAmt(c.paidOut, c.prizeToken)}` : ""}</div>
-        <div class="foot" style="gap:8px;flex-wrap:wrap">${actions}<span class="camp-msg" id="msg-${id}"></span></div>
+        <div class="foot" style="gap:8px;flex-wrap:wrap">${actions}<span class="camp-msg" role="status" id="msg-${id}"></span></div>
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
           <span style="font-size:12.5px;color:var(--faint)">${t("post_set")}</span>
           <input id="posturl-${id}" type="text" value="${curPost.replace(/"/g, "%22")}" placeholder="${t("post_ph")}" style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
@@ -2483,9 +2629,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (ldd){
     const lbtn = $("learnBtn");
     if (ldd.querySelector(".nav-dd-menu a.on")) lbtn.classList.add("on");
-    lbtn.addEventListener("click", e => { e.stopPropagation(); ldd.classList.toggle("open"); });
-    document.addEventListener("click", e => { if(!ldd.contains(e.target)) ldd.classList.remove("open"); });
-    document.addEventListener("keydown", e => { if(e.key === "Escape") ldd.classList.remove("open"); });
+    lbtn.setAttribute("aria-haspopup", "true");
+    lbtn.setAttribute("aria-expanded", "false");
+    lbtn.addEventListener("click", e => { e.stopPropagation(); ldd.classList.toggle("open"); lbtn.setAttribute("aria-expanded", ldd.classList.contains("open") ? "true" : "false"); });
+    document.addEventListener("click", e => { if(!ldd.contains(e.target)){ ldd.classList.remove("open"); lbtn.setAttribute("aria-expanded", "false"); } });
+    document.addEventListener("keydown", e => { if(e.key === "Escape"){ ldd.classList.remove("open"); lbtn.setAttribute("aria-expanded", "false"); } });
   }
   (async () => {
     try{
@@ -2501,6 +2649,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const sg = await prov.getSigner();
         if ((await sg.getAddress()).toLowerCase() === myAddr.toLowerCase()) signer = sg;
       }catch(e){ signer = null; }
+      // The wallet account may have changed while the awaits above were
+      // in flight; accountsChanged ignores events until myAddr is set,
+      // so re-read once — on a mismatch, take the same reload path the
+      // accountsChanged handler uses for a switched account.
+      try{
+        const again = await window.ethereum.request({ method: "eth_accounts" });
+        if (again && again[0] && again[0].toLowerCase() !== myAddr.toLowerCase()){ try{ sessionStorage.removeItem("hg_dc"); }catch(e){} myAddr = again[0]; location.reload(); return; }
+      }catch(e){}
       renderConnectBtn();
       readHuman(myAddr).then(h => { myHuman = h; renderConnectBtn(); }).catch(() => {});
       if ($("campGrid") || $("soonGrid")) loadCampaigns();
@@ -2509,6 +2665,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }catch(e){}
   })();
   if (window.ethereum && window.ethereum.on) window.ethereum.on("accountsChanged", accs => { if (!accs || !accs[0]){ if (myAddr) disconnectWallet(); return; } if (myAddr && accs[0].toLowerCase() !== myAddr.toLowerCase()){ try{ sessionStorage.removeItem("hg_dc"); }catch(e){} myAddr = accs[0]; location.reload(); } });
+  if (window.ethereum && window.ethereum.on) window.ethereum.on("chainChanged", () => location.reload());
   let sampleArmed = false;
   const cb = $("checkBtn");
   if (cb) cb.onclick = () => { if (sampleArmed) { checkAddress(SAMPLE_HOLDER, $("verdict")); } else { checkAddress($("checkInput").value.trim(), $("verdict")); } };
@@ -2642,7 +2799,7 @@ window.demoReset = () => {
     loadProfile(addr);
     loadCardQuest(addr);
     const hbEl = $("cardBinding");
-    if (hbEl){ hbEl.innerHTML = ""; creatorBinding(addr).then(hb => { const be = $("bindEntryStatus"); if (be) be.textContent = hb ? "@" + hb.h + " \u2713" : t("card_bind_none"); if (hb) { const nm = $("cardName"); if (nm) nm.textContent = "@" + hb.h; hbEl.innerHTML = `<a href="https://x.com/${hb.h}" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;font-family:var(--mono);font-size:15px">@${hb.h}</a> <span style="color:var(--gold);font-size:12px;border:1px solid rgba(240,185,11,.45);border-radius:99px;padding:2px 8px">${t("bind_bound")}</span>`; } }); }
+    if (hbEl){ hbEl.innerHTML = ""; creatorBinding(addr).then(hb => { const be = $("bindEntryStatus"); if (be) be.textContent = hb ? "@" + hb.h + " \u2713" : t("card_bind_none"); if (hb) { const nm = $("cardName"); if (nm) nm.textContent = "@" + hb.h; hbEl.innerHTML = `<a href="https://x.com/${encodeURIComponent(hb.h)}" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;font-family:var(--mono);font-size:15px">@${shownHandle(hb.h)}</a> <span class="pill">${t("bind_bound")}</span>`; } }); }
   };
   const kbAuto = new URLSearchParams(location.search).get("a");
   if (kb && kbAuto && ethers.isAddress(kbAuto)) { $("cardInput").value = kbAuto; kb.click(); }
@@ -2662,6 +2819,14 @@ window.demoReset = () => {
     try{ await navigator.clipboard.writeText(location.origin + location.pathname + "?a=" + a2); toast(t("m_copied")); }catch(e){}
   };
   if ($("campGrid")){ $("campGrid").innerHTML = skeletonHTML(6); restoreFilters(); }
+  const fltClr = $("fltClear");
+  if (fltClr) fltClr.addEventListener("click", () => {
+    if ($("fltQ")) $("fltQ").value = "";
+    if ($("fltKind")) $("fltKind").value = "all";
+    if ($("fltStatus")) $("fltStatus").value = "all";
+    if ($("fltSeries")) $("fltSeries").value = "all";
+    if (liveOnly) window.toggleLiveOnly(); else applyFilters();
+  });
   if ($("soonGrid")) $("soonGrid").innerHTML = skeletonHTML(3);
   if ($("mineGrid")) $("mineGrid").innerHTML = skeletonHTML(3);
   if ($("joinedGrid")) $("joinedGrid").innerHTML = skeletonHTML(3);

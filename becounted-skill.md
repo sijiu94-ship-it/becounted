@@ -60,7 +60,8 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 5. **只参加点名的活动。** 仅限用户明确点名(以活动 id 或无歧义的标题)
    的活动;没点名的,一个都不碰。
 6. **金额以 preview 为准,绝不改数重试。** preview 报错或被风险拦截时,
-   立即停下,把原因原文告诉用户。不得换金额、换参数、换合约重试。
+   立即停下,先按第 7.1 节对照表给人话结论,原文附在后面。不得换金额、
+   换参数、换合约重试。
 7. **`--value` 恒为 0。** 本文件的全部动作都不附带 BNB,也不需要任何代币
    授权(approve)。任何一步若要求你发送 BNB、做 approve 或签消息,
    立即停下并报告——那不是本流程的一部分。
@@ -84,6 +85,22 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 读状态走公开 RPC 的 `eth_call`,不需要钱包、不产生交易。先拿到活动 id
 和用户自己的 Agentic Wallet 地址(`baw wallet address --json`)。
 
+**活动 id 从哪来(三级路径,按顺序试):**
+
+1. **用户直接给 id** —— 最佳,直接用。
+2. **用户只给了标题** —— 不要猜 id。请用户在官网打开那个活动的详情
+   页,把链接发给你:链接形如 `campaign.html?id=N`,其中的 `N` 就是
+   活动 id。用户发来链接后,从链接里取 id 再继续。
+3. **Agent 自查(前两条都拿不到时)** —— 用 `eth_getLogs` 扫活动合约
+   的 `CampaignCreated` 事件,按 `title` 字段匹配用户点名的标题:
+   事件签名(topic0)为
+   `0xc3746a89664fadf8955c57845515461ecffa90466ca6abccc52ba5976dc43a91`
+   (`CampaignCreated(uint256,address,uint8,string,uint64,uint64)`,
+   第一个 indexed 参数就是活动 id)。**分段扫**:公开 RPC 单次
+   `eth_getLogs` 的区间上限约 5 万块,按每段 ≤ 45,000 块分段、从近
+   到远扫,命中标题完全一致的事件后取其 id;同名活动有多个时,把
+   候选(标题 + id + 起止时间)列给用户确认,不要自行挑一个。
+
 用 `cast`(如有 Foundry):
 
 ```bash
@@ -100,28 +117,74 @@ curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"{{APPS_MAINNET_ADDRESS}}","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
 ```
 
-`getCampaign` 关键字段:
+`getCampaign` 关键字段(序号 = 返回元组中的位置,从 0 数;`cast` 的
+输出是纯位置型的,对号入座靠序号):
 
-| 字段 | 含义 / 你要做的判断 |
+| 字段(序号) | 含义 / 你要做的判断 |
 |---|---|
-| `kind` | 活动类型:**0 = 抽奖,1 = 投票,2 = 领取**。动作必须与类型匹配 |
-| `title` | 活动标题。向用户展示确认时必须带上 |
-| `startAt` / `endAt` | 开始 / 结束时间(unix 秒)。未开始或已结束 → 告诉用户,不要硬发交易 |
-| `optionCount` | 投票选项数(仅投票)。选项序号范围 0 ~ optionCount-1 |
-| `entryCount` / `maxClaims` | 已参加数 / 领取上限(仅领取)。已满 → 告诉用户,停下 |
-| `prizeToken` | 奖品代币;零地址(`0x000…000`)= BNB |
-| `prizePerWinner` | 抽奖每位中奖者奖金(最小单位,展示时按代币 decimals 换算) |
-| `claimAmount` | 领取活动每人金额(等额模式)。拼手气模式(`claimRandom = true`)金额由合约决定,以链上结果为准 |
-| `drawn` | 抽奖是否已开奖。领奖前必须为 `true` |
-| `prizeLabel` | 自定义链下奖品说明(仅抽奖)。非空 = 本场奖品不是代币,而是白名单、实物等链下奖品,由发起人按链上中奖名单发放;向用户确认时必须**原文展示**这段说明,**不得显示「奖金 0」**,也不要按 `prizePerWinner` 换算 |
+| `kind`(1) | 活动类型:**0 = 抽奖,1 = 投票,2 = 领取**。动作必须与类型匹配 |
+| `title`(2) | 活动标题。向用户展示确认时必须带上 |
+| `startAt`(3) / `endAt`(4) | 开始 / 结束时间(unix 秒)。未开始或已结束 → 告诉用户,不要硬发交易 |
+| `winnerCount`(5) | 抽奖的中奖人数。6.1 确认话术里「× N 人」就取这个字段,不要自己数元组猜 |
+| `drawn`(7) | 抽奖是否已开奖。领奖前必须为 `true` |
+| `optionCount`(9) | 投票选项数(仅投票)。选项序号范围 0 ~ optionCount-1 |
+| `entryCount`(10) / `maxClaims`(15) | 已参加数 / 领取上限(仅领取)。已满 → 告诉用户,停下 |
+| `prizeToken`(11) | 奖品代币;零地址(`0x000…000`)= BNB。换算金额前先读 decimals:对 `prizeToken` 调 `decimals()`(选择器 `0x313ce567`)取位数;零地址(BNB)按 18 位。BSC 上的 USDC、USDT 也都是 18 位 |
+| `prizePerWinner`(12) | 抽奖每位中奖者奖金(最小单位,展示时按上面读到的 decimals 换算) |
+| `claimAmount`(14) | 领取活动每人金额(等额模式)。拼手气模式(`claimRandom = true`)金额由合约决定,以链上结果为准 |
+| `prizeLabel`(19) | 自定义链下奖品说明(仅抽奖)。非空 = 本场奖品不是代币,而是白名单、实物等链下奖品,由发起人按链上中奖名单发放;向用户确认时必须**原文展示**这段说明,**不得显示「奖金 0」**,也不要按 `prizePerWinner` 换算 |
 
-参加前再做两项只读预检(同样用 `eth_call` / `cast call`):
+参加前再做只读预检(同样用 `eth_call` / `cast call`):
 
 - 抽奖、领取前:`hasEntered(<id>, <用户地址>)`(选择器 `0x073c74f3`)。
   已参加 → 告诉用户,不要重复发送。
 - 领奖前:`isWinner(<id>, <用户地址>)`(选择器 `0xbdd415af`)为 `true`,
   且 `prizeClaimed(<id>, <用户地址>)`(选择器 `0x9da22700`)为 `false`,
   且 `drawn` 为 `true`。任一不满足 → 告诉用户原因,停下。
+- 投票前:读 `optionLabelsOf(<id>)`(选择器 `0x64282e78`),返回选项
+  文字数组(顺序与链上序号一一对应)。6.2 的确认话术必须带上用户要
+  投的那个选项的**文字**,不要只报序号。
+
+**条件预检:读 `conditionsOf(<id>)`(选择器 `0x3c5da3e1`)查条件 0–3。**
+
+活动可以带参加条件;不预检就硬发交易,只会撞上 `ConditionFailed(n)`
+白付 gas。`conditionsOf` 返回元组按序号解读:
+
+| 序号 | 字段 | 启用判据 |
+|---|---|---|
+| 0 | `requireBinding` | = `true` → 条件 0 启用 |
+| 1 | `gateToken` | ≠ 零地址 → 条件 1 启用 |
+| 2 | `gateMin` | 条件 1 的最低持仓量 |
+| 3 | `gateIs721` | 条件 1 的代币是否为 NFT(见下) |
+| 4 | `requireEnteredId` | ≠ `uint256` 最大值(`0xffff…ffff`)→ 条件 2 启用 |
+| 5 | `minStamps` | > 0 → 条件 3 启用 |
+| 6 | `questRef` | 条件 3 读印记数用的 QuestPass 合约地址 |
+| 7 | `allowRoot` | ≠ 零值 → 条件 4 启用(见 6.0 节) |
+| 8 | `idListRoot` | ≠ 零值 → 条件 5 启用(见 6.0b 节) |
+
+逐项核对启用的条件,**任一不满足就停下**,按对应话术告诉用户,不要
+硬发交易:
+
+- **条件 0(X 绑定)**:先读活动合约的 `bindings()`(选择器
+  `0xc8f5a5f1`)拿到绑定合约地址,再对它调
+  `isBindingValid(<用户地址>)`(选择器 `0x00263058`)。为 `false` →
+  停下:「本场要求先完成 X 绑定,你还没绑。绑定不能通过 Agent 完成,
+  请按第 8 节的方式(帖文见证,或在官网绑定页用普通钱包签名)先完成
+  绑定,再回来参加。」
+- **条件 1(持币门槛)**:对 `gateToken` 调 `balanceOf(<用户地址>)`
+  (选择器 `0x70a08231`),与 `gateMin` 比对。不足 → 停下:「本场要求
+  持有至少 <gateMin 按 decimals 换算> 的该代币,你的余额不足。」注意:
+  `gateIs721 = true` 时 `gateMin` 是 NFT 的**个数**(`balanceOf` 返回
+  件数);本门槛只支持 `balanceOf` 直返个数的代币(ERC20 与 ERC721),
+  **ERC1155 不支持**——若读数明显对不上或调用失败,如实告诉用户本场
+  门槛无法核验,停下,不要猜。
+- **条件 2(前置参与)**:`hasEntered(<requireEnteredId>, <用户地址>)`
+  (选择器 `0x073c74f3`)。为 `false` → 停下:「本场要求先参加过活动
+  #<requireEnteredId>,你还没有参加记录。先去参加那一场,再回来。」
+- **条件 3(远征印记)**:对 `questRef` 调 `stampCount(<用户地址>)`
+  (选择器 `0xb5353221`)。小于 `minStamps` → 停下:「本场要求至少
+  <minStamps> 枚真人远征印记,你目前有 <读到的枚数> 枚。先去领印记
+  (见 6.5 节),集够了再回来。」
 
 注意:读状态以 `eth_call` 为准;`preview` 的职责是执行前的最终模拟与
 风险检查,不要用它代替读状态。
@@ -218,8 +281,9 @@ cast calldata "claimPrize(uint256)" 3
 
 - 前置:活动 `kind = 1`、在时间窗内、未投过票。
 - **链上选项序号从 0 开始**:用户说「第 N 个选项」= 链上序号 `N-1`。
-  展示确认时必须同时写明两种说法,例如「投第 2 个选项(链上序号 1)」,
-  避免投错。
+  展示确认时必须带上选项文字(第 5 节预检读到的 `optionLabelsOf`
+  结果),并同时写明两种说法,例如「投『<选项文字>』(第 2 个,链上
+  序号 1)」,让用户对着文字核对,避免投错。
 - 序号越界(≥ `optionCount`)→ 停下,告诉用户可选范围。
 
 ### 6.3 领取 claim(领取活动)
@@ -233,6 +297,9 @@ cast calldata "claimPrize(uint256)" 3
 ### 6.4 领奖 claimPrize(抽奖开奖后)
 
 - 前置:第 5 节的三项领奖预检全部通过。
+- **领取期限:开奖后须在活动结束(`endAt`)起 30 天内领取。** 预检时
+  若已超过这个期限,直接告诉用户奖金已过期,不要发交易——链上会以
+  `ClaimExpired` 拒绝(见 7.1),过期奖金转入创建者可回收的余款。
 - 奖金由合约托管直接发到用户地址;金额以 preview 解析与链上结果为准。
 
 
@@ -241,6 +308,8 @@ cast calldata "claimPrize(uint256)" 3
 目标合约:`{{QUEST_MAINNET_ADDRESS}}`。赛季节奏:集印期 7 天,每天可领
 1 枚印记(领印即按当日奖池分一份小额 USDC,立即到账);集满 5 枚可报
 名终章;报名窗在集印结束后 24 小时;终章奖池 45 USDC 抽 3 人。
+注意:本段数字(集满 5 枚、45 USDC 抽 3 人等)为当前赛季参数,执行时
+以链上读数与 preview 解析为准,不要凭本段文字向用户承诺数额。
 
 先读状态(eth_call,选择器 + 地址参数补齐到 32 字节):
 - `phase()` `0xb1c9fe6e` → 0 未开始 / 1 集印期 / 2 终章报名期 / 3 待开奖 / 4 已开奖
@@ -249,7 +318,7 @@ cast calldata "claimPrize(uint256)" 3
 - `isWinner(address)` `0x9d9ca28d`、`prizeClaimed(address)` `0xdc8a55c2`
 
 写操作(每个仍走第 4 节流程:预览 → 用户逐次明确确认 → 执行):
-- 领印记 `claimStamp()` calldata `0x74cdcabc`。phase 必须为 1,且当天未领过;一天只能领一次,重复调用必然失败,不要重试轰炸。
+- 领印记 `claimStamp()` calldata `0x74cdcabc`。phase 必须为 1,且当天未领过;一天只能领一次,重复调用必然失败,不要重试轰炸。领之前先做名额预检:读 `currentDay()`(`0x5c9302c9`)、当天的 `dayClaims(<day>)`(选择器 `0x112d87dd`)与 `slotsPerDay()`(选择器 `0x2e6716cc`);`dayClaims` ≥ `slotsPerDay` → 今天的名额已领完,停下并告诉用户「今天的印记名额已领完,明天再来」,不要发交易(必然以 `NoSlots` 失败)。
 - 终章报名 `enterFinale()` calldata `0x612f5430`。phase 必须为 2,且 `eligible` 为 true、未报名过。
 - 领奖 `claimPrize()` calldata `0x70740ac9`。phase 必须为 4,`isWinner` 为 true 且未领过。
 - 锁定种子与开奖(lockFinaleSeed / drawFinale)由项目方执行,不在参与者 Agent 的范围内;phase 为 3 时只需告诉用户「等待项目方开奖」。
@@ -268,8 +337,8 @@ baw contract-call preview \
   --json
 ```
 
-- preview 返回错误或被风险拦截 → **立即停下**,把原因原文告诉用户
-  (护栏第 6 条),不要改参数重试。
+- preview 返回错误或被风险拦截 → **立即停下**,先按 7.1 对照表给
+  人话结论、原文附在后面(护栏第 6 条),不要改参数重试。
 - preview 成功 → 把解析结果(活动标题、动作、金额、目标合约)展示给
   用户,**等用户明确确认**。用户没确认,就到此为止,不要 execute。
 - 确认后,用**这一次 preview 返回的 `requestId`** 执行:
@@ -278,12 +347,46 @@ baw contract-call preview \
 baw contract-call execute --requestId <requestId> --json
 ```
 
-- 结果 `BROADCASTED` → 把 `txHash` 报告给用户,本笔结束。
+- 结果 `BROADCASTED` → 先记下 `txHash`,但**不要立刻报成功**:
+  广播成功 ≠ 执行成功(名额可能在确认间隙被抢完、时间窗可能刚过,
+  交易照样会上链失败),先做下一步复核。
+- **执行后复核(报成功前必做)**:只读复核这笔是否真的生效——参加
+  抽奖 / 投票 / 领取后,`hasEntered(<id>, <用户地址>)` 应为 `true`;
+  领印记后,`stampCount` 应比执行前 +1(或 `hasStampedOn` 当天为
+  `true`);领奖后,`prizeClaimed` 应为 `true`;也可以查这笔交易的
+  收据 `status` 应为成功。复核通过 → 向用户报告成功(带 txHash)。
+  复核不符 → 如实告诉用户这笔没有生效,附 txHash 与链上实际状态,
+  **不要报成功,也不要自行重发**(护栏第 4、6 条)。
 - 结果 `PENDING_CONFIRMATION` → 告诉用户去币安 App 里批准;**不要**
   自行重发,也不要新建 preview 绕过。等用户回来告知结果。
 - preview 会过期:若 execute 报告 requestId 已过期,重新 preview,
   并**重新向用户确认**(新 preview = 新确认),不得沿用旧确认。
-- execute 报错 → 停下,原文报告,不要自行重试。
+- execute 报错 → 停下,先按 7.1 对照表给人话结论、原文附在后面,
+  不要自行重试。
+
+### 7.1 错误对照表 / Error table — 先给人话结论,原文附后
+
+preview / execute 报错时,错误数据以 4 字节**选择器**开头,对照下表
+给用户**人话结论 + 下一步**,然后把原文附在后面。`ConditionFailed`
+的选择器后面还跟一个 32 字节参数,就是条件编号。
+
+| 错误(选择器) | 人话结论 | 下一步 |
+|---|---|---|
+| `ConditionFailed(0)`(`0x075c760f` + 参数 0) | 本场要求先完成 X 绑定,你还没绑 | 按第 8 节先完成绑定,再回来参加 |
+| `ConditionFailed(1)`(参数 1) | 持币门槛没达到 | 把第 5 节预检读到的门槛与余额告诉用户;不要替用户买币 |
+| `ConditionFailed(2)`(参数 2) | 本场要求先参加过指定活动,你还没参加 | 告诉用户先去参加那一场,再回来 |
+| `ConditionFailed(3)`(参数 3) | 真人远征印记不够 | 告诉用户还差几枚,先去领印记(6.5 节) |
+| `ConditionFailed(4)`(参数 4) | 你的地址不在本场地址名单里(或名单证明不对) | 请用户提供发行人分发的名单核对;拿不到名单就停下,不要猜 |
+| `ConditionFailed(5)`(参数 5) | 你的 Agent ID 名字不在本场身份名单里(或名单证明不对) | 请用户提供发行人分发的名字名单核对;拿不到就停下 |
+| `NotHuman`(`0xb54e834c`) | 这个钱包没有 Agent ID,过不了真人门禁 | 让用户确认用的是 Agentic Wallet 地址、且已在币安 App 领取 Agent ID |
+| `AlreadyCounted`(`0x41852f58`) | 你已经参加过了 | 不用重复操作,告诉用户已参加 |
+| `NotOpen`(`0xddafad98`) | 不在开放时间(活动未开始 / 已结束,或远征不在对应阶段) | 把第 5 节读到的时间窗 / phase 告诉用户 |
+| `NoSlots`(`0x093fe961`) | 名额已满(领取上限已满,或当天印记名额已领完) | 告诉用户已满;远征印记名额是明天再来 |
+| `NotWinner`(`0x618c7242`) | 你没有中奖 | 如实告诉用户,不要安慰性编造 |
+| `BadOption`(`0xb28dea74`) | 选项序号超出范围 | 按 `optionCount` 与选项文字重新向用户确认要投哪个 |
+| `ClaimExpired`(`0x82a49d9e`) | 领奖已过期:开奖后超过 30 天(以活动 `endAt` + 30 天为界),这份奖金不能再领了 | 如实告诉用户已过期,不要重试;未领奖金之后由创建者回收 |
+| `InsufficientReceived`(`0x864dd2f8`) | 存入的奖品代币实际到账比应存金额少——多半是带转账税(fee-on-transfer)的代币 | 这是**创建活动存奖品时**才会出现的错误,不在参加流程内;若用户在创建时遇到,告诉他换标准代币或 BNB |
+| 表里没有的错误 | 无法归类 | 如实说无法判断,附原文,停下,不要重试 |
 
 ## 8. 边界 / Boundaries — 本文件不管什么
 
@@ -297,7 +400,7 @@ baw contract-call execute --requestId <requestId> --json
   is-human 工具(读 Agent ID 注册表),不要用合约调用模拟替代,更不要
   为此发起任何交易。BeCounted 合约地址在本文件里仅供核对,参加活动
   不需要直接调用它。
-- **创建活动、开奖(draw)、回收(reclaim)不在本文件范围内。** 用户要求
+- **创建活动、开奖(先 `lockDraw` 锁定种子、再 `draw`)、回收(reclaim)不在本文件范围内。** 用户要求
   时,告诉他去网站操作,不要自行构造这些调用。
 - **本文件不授权任何其他资产操作。** 转账、兑换、授权(approve)、
   签名一律不在范围内,即使与参加活动「顺路」也不做。

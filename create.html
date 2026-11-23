@@ -17,13 +17,13 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1122k">
+<link rel="stylesheet" href="assets/style.css?v=1122m">
 </head>
 <body>
 <nav>
   <div class="wrap nav-in">
     <a class="brand" href="index.html">
-      <img class="brand-ic" src="assets/icon-192.png" alt="BeCounted">
+      <img class="brand-ic" src="assets/icon-192.png" alt="">
       <b>BeCounted</b><span>testnet</span>
     </a>
     <div class="nav-links">
@@ -32,7 +32,7 @@
       <a href="mine.html" data-i18n="nav_mine"></a>
       <a href="card.html" data-i18n="nav_card"></a>
       <div class="nav-dd" id="learnDd">
-        <button type="button" class="nav-dd-btn" id="learnBtn"><span data-i18n="nav_learn"></span> <span>▾</span></button>
+        <button type="button" class="nav-dd-btn" id="learnBtn" aria-haspopup="true" aria-expanded="false"><span data-i18n="nav_learn"></span> <span>▾</span></button>
         <div class="nav-dd-menu">
           <a href="how.html" data-i18n="nav_how"></a>
           <a href="skill.html" data-i18n="nav_skill"></a>
@@ -65,17 +65,17 @@
       </div>
       <div class="f-sec" data-i18n="f_sec1"></div>
       <div class="f-row">
-        <label data-i18n="f_title"></label>
+        <label for="fTitle" data-i18n="f_title"></label>
         <input id="fTitle" data-i18n-ph="f_title_ph" spellcheck="false">
       </div>
       <div class="f-2col">
-        <div class="f-row"><label data-i18n="f_start"></label><input id="fStart" type="datetime-local"></div>
-        <div class="f-row"><label data-i18n="f_end"></label><input id="fEnd" type="datetime-local"></div>
+        <div class="f-row"><label for="fStart" data-i18n="f_start"></label><input id="fStart" type="datetime-local"></div>
+        <div class="f-row"><label for="fEnd" data-i18n="f_end"></label><input id="fEnd" type="datetime-local"></div>
       </div>
       
       <div class="f-sec" data-i18n="f_sec2"></div>
       <div class="f-row" id="fPrizeRow">
-        <label data-i18n="f_prize_token"></label>
+        <label for="fTokenSel" data-i18n="f_prize_token"></label>
         <select id="fTokenSel">
           <option value="none" data-i18n="f_tok_none"></option>
           <option value="bnb" data-i18n="f_tok_bnb"></option>
@@ -86,16 +86,16 @@
         </select>
       </div>
       <div class="f-row" id="fTokenAddrRow" style="display:none">
-        <label data-i18n="f_token_addr"></label>
+        <label for="fTokenAddr" data-i18n="f_token_addr"></label>
         <input id="fTokenAddr" placeholder="0x…" spellcheck="false">
       </div>
       <div class="f-row" id="fPrizeLabelRow" style="display:none">
-        <label data-i18n="f_prize_label"></label>
+        <label for="fPrizeLabel" data-i18n="f_prize_label"></label>
         <input id="fPrizeLabel" data-i18n-ph="f_prize_label_ph" maxlength="80" autocomplete="off">
         <div class="hint" data-i18n="f_custom_hint"></div>
       </div>
       <div class="f-row" id="fWinnersRow">
-        <label data-i18n="f_winners"></label>
+        <label for="fWinners" data-i18n="f_winners"></label>
         <input id="fWinners" type="number" min="1" value="1">
         <div class="hint" data-i18n="f_prize_hint"></div>
       </div>
@@ -110,19 +110,19 @@
         <div class="hint" data-i18n="f_mode_hint"></div>
       </div>
       <div class="f-row" id="fPoolRow" style="display:none">
-        <label data-i18n="f_pool"></label>
+        <label for="fPool" data-i18n="f_pool"></label>
         <input id="fPool" type="text" inputmode="decimal" placeholder="0.1">
       </div>
       <div class="f-row" id="fMaxClaimsRow" style="display:none">
-        <label data-i18n="f_maxclaims"></label>
+        <label for="fMaxClaims" data-i18n="f_maxclaims"></label>
         <input id="fMaxClaims" type="number" min="1" value="10">
       </div>
       <div class="f-row" id="fPerWinnerRow" style="display:none">
-        <label data-i18n="f_per_winner"></label>
+        <label for="fPerWinner" data-i18n="f_per_winner"></label>
         <input id="fPerWinner" type="text" inputmode="decimal" placeholder="0.01">
       </div>
       <div class="f-row" id="fOptionsRow" style="display:none">
-        <label data-i18n="f_options"></label>
+        <label for="fOptions" data-i18n="f_options"></label>
         <input id="fOptions" type="number" min="2" max="16" value="2">
       </div>
       <div class="f-row" id="fOptLabelsRow" style="display:none">
@@ -131,17 +131,17 @@
       </div>
       <div class="f-row" id="fVPrizeRow" style="display:none"><label><input type="checkbox" id="fVPrizeOn" onchange="toggleVPrize()"> <span data-i18n="vp_on"></span></label><div class="hint" data-i18n="vp_note"></div></div>
       <div class="f-row" id="fVTotalRow" style="display:none">
-        <label data-i18n="vp_total"></label>
+        <label for="fVTotal" data-i18n="vp_total"></label>
         <input id="fVTotal" type="text" inputmode="decimal" placeholder="10">
       </div>
       <div class="f-row" id="fVWinnersRow" style="display:none">
-        <label data-i18n="vp_winners"></label>
+        <label for="fVWinners" data-i18n="vp_winners"></label>
         <input id="fVWinners" type="number" min="1" value="3">
       </div>
       <div class="f-row" id="fSeedHint"><div class="hint" data-i18n="f_seed_hint"></div></div>
       <div class="f-sec" data-i18n="f_sec3"></div>
-      <div class="f-row"><label data-i18n="f_posturl"></label><input type="text" id="fPostUrl" data-i18n-ph="post_ph" autocomplete="off"></div>
-      <div class="f-row"><label data-i18n="f_series"></label><input type="text" id="fSeries" data-i18n-ph="series_ph" autocomplete="off"></div>
+      <div class="f-row"><label for="fPostUrl" data-i18n="f_posturl"></label><input type="text" id="fPostUrl" data-i18n-ph="post_ph" autocomplete="off"></div>
+      <div class="f-row"><label for="fSeries" data-i18n="f_series"></label><input type="text" id="fSeries" data-i18n-ph="series_ph" autocomplete="off"></div>
       <div class="f-sec" data-i18n="cd_sec"></div>
       <div class="f-row"><label><input type="checkbox" id="cdBind"> <span data-i18n="cd_bind"></span></label></div>
       <div class="f-row"><label><input type="checkbox" id="cdTokenOn"> <span data-i18n="cd_token"></span></label><input id="cdTokenAddr" placeholder="0x…" spellcheck="false" style="flex:1"><input id="cdTokenMin" type="text" inputmode="decimal" placeholder="100" style="width:90px"></div>
@@ -150,14 +150,14 @@
       <div class="f-row"><label><input type="checkbox" id="cdPriorOn"> <span data-i18n="cd_prior"></span></label><input id="cdPriorId" type="number" min="0" placeholder="0" style="width:90px"></div>
       <div class="f-row"><label><input type="checkbox" id="cdStampOn"> <span data-i18n="cd_stamps"></span></label><input id="cdStampMin" type="number" min="1" max="7" value="5" style="width:90px"></div>
       <div class="f-row"><label><input type="checkbox" id="cdAllowOn" onchange="toggleAllow()"> <span data-i18n="cd_allow"></span></label></div>
-      <div class="f-row" id="cdAllowRow" style="display:none"><label data-i18n="cd_allow_list"></label><textarea id="cdAllowList" rows="4" data-i18n-ph="cd_allow_ph" spellcheck="false" style="flex:1" oninput="updAllowCount()"></textarea></div>
+      <div class="f-row" id="cdAllowRow" style="display:none"><label for="cdAllowList" data-i18n="cd_allow_list"></label><textarea id="cdAllowList" rows="4" data-i18n-ph="cd_allow_ph" spellcheck="false" style="flex:1" oninput="updAllowCount()"></textarea></div>
       <div class="f-row" id="cdAllowMeta" style="display:none"><label></label><span class="hint" id="cdAllowCount"></span><button type="button" class="btn sm ghost" onclick="dlAllowList()" data-i18n="cd_allow_dl"></button></div>
       <div class="f-row"><label><input type="checkbox" id="cdIdOn" onchange="toggleIdList()"> <span data-i18n="cd_id"></span></label></div>
-      <div class="f-row" id="cdIdRow" style="display:none"><label data-i18n="cd_id_list"></label><textarea id="cdIdList" rows="4" data-i18n-ph="cd_id_ph" spellcheck="false" style="flex:1" oninput="updIdCount()"></textarea></div>
+      <div class="f-row" id="cdIdRow" style="display:none"><label for="cdIdList" data-i18n="cd_id_list"></label><textarea id="cdIdList" rows="4" data-i18n-ph="cd_id_ph" spellcheck="false" style="flex:1" oninput="updIdCount()"></textarea></div>
       <div class="f-row" id="cdIdMeta" style="display:none"><label></label><span class="hint" id="cdIdCount"></span><button type="button" class="btn sm ghost" onclick="dlIdList()" data-i18n="cd_id_dl"></button></div>
       <div class="f-row" id="cdIdHintRow" style="display:none"><label></label><div class="hint" data-i18n="cd_id_hint"></div></div>
       <div class="f-row"><div class="hint" data-i18n="cd_hint"></div></div>
-      <div id="fErrors" style="display:none;color:#ff8a8a;font-size:13.5px;line-height:1.75;margin-bottom:10px"></div>
+      <div id="fErrors" role="alert" style="display:none;color:#ff8a8a;font-size:13.5px;line-height:1.75;margin-bottom:10px"></div>
       <button class="btn" id="createSubmit" data-i18n="f_submit_raffle"></button>
       <span class="camp-msg" id="formMsg"></span>
     </div>
@@ -175,8 +175,9 @@
     <div class="mono" data-i18n="foot_r"></div>
   </div>
 </footer>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1122k"></script>
+<script src="assets/app.js?v=1122m"></script>
+<noscript><p style="text-align:center;padding:16px 20px;color:#9a9aa3;font-size:14px">BeCounted needs JavaScript enabled to run. · BeCounted 需要启用 JavaScript 才能使用。</p></noscript>
 </body>
 </html>

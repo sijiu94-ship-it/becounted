@@ -17,13 +17,13 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1122k">
+<link rel="stylesheet" href="assets/style.css?v=1122m">
 </head>
 <body>
 <nav>
   <div class="wrap nav-in">
     <a class="brand" href="index.html">
-      <img class="brand-ic" src="assets/icon-192.png" alt="BeCounted">
+      <img class="brand-ic" src="assets/icon-192.png" alt="">
       <b>BeCounted</b><span>testnet</span>
     </a>
     <div class="nav-links">
@@ -32,7 +32,7 @@
       <a href="mine.html" data-i18n="nav_mine"></a>
       <a href="card.html" data-i18n="nav_card"></a>
       <div class="nav-dd" id="learnDd">
-        <button type="button" class="nav-dd-btn" id="learnBtn"><span data-i18n="nav_learn"></span> <span>▾</span></button>
+        <button type="button" class="nav-dd-btn" id="learnBtn" aria-haspopup="true" aria-expanded="false"><span data-i18n="nav_learn"></span> <span>▾</span></button>
         <div class="nav-dd-menu">
           <a href="how.html" data-i18n="nav_how"></a>
           <a href="skill.html" class="on" data-i18n="nav_skill"></a>
@@ -80,15 +80,17 @@
   </div>
 </section>
 
+<div class="wrap" style="padding-bottom:20px"><a href="#" style="color:var(--muted);font-size:13.5px">↑ Back to top · 回到顶部</a></div>
+
 <footer>
   <div class="wrap f-in">
     <div data-i18n="foot_l"></div>
     <div class="mono" data-i18n="foot_r"></div>
   </div>
 </footer>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1122k"></script>
+<script src="assets/app.js?v=1122m"></script>
 <script>
 (function(){
   var SKILL_URL = "https://becounted.9nosing.com/becounted-skill.md";
@@ -104,6 +106,7 @@
   function renderMd(md){
     var lines = md.replace(/\r\n/g, "\n").split("\n");
     var out = [], para = [], list = null, quote = [], table = [], code = null;
+    var toc = [], hSeq = 0;
     function flushPara(){ if (para.length){ out.push("<p>" + inline(esc(para.join("\n"))) + "</p>"); para = []; } }
     function flushList(){ if (list){ out.push("<" + list.type + ">" + list.items.map(function(x){ return "<li>" + inline(esc(x)) + "</li>"; }).join("") + "</" + list.type + ">"); list = null; } }
     function flushQuote(){
@@ -128,7 +131,7 @@
       if (!body.length) return;
       var h = "<table><thead><tr>" + body[0].map(function(c){ return "<th>" + inline(esc(c)) + "</th>"; }).join("") + "</tr></thead><tbody>";
       for (var i = 1; i < body.length; i++) h += "<tr>" + body[i].map(function(c){ return "<td>" + inline(esc(c)) + "</td>"; }).join("") + "</tr>";
-      out.push(h + "</tbody></table>");
+      out.push('<div class="md-twrap">' + h + "</tbody></table></div>");
     }
     function flushAll(){ flushPara(); flushList(); flushQuote(); flushTable(); }
     for (var n = 0; n < lines.length; n++){
@@ -141,7 +144,19 @@
       if (/^\s*```/.test(line)){ flushAll(); code = []; continue; }
       if (!line.trim()){ flushAll(); continue; }
       var hm = line.match(/^(#{1,6})\s+(.*)/);
-      if (hm){ flushAll(); var lv = Math.min(hm[1].length, 4); out.push("<h" + lv + ">" + inline(esc(hm[2])) + "</h" + lv + ">"); continue; }
+      if (hm){
+        flushAll();
+        var lv = Math.min(hm[1].length + 1, 4); // the page already has an h1: the document's own h1 renders as h2, deeper levels shift with it
+        if (lv === 2 || lv === 3){
+          hSeq++;
+          var hid = "md-s" + hSeq;
+          toc.push({ id: hid, lv: lv, text: hm[2].replace(/[`*_]/g, "") });
+          out.push("<h" + lv + " id=\"" + hid + "\">" + inline(esc(hm[2])) + "</h" + lv + ">");
+        } else {
+          out.push("<h" + lv + ">" + inline(esc(hm[2])) + "</h" + lv + ">");
+        }
+        continue;
+      }
       if (/^\s*(-{3,}|\*{3,})\s*$/.test(line)){ flushAll(); out.push("<hr>"); continue; }
       var qm = line.match(/^>\s?(.*)/);
       if (qm){ flushPara(); flushList(); flushTable(); quote.push(qm[1]); continue; }
@@ -156,6 +171,11 @@
     }
     if (code !== null) out.push("<pre><code>" + esc(code.join("\n")) + "</code></pre>");
     flushAll();
+    if (toc.length){
+      out.unshift('<nav class="md-toc">' + toc.map(function(e){
+        return '<a class="md-toc-' + e.lv + '" href="#' + e.id + '">' + esc(e.text) + "</a>";
+      }).join("") + "</nav>");
+    }
     return out.join("\n");
   }
   var box = document.getElementById("skillDoc");
@@ -178,5 +198,6 @@
   });
 })();
 </script>
+<noscript><p style="text-align:center;padding:16px 20px;color:#9a9aa3;font-size:14px">BeCounted needs JavaScript enabled to run. · BeCounted 需要启用 JavaScript 才能使用。</p></noscript>
 </body>
 </html>
