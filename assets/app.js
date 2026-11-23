@@ -71,7 +71,7 @@ const SITE_URL = "https://becounted.9nosing.com/";
 const NETWORK = {
   appsChainId: 97, appsChainHex: "0x61",
   appsRpcs: ["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet-dataseed.bnbchain.org", "https://data-seed-prebsc-1-s1.bnbchain.org:8545"],
-  mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
+  mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com", "https://rpc.ankr.com/bsc", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
 const APPS_DEPLOY_BLOCK = 144360363; // V9 deployment block: event scans start here
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
