@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1121v">
+<link rel="stylesheet" href="assets/style.css?v=1121w">
 </head>
 <body>
 <nav>
@@ -81,11 +81,17 @@
           <option value="usdt" data-i18n="f_tok_usdt"></option>
           <option value="usdc" data-i18n="f_tok_usdc"></option>
           <option value="erc20" data-i18n="f_tok_erc20"></option>
+          <option value="custom" data-i18n="f_tok_custom"></option>
         </select>
       </div>
       <div class="f-row" id="fTokenAddrRow" style="display:none">
         <label data-i18n="f_token_addr"></label>
         <input id="fTokenAddr" placeholder="0x…" spellcheck="false">
+      </div>
+      <div class="f-row" id="fPrizeLabelRow" style="display:none">
+        <label data-i18n="f_prize_label"></label>
+        <input id="fPrizeLabel" data-i18n-ph="f_prize_label_ph" maxlength="80" autocomplete="off">
+        <div class="hint" data-i18n="f_custom_hint"></div>
       </div>
       <div class="f-row" id="fWinnersRow">
         <label data-i18n="f_winners"></label>
@@ -166,6 +172,6 @@
 </footer>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1121v"></script>
+<script src="assets/app.js?v=1121w"></script>
 </body>
 </html>

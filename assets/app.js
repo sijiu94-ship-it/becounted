@@ -1,6 +1,6 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0xf197907879833d4bb507963a9bae5f3172f550f3"; // OneIDCampaignsV8
+const APPS_TESTNET     = "0x1ebff25f093c798ea301008b13c54fbc00348aec"; // OneIDCampaignsV9
 const BINDINGS_TESTNET = "0x6e17c5ddc3be1cb4443b6cbb64c1b520fd80d5f2"; // IdentityBindings
 const PROFILE_TESTNET  = "0x03b4a3129199b16ccf144a100b1fc65f31d907c1"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
@@ -37,7 +37,7 @@ const APPS_ABI = [
   "function conditionsOf(uint256) view returns (tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot))",
   "function getEntries(uint256) view returns (address[])",
   "function getWinners(uint256) view returns (address[])",
-  "function getCampaign(uint256) view returns (tuple(address creator, uint8 kind, string title, uint64 startAt, uint64 endAt, uint32 winnerCount, uint64 seedBlock, bool drawn, bool usedFallbackSeed, uint8 optionCount, uint256 entryCount, address prizeToken, uint256 prizePerWinner, uint256 pool, uint256 claimAmount, uint32 maxClaims, bool claimRandom, uint256 paidOut, bool reclaimed))",
+  "function getCampaign(uint256) view returns (tuple(address creator, uint8 kind, string title, uint64 startAt, uint64 endAt, uint32 winnerCount, uint64 seedBlock, bool drawn, bool usedFallbackSeed, uint8 optionCount, uint256 entryCount, address prizeToken, uint256 prizePerWinner, uint256 pool, uint256 claimAmount, uint32 maxClaims, bool claimRandom, uint256 paidOut, bool reclaimed, string prizeLabel))",
   "function hasEntered(uint256, address) view returns (bool)","function voteOf(uint256,address) view returns (uint8)",
   "function tally(uint256, uint8) view returns (uint256)",
   "function getWinners(uint256) view returns (address[])",
@@ -49,7 +49,7 @@ const APPS_ABI = [
   "function claim(uint256, bytes32[])",
   "function claimPrize(uint256)",
   "function reclaim(uint256)",
-  "function createRaffle(string, uint64, uint64, uint32, uint64, address, uint256, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot)) payable returns (uint256)",
+  "function createRaffle(string, uint64, uint64, uint32, uint64, address, uint256, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot), string) payable returns (uint256)",
   "function createVote(string, uint64, uint64, uint8, address, uint256, uint32, uint64, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot), string[]) payable returns (uint256)",
   "function optionLabelsOf(uint256) view returns (string[])",
   "function createClaim(string, uint64, uint64, uint32, address, uint256, bool, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot)) payable returns (uint256)",
@@ -73,7 +73,7 @@ const NETWORK = {
   appsRpcs: ["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet-dataseed.bnbchain.org", "https://data-seed-prebsc-1-s1.bnbchain.org:8545"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 144221089; // V5 deployment block: event scans start here
+const APPS_DEPLOY_BLOCK = 144329082; // V9 deployment block: event scans start here
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-26: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
@@ -264,7 +264,8 @@ en: {
   cd_ends:"ends in", cd_starts:"starts in", cd_d:"d", cd_h:"h", cd_m:"m",
   soon_h:"Ending soon", soon_sub:"Live now, closing first — do not miss the window.",
   hot_h:"Trending", hot_camps:"Hot campaigns", hot_creators:"Top creators", hot_entries:"entries",
-  f_tok_usdt:"USDT (preset)", f_tok_usdc:"USDC (preset)",
+  f_tok_usdt:"USDT \u00b7 {chain} (preset)", f_tok_usdc:"USDC \u00b7 {chain} (preset)", f_tok_custom:"Custom prize (off-chain)", f_chain_main:"BSC mainnet", f_chain_test:"BSC testnet",
+  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.",
 
   c_claim:"Claim drop", c_pool:"Pool", c_each:"Each gets", c_claimed_n:"claimed", c_claim_btn:"Claim",
   c_prize:"Prize", c_per_winner:"per winner", c_claim_prize:"Claim prize", c_prize_claimed:"Prize claimed",
@@ -301,7 +302,7 @@ en: {
   f_start:"Starts at", f_end:"Ends at", f_winners:"Number of winners",
   f_options:"Number of options (2–16)", f_opt_labels:"Option texts", e_opt_label:"Fill in every option text (1-60 bytes each).",
   f_seed_hint:"The draw's seed block is fixed automatically at creation — a future block right after the end time, whose hash nobody can know in advance. Results are reproducible by anyone.",
-  f_prize_hint:"Prizes are paid by you directly to the winners after the draw. The contract never holds funds.",
+  f_prize_hint:"The prize is escrowed in the contract in full when you create the campaign. Winners claim on-chain; anything unclaimed for 30 days can be reclaimed by you.",
   f_submit_raffle:"Create raffle", f_submit_vote:"Create vote",
   f_tab_raffle:"Raffle", f_tab_vote:"Vote",
   f_err_title:"Give the campaign a title.", f_err_time:"End time must be after the start time, and the start cannot be in the past.",
@@ -481,7 +482,8 @@ zh: {
   cd_ends:"距结束", cd_starts:"距开始", cd_d:"天", cd_h:"小时", cd_m:"分",
   soon_h:"即将结束", soon_sub:"正在进行、先到截止时间的排前面——别错过窗口。",
   hot_h:"热度榜", hot_camps:"热门活动", hot_creators:"创作者榜", hot_entries:"人参与",
-  f_tok_usdt:"USDT（预设）", f_tok_usdc:"USDC（预设）",
+  f_tok_usdt:"USDT \u00b7 {chain}（预设）", f_tok_usdc:"USDC \u00b7 {chain}（预设）", f_tok_custom:"自定义奖品（链下发放）", f_chain_main:"BSC 主网", f_chain_test:"BSC 测试网",
+  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。",
 
   c_claim:"领取", c_pool:"奖池", c_each:"每份", c_claimed_n:"已领", c_claim_btn:"领取",
   c_prize:"奖品", c_per_winner:"每位中奖者", c_claim_prize:"领取奖品", c_prize_claimed:"奖品已领取",
@@ -518,7 +520,7 @@ zh: {
   f_start:"开始时间", f_end:"结束时间", f_winners:"中奖人数",
   f_options:"选项数量（2–16）", f_opt_labels:"选项文字", e_opt_label:"请把每个选项的文字都填好（每个 1–60 字节）。",
   f_seed_hint:"开奖的种子区块会在创建时自动定死——取结束时间之后的一个未来区块，它的哈希无人能提前知道。开奖结果任何人可复算。",
-  f_prize_hint:"奖品由你在开奖后直接发给中奖者。合约从不经手资金。",
+  f_prize_hint:"奖品在创建时全额托管进合约，中奖者链上自助领取；30 天未领的部分可由你回收。",
   f_submit_raffle:"创建抽奖", f_submit_vote:"创建投票",
   f_tab_raffle:"抽奖", f_tab_vote:"投票",
   f_err_title:"给活动起个标题。", f_err_time:"结束时间必须晚于开始时间，开始时间不能是过去。",
@@ -814,9 +816,12 @@ async function loadCampaigns(){
           if(c.drawn){ try{ myWin = await appsRead.isWinner(i, myAddr); }catch(e){} }
         }
         const hasPrize = isRaffle && c.prizePerWinner > 0n;
+        const hasCustom = isRaffle && !hasPrize && !!c.prizeLabel;
         if(isRaffle){
           keyline = hasPrize
             ? `<b>${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}</b> \u00d7 ${c.winnerCount} \u00b7 ${c.entryCount} ${t("c_entries")}`
+            : hasCustom
+            ? `<b>${String(c.prizeLabel).replace(/</g, "&lt;")}</b> \u00b7 ${t("c_custom_tag")} \u00b7 ${c.entryCount} ${t("c_entries")}`
             : `${c.winnerCount} ${t("c_winners")} \u00b7 ${c.entryCount} ${t("c_entries")}`;
           if(c.drawn){
             const w = await appsRead.getWinners(i);
@@ -1082,7 +1087,15 @@ window.setSeriesMine = id => withSigner(async (msg) => { const a = new ethers.Co
 window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofFor(id, myAddr); if (pf === null) throw new Error(t("m_cond_4")); await sendAndWait(msg, a.claim(id, pf)); }, id, true);
 window.claimPrize = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claimPrize(id)); }, id);
 window.reclaimCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.reclaim(id)); }, id);
-window.onLangChange = () => { renderConnectBtn(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); if ($("questBox")) loadQuest(); };
+window.onLangChange = () => { renderConnectBtn(); labelPresetOptions(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); if ($("questBox")) loadQuest(); };
+function labelPresetOptions(){
+  const sel = $("fTokenSel"); if (!sel) return;
+  const chain = t(NETWORK.appsChainId === 56 ? "f_chain_main" : "f_chain_test");
+  for (const v of ["usdt", "usdc"]){
+    const opt = sel.querySelector(`option[value="${v}"]`);
+    if (opt) opt.textContent = t(v === "usdt" ? "f_tok_usdt" : "f_tok_usdc").replace("{chain}", chain);
+  }
+}
 
 /* ---------- live gate feed ---------- */
 async function loadFeed(){
@@ -1128,6 +1141,7 @@ function renderOptLabels(){
 function collectOptLabels(){ return Array.from(document.querySelectorAll("#fOptLabels input")).map(i => i.value.trim()); }
 function switchCreateTab(k){
   createKind = k;
+  const _tsel0 = $("fTokenSel"); if (_tsel0 && k !== 0 && _tsel0.value === "custom") _tsel0.value = "none";
   document.querySelectorAll(".form > .tabs > button").forEach((b,i)=>b.classList.toggle("on", i===k));
   $("fWinnersRow").style.display = k===0 ? "" : "none";
   $("fOptionsRow").style.display = k===1 ? "" : "none";
@@ -1140,7 +1154,8 @@ function switchCreateTab(k){
   $("fVPrizeRow").style.display = k===1 ? "" : "none";
   $("fVTotalRow").style.display = vp ? "" : "none";
   $("fVWinnersRow").style.display = vp ? "" : "none";
-  $("fPerWinnerRow").style.display = (k===0 && $("fTokenSel").value !== "none") ? "" : "none";
+  $("fPerWinnerRow").style.display = (k===0 && $("fTokenSel").value !== "none" && $("fTokenSel").value !== "custom") ? "" : "none";
+  if ($("fPrizeLabelRow")) $("fPrizeLabelRow").style.display = (k===0 && $("fTokenSel").value === "custom") ? "" : "none";
   $("fPoolRow").style.display = k===2 ? "" : "none";
   $("fModeRow").style.display = k===2 ? "" : "none";
   $("fMaxClaimsRow").style.display = k===2 ? "" : "none";
@@ -1148,7 +1163,7 @@ function switchCreateTab(k){
 }
 function prizeTokenAddr(){
   const sel = $("fTokenSel").value;
-  if (sel === "none") return null;
+  if (sel === "none" || sel === "custom") return null;
   if (sel === "bnb") return ethers.ZeroAddress;
   if (TOKEN_PRESETS[sel]) return TOKEN_PRESETS[sel];
   const a = $("fTokenAddr").value.trim();
@@ -1179,7 +1194,8 @@ function validateCreate(){
     if (markErr("fWinners", !(w >= 1))) errs.push(t("e_winners"));
     const sel = $("fTokenSel")?.value || "none";
     if (sel === "erc20" && markErr("fTokenAddr", !ethers.isAddress(($("fTokenAddr")?.value || "").trim()))) errs.push(t("e_token"));
-    if (sel !== "none" && markErr("fPerWinner", !(parseFloat($("fPerWinner")?.value || "0") > 0))) errs.push(t("e_prize"));
+    if (sel !== "none" && sel !== "custom" && markErr("fPerWinner", !(parseFloat($("fPerWinner")?.value || "0") > 0))) errs.push(t("e_prize"));
+    if (sel === "custom"){ const _lb = ($("fPrizeLabel")?.value || "").trim(); const _bl = new TextEncoder().encode(_lb).length; if (markErr("fPrizeLabel", !(_bl >= 1 && _bl <= 80))) errs.push(t("f_err_label")); }
   } else if (createKind === 1){
     const o = parseInt($("fOptions")?.value || "0", 10);
     if (markErr("fOptions", !(o >= 2 && o <= 16))) errs.push(t("e_options"));
@@ -1215,7 +1231,9 @@ function renderPreview(){
   if (createKind === 0){
     const sel = $("fTokenSel")?.value || "none";
     const w = $("fWinners")?.value || "1";
-    keyline = sel !== "none" && parseFloat($("fPerWinner")?.value || "0") > 0
+    keyline = sel === "custom"
+      ? `<b>${(($("fPrizeLabel")?.value || "").trim() || t("f_prize_label")).replace(/</g, "&lt;")}</b> \u00b7 ${t("c_custom_tag")} \u00d7 ${w}`
+      : sel !== "none" && parseFloat($("fPerWinner")?.value || "0") > 0
       ? `<b>${$("fPerWinner").value} ${sel === "bnb" ? "BNB" : sel.toUpperCase()}</b> \u00d7 ${w}`
       : `${w} ${t("c_winners")}`;
     cta = t("c_enter");
@@ -1306,7 +1324,8 @@ async function submitCreate(){
       const secPerBlock = Math.max(0.3, (latest.timestamp - older.timestamp) / 200);
       const seedBlock = latest.number + Math.ceil((endAt - latest.timestamp) / secPerBlock) + 40;
       const value = (token === ethers.ZeroAddress) ? total : 0n;
-      await (await apps.createRaffle(title, startAt, endAt, winners, seedBlock, token, per, cond, { value })).wait();
+      const prizeLabel = ($("fTokenSel").value === "custom") ? ($("fPrizeLabel").value || "").trim() : "";
+      await (await apps.createRaffle(title, startAt, endAt, winners, seedBlock, token, per, cond, prizeLabel, { value })).wait();
     } else if(createKind === 1){
       const options = parseInt($("fOptions").value, 10);
       if ($("fVPrizeOn")?.checked){
@@ -1613,6 +1632,7 @@ async function loadDetail(){
         if (!myAddr || (myState.winner && !myState.prizeClaimed)) foot += ` <button class="btn ghost" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`;
         else if (myState.prizeClaimed) foot += ` <span class="count">${t("j_won_claimed")}</span>`;
       }
+      if (c.drawn && c.prizePerWinner === 0n && c.prizeLabel && myState.winner) foot += ` <span class="count">${t("d_custom_claim")}</span>`;
     } else if (kind === 1){
       const counts = new Array(Number(c.optionCount)).fill(0);
       const latest = await providerTest.getBlockNumber();
@@ -1663,12 +1683,12 @@ async function loadDetail(){
       <div class="panel"><div id="partList">${entries.length ? entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}</div>
       ${proof}
       ${condChipsHtml(cond)}${listPanelHtml(id, cond)}
-      <div class="trust-row">${t("d_contract")} <a href="https://testnet.bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 BeCounted <a href="https://testnet.bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : t("d_escrow_no")}</div>`;
+      <div class="trust-row">${t("d_contract")} <a href="https://testnet.bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 BeCounted <a href="https://testnet.bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : (c.prizeLabel ? t("d_custom_note") : t("d_escrow_no"))}</div>`;
     window.__partEntries = entries;
     const sb = $("stickyBar");
     if (sb){
       let sAct = "", sInfo = "";
-      if (kind === 0 && live && !myState.entered){ sAct = `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`; sInfo = c.prizePerWinner > 0n ? `${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}` : String(c.title).replace(/</g, "&lt;"); }
+      if (kind === 0 && live && !myState.entered){ sAct = `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`; sInfo = c.prizePerWinner > 0n ? `${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}` : (c.prizeLabel ? String(c.prizeLabel).replace(/</g, "&lt;") : String(c.title).replace(/</g, "&lt;")); }
       else if (kind === 0 && ended && !c.drawn){ sAct = `<button class="btn" onclick="drawCampaign(${id})">${t("m_draw")}</button>`; sInfo = String(c.title).replace(/</g, "&lt;"); }
       else if (kind === 0 && c.drawn && c.prizePerWinner > 0n && (!myAddr || (myState.winner && !myState.prizeClaimed))){ sAct = `<button class="btn" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}`; }
       else if (kind === 1 && c.pool > 0n && c.drawn && myState.winner && !myState.prizeClaimed){ sAct = `<button class="btn" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)}`; }
@@ -1710,6 +1730,7 @@ window.makeCert = async id => {
     ctx.font = "600 30px 'Space Grotesk', sans-serif"; ctx.fillStyle = "#f0b90b";
     let key = `${t("cert_entries")}: ${entries.length}  \u00b7  ${t("cert_winners")}: ${winners.length}`;
     if (c.prizePerWinner > 0n) key += `  \u00b7  ${fmtAmt(c.prizePerWinner)} ${tokenLabel(c.prizeToken)} ${t("cert_each")}`;
+    else if (c.prizeLabel) key += `  \u00b7  ${String(c.prizeLabel)} (${t("c_custom_tag")})`;
     ctx.fillText(key, 72, keyY);
     ctx.font = "500 20px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#9a9aa3";
     ctx.fillText(`${t("d_proof_seedblock")}: ${c.seedBlock}${c.usedFallbackSeed ? " (fallback)" : ""}  \u00b7  ${t("cert_recompute")}`, 72, keyY + 44);
@@ -2401,8 +2422,11 @@ window.demoReset = () => {
     const tsel = $("fTokenSel");
     if (tsel) tsel.addEventListener("change", () => {
       $("fTokenAddrRow").style.display = tsel.value === "erc20" ? "" : "none";
-      $("fPerWinnerRow").style.display = (tsel.value !== "none" && createKind === 0) ? "" : "none";
+      $("fPerWinnerRow").style.display = (tsel.value !== "none" && tsel.value !== "custom" && createKind === 0) ? "" : "none";
+      if ($("fPrizeLabelRow")) $("fPrizeLabelRow").style.display = (tsel.value === "custom" && createKind === 0) ? "" : "none";
+      renderPreview();
     });
+    labelPresetOptions();
     switchCreateTab(0);
   }
 });

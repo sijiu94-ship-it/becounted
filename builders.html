@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1121v">
+<link rel="stylesheet" href="assets/style.css?v=1121w">
 </head>
 <body>
 <nav>
@@ -60,7 +60,7 @@
     <div class="codebox"><span class="kw">interface</span> IBeCounted { <span class="kw">function</span> isHuman(address) <span class="kw">external view returns</span> (bool); }<br><br><span class="kw">function</span> enter() <span class="kw">external</span> {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">require</span>(gate.isHuman(msg.sender), <span class="str">"not a unique human"</span>);<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">require</span>(!entered[msg.sender], <span class="str">"already counted"</span>);<br>&nbsp;&nbsp;&nbsp;&nbsp;entered[msg.sender] = <span class="kw">true</span>;<br>}</div>
     <table class="addr-table">
       <tr><td data-i18n="a_gate"></td><td><a href="https://testnet.bscscan.com/address/0x0cb41f96c84df7bed5db273e77b62414b1a80cbd" target="_blank" rel="noopener">0x0cb41f96c84df7bed5db273e77b62414b1a80cbd</a></td></tr>
-      <tr><td data-i18n="a_apps"></td><td><a href="https://testnet.bscscan.com/address/0xf197907879833d4bb507963a9bae5f3172f550f3" target="_blank" rel="noopener">0xf197907879833d4bb507963a9bae5f3172f550f3</a></td></tr>
+      <tr><td data-i18n="a_apps"></td><td><a href="https://testnet.bscscan.com/address/0x1ebff25f093c798ea301008b13c54fbc00348aec" target="_blank" rel="noopener">0x1ebff25f093c798ea301008b13c54fbc00348aec</a></td></tr>
       <tr><td data-i18n="a_bind"></td><td><a href="https://testnet.bscscan.com/address/0x6e17c5ddc3be1cb4443b6cbb64c1b520fd80d5f2" target="_blank" rel="noopener">0x6e17c5ddc3be1cb4443b6cbb64c1b520fd80d5f2</a></td></tr>
       <tr><td data-i18n="a_reg"></td><td><a href="https://bscscan.com/address/0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F" target="_blank" rel="noopener">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</a> (SPACE ID Agent ID)</td></tr>
       <tr><td data-i18n="a_profile"></td><td><a href="https://testnet.bscscan.com/address/0x03b4a3129199b16ccf144a100b1fc65f31d907c1" target="_blank" rel="noopener">0x03b4a3129199b16ccf144a100b1fc65f31d907c1</a></td></tr>
@@ -92,6 +92,6 @@
 </footer>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1121v"></script>
+<script src="assets/app.js?v=1121w"></script>
 </body>
 </html>
