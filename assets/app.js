@@ -1,6 +1,6 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0x9dac1ccb350a3568a7858f3874b06a69a61aa426"; // OneIDCampaignsV9 (instance bound to IdentityBindingsV2)
+const APPS_TESTNET     = "0x5c6bd30ead292b97e910d761209736A440f4bA3e"; // OneIDCampaignsV10 trial stack (own gate + MockRegistryV2 with handleOf; bindings = IdentityBindingsV2)
 const BINDINGS_TESTNET = "0x3b5a6cd4ae21cf100da21197a58be6d6d406f843"; // IdentityBindings
 const PROFILE_TESTNET  = "0x03b4a3129199b16ccf144a100b1fc65f31d907c1"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
@@ -34,7 +34,9 @@ const SAMPLE_HOLDER    = "0x119B2Bf71856155b234f818476ae0610634A2aB9"; // 9nosin
 const ERC721_ABI = ["function balanceOf(address) view returns (uint256)"];
 const APPS_ABI = [
   "function campaignCount() view returns (uint256)",
-  "function conditionsOf(uint256) view returns (tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot))",
+  "function conditionsOf(uint256) view returns (tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot))",
+  "function gate() view returns (address)",
+  "function idRegistry() view returns (address)",
   "function getEntries(uint256) view returns (address[])",
   "function getWinners(uint256) view returns (address[])",
   "function getCampaign(uint256) view returns (tuple(address creator, uint8 kind, string title, uint64 startAt, uint64 endAt, uint32 winnerCount, uint64 seedBlock, bool drawn, bool usedFallbackSeed, uint8 optionCount, uint256 entryCount, address prizeToken, uint256 prizePerWinner, uint256 pool, uint256 claimAmount, uint32 maxClaims, bool claimRandom, uint256 paidOut, bool reclaimed, string prizeLabel))",
@@ -43,16 +45,16 @@ const APPS_ABI = [
   "function getWinners(uint256) view returns (address[])",
   "function isWinner(uint256, address) view returns (bool)",
   "function prizeClaimed(uint256, address) view returns (bool)",
-  "function enterRaffle(uint256, bytes32[])",
-  "function castVote(uint256, uint8, bytes32[])",
+  "function enterRaffle(uint256, bytes32[], bytes32[])",
+  "function castVote(uint256, uint8, bytes32[], bytes32[])",
   "function draw(uint256)",
-  "function claim(uint256, bytes32[])",
+  "function claim(uint256, bytes32[], bytes32[])",
   "function claimPrize(uint256)",
   "function reclaim(uint256)",
-  "function createRaffle(string, uint64, uint64, uint32, uint64, address, uint256, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot), string) payable returns (uint256)",
-  "function createVote(string, uint64, uint64, uint8, address, uint256, uint32, uint64, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot), string[]) payable returns (uint256)",
+  "function createRaffle(string, uint64, uint64, uint32, uint64, address, uint256, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string) payable returns (uint256)",
+  "function createVote(string, uint64, uint64, uint8, address, uint256, uint32, uint64, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string[]) payable returns (uint256)",
   "function optionLabelsOf(uint256) view returns (string[])",
-  "function createClaim(string, uint64, uint64, uint32, address, uint256, bool, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot)) payable returns (uint256)",
+  "function createClaim(string, uint64, uint64, uint32, address, uint256, bool, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot)) payable returns (uint256)",
   "function postUrl(uint256) view returns (string)","function series(uint256) view returns (string)","function setSeries(uint256,string)",
   "function setPostUrl(uint256, string)",
   "event PostUrlSet(uint256 indexed id, string url)",
@@ -73,7 +75,7 @@ const NETWORK = {
   appsRpcs: ["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet-dataseed.bnbchain.org", "https://data-seed-prebsc-1-s1.bnbchain.org:8545"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com", "https://rpc.ankr.com/bsc", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 144360363; // V9 deployment block: event scans start here
+const APPS_DEPLOY_BLOCK = 144378510; // V10 deployment block: event scans start here
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-26: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
@@ -135,7 +137,7 @@ en: {
   m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", cd_sec:"4 \u00b7 Entry conditions (optional)", cd_bind:"Must have a bound X account", cd_token:"Token holding gate", cd_721:"This is an NFT (count by balance)", cd_721_hint:"NFT gate: the address above is the NFT contract, the number is how many they must hold (usually 1). At entry the contract checks balanceOf - it returns the count they hold.", cd_prior:"Must have entered campaign #", cd_stamps:"Must hold expedition stamps \u2265", cd_hint:"Conditions are checked on-chain at entry. A follow on X cannot be verified on-chain - the binding condition is its trustless half: every entrant carries a public handle anyone can check.", cd_err_token:"Enter a valid gate token address.", cd_err_min:"Enter a minimum holding above zero.", cd_err_prior:"Enter the earlier campaign number.", cd_err_stamps:"Stamps required: 1 to 7.", chip_bind:"X bound", chip_token:"Hold", chip_nft:"NFT", chip_prior:"Entered", chip_stamps:"Stamps", m_cond_0:"This campaign requires a bound X account - bind yours from your identity card first.", m_cond_1:"You do not hold enough of the gate token for this campaign.", m_cond_2:"This campaign is for returning participants - enter the earlier campaign first.", m_cond_3:"You need more expedition stamps for this campaign.", chip_allow:"Allowlist", m_cond_4:"This campaign is allowlist-only. Import the address list on the campaign page, then try again.", cd_allow:"Allowlist only - only listed addresses can join", cd_allow_list:"Address list", cd_allow_ph:"One address per line (or comma-separated)", cd_allow_dl:"Download list file", cd_err_allow:"The list is empty or contains an invalid address.", lst_h:"Allowlist", lst_hint:"This campaign is limited to an address list committed on-chain as a Merkle root. Import the list to check your address and join.", lst_ph:"Paste the address list here", lst_save:"Save list", lst_in:" \u00b7 your address is on the list \u2713", lst_out:" \u00b7 your address is not on the list", lst_root_ok:"List matches the on-chain root \u2713", lst_root_bad:"This list does not match the on-chain root \u2717", vp_on:"Add a prize pool drawn among voters", vp_note:"After the vote ends, winners are drawn at random from ALL voters - the option picked plays no role - and split the pool equally. Winners claim on-chain; anyone can recompute the draw.", vp_total:"Total prize pool", vp_winners:"Prize winners", vp_err_token:"Pick a prize token for the voter prize.", vp_err_total:"Enter a prize pool above zero.", c_vote_prize:"voter prize", nav_quest:"Expedition", q_kicker:"GENESIS EXPEDITION \u00b7 SEASON 0", q_title:"The Human Expedition", q_sub:"Seven days, seven stamps, one finale. Only verified humans can stamp - one per day, paid instantly in lucky shares. Collect at least 5 stamps to enter the finale draw.", q_stat_daypool:"stamp pool / day", q_stat_slots:"stamp slots / day", q_stat_finale:"finale pool", q_stat_min:"stamps to enter finale", q_my_h:"My expedition", q_day:"Day", q_today_claim:"Claim today's stamp", q_today_done:"Stamped today", q_today_full:"Today's stamps are gone", q_today_left:"left today:", q_notstarted:"Season starts", q_connect_hint:"Connect your wallet to play.", q_finale_h:"Finale", q_enter:"Enter the finale", q_entered:"Entered the finale", q_need_more:"stamps short:", q_eligible_yes:"Finale eligible", q_genesis:"Genesis participant", q_seed_lock:"Lock the draw seed", q_draw_btn:"Draw the finale", q_drawn_h:"Finale drawn", q_claim_prize:"Claim prize", q_prize_claimed:"Prize claimed", q_entries_h:"Finale entries", q_phase_entry:"entries close", q_winner_tag:"WINNER", q_rules_h:"How it works", q_rules_1:"One stamp per human per day. Each stamp pays a lucky share of the day's pool, instantly.", q_rules_2:"Collect at least 5 of 7 stamps to enter the finale. Entry is one per human.", q_rules_3:"The finale draw seed is locked on-chain after entries close; anyone can recompute the winners. Stamp randomness is entertainment-grade pseudo-randomness - small daily amounts by design.", q_card_h:"Expedition - Season 0", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_disconnect:"Click to disconnect", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", cd_sec:"4 \u00b7 Entry conditions (optional)", cd_bind:"Must have a bound X account", cd_token:"Token holding gate", cd_721:"This is an NFT (count by balance)", cd_721_hint:"NFT gate: the address above is the NFT contract, the number is how many they must hold (usually 1). At entry the contract checks balanceOf - it returns the count they hold.", cd_prior:"Must have entered campaign #", cd_stamps:"Must hold expedition stamps \u2265", cd_hint:"Conditions are checked on-chain at entry. A follow on X cannot be verified on-chain - the binding condition is its trustless half: every entrant carries a public handle anyone can check.", cd_err_token:"Enter a valid gate token address.", cd_err_min:"Enter a minimum holding above zero.", cd_err_prior:"Enter the earlier campaign number.", cd_err_stamps:"Stamps required: 1 to 7.", chip_bind:"X bound", chip_token:"Hold", chip_nft:"NFT", chip_prior:"Entered", chip_stamps:"Stamps", m_cond_0:"This campaign requires a bound X account - bind yours from your identity card first.", m_cond_1:"You do not hold enough of the gate token for this campaign.", m_cond_2:"This campaign is for returning participants - enter the earlier campaign first.", m_cond_3:"You need more expedition stamps for this campaign.", chip_allow:"Allowlist", chip_id:"Agent ID list", m_cond_5:"This campaign is limited to listed Agent IDs - your Agent ID is not on the list (or your address has no Agent ID name). If you have the name list, import it on the campaign page first.", cd_id:"Agent ID allowlist - only listed Agent IDs can join", cd_id_list:"Agent ID list", cd_id_ph:"One Agent ID name per line (.ai suffix optional)", cd_id_dl:"Download list file", cd_err_id:"The list is empty or contains an invalid name.", cd_id_hint:"The list is committed as hashes of the names themselves - it holds identities, never wallet addresses. A mistyped name fails silently: it simply never matches anyone. Check every name carefully.", idlst_h:"Agent ID allowlist", idlst_hint:"This campaign is limited to the Agent IDs on a list committed on-chain as a Merkle root of name hashes - identities only, no wallet addresses. Import the name list to check yours and join.", idlst_ph:"Paste the Agent ID name list here", idlst_in:" \u00b7 your Agent ID is on the list \u2713", idlst_out:" \u00b7 your Agent ID is not on the list", idlst_nohandle:" \u00b7 your address has no Agent ID name", m_cond_4:"This campaign is allowlist-only. Import the address list on the campaign page, then try again.", cd_allow:"Allowlist only - only listed addresses can join", cd_allow_list:"Address list", cd_allow_ph:"One address per line (or comma-separated)", cd_allow_dl:"Download list file", cd_err_allow:"The list is empty or contains an invalid address.", lst_h:"Allowlist", lst_hint:"This campaign is limited to an address list committed on-chain as a Merkle root. Import the list to check your address and join.", lst_ph:"Paste the address list here", lst_save:"Save list", lst_in:" \u00b7 your address is on the list \u2713", lst_out:" \u00b7 your address is not on the list", lst_root_ok:"List matches the on-chain root \u2713", lst_root_bad:"This list does not match the on-chain root \u2717", vp_on:"Add a prize pool drawn among voters", vp_note:"After the vote ends, winners are drawn at random from ALL voters - the option picked plays no role - and split the pool equally. Winners claim on-chain; anyone can recompute the draw.", vp_total:"Total prize pool", vp_winners:"Prize winners", vp_err_token:"Pick a prize token for the voter prize.", vp_err_total:"Enter a prize pool above zero.", c_vote_prize:"voter prize", nav_quest:"Expedition", q_kicker:"GENESIS EXPEDITION \u00b7 SEASON 0", q_title:"The Human Expedition", q_sub:"Seven days, seven stamps, one finale. Only verified humans can stamp - one per day, paid instantly in lucky shares. Collect at least 5 stamps to enter the finale draw.", q_stat_daypool:"stamp pool / day", q_stat_slots:"stamp slots / day", q_stat_finale:"finale pool", q_stat_min:"stamps to enter finale", q_my_h:"My expedition", q_day:"Day", q_today_claim:"Claim today's stamp", q_today_done:"Stamped today", q_today_full:"Today's stamps are gone", q_today_left:"left today:", q_notstarted:"Season starts", q_connect_hint:"Connect your wallet to play.", q_finale_h:"Finale", q_enter:"Enter the finale", q_entered:"Entered the finale", q_need_more:"stamps short:", q_eligible_yes:"Finale eligible", q_genesis:"Genesis participant", q_seed_lock:"Lock the draw seed", q_draw_btn:"Draw the finale", q_drawn_h:"Finale drawn", q_claim_prize:"Claim prize", q_prize_claimed:"Prize claimed", q_entries_h:"Finale entries", q_phase_entry:"entries close", q_winner_tag:"WINNER", q_rules_h:"How it works", q_rules_1:"One stamp per human per day. Each stamp pays a lucky share of the day's pool, instantly.", q_rules_2:"Collect at least 5 of 7 stamps to enter the finale. Entry is one per human.", q_rules_3:"The finale draw seed is locked on-chain after entries close; anyone can recompute the winners. Stamp randomness is entertainment-grade pseudo-randomness - small daily amounts by design.", q_card_h:"Expedition - Season 0", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -373,7 +375,7 @@ zh: {
   m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", cd_sec:"4 · 参加条件（可选）", cd_bind:"必须已绑定 X 账号", cd_token:"持币门槛", cd_721_hint:"NFT 门槛这样设：上面地址填 NFT 合约，数字填至少持有几个（一般填 1）。参加时合约查 balanceOf，返回他持有几个，够数放行。", cd_721:"这是 NFT（按余额计数）", cd_prior:"必须参加过活动编号 #", cd_stamps:"必须持有远征印记 ≥", cd_hint:"条件在参加时由链上逐条检查。「关注」无法链上验证——绑定条件是它的无信任版本：每位参加者都带着公开账号，任何人可在 X 上对照核对。", cd_err_token:"请填入有效的门槛代币地址。", cd_err_min:"请填入大于零的最低持有量。", cd_err_prior:"请填入前置活动的编号。", cd_err_stamps:"印记门槛需在 1 到 7 之间。", chip_bind:"已绑定 X", chip_token:"持币", chip_nft:"NFT", chip_prior:"参加过", chip_stamps:"印记", m_cond_0:"本活动要求先绑定 X 账号——去身份卡页绑定后再来。", m_cond_1:"你持有的门槛代币不足，暂时参加不了本活动。", m_cond_2:"本活动只对老参加者开放——先去参加前置活动。", m_cond_3:"你的远征印记还不够，集满门槛再来。", chip_allow:"名单制", m_cond_4:"本活动是名单制——先到活动详情页导入名单文件再参加。", cd_allow:"名单制——只有名单内的地址能参加", cd_allow_list:"地址名单", cd_allow_ph:"每行一个地址(或用逗号分隔)", cd_allow_dl:"下载名单文件", cd_err_allow:"名单为空或含有无效地址。", lst_h:"参加名单", lst_hint:"本活动限定名单内地址参加,名单的默克尔根已存入合约。导入名单即可核对你的地址并参加。", lst_ph:"把地址名单粘贴到这里", lst_save:"保存名单", lst_in:" \u00b7 你的地址在名单内 \u2713", lst_out:" \u00b7 你的地址不在名单内", lst_root_ok:"名单与链上根一致 \u2713", lst_root_bad:"这份名单与链上根不一致 \u2717", vp_on:"给投票加奖池(在投票人中抽奖)", vp_note:"投票结束后,从全部投票人中随机抽取中奖者——投了哪个选项不影响抽奖——平分奖池。中奖者链上自助领取,任何人可复算开奖。", vp_total:"奖池总额", vp_winners:"中奖名额", vp_err_token:"请为投票奖池选择奖品代币。", vp_err_total:"请填入大于零的奖池金额。", c_vote_prize:"投票奖池", nav_quest:"远征", q_kicker:"创世远征 \u00b7 第 0 季", q_title:"真人远征", q_sub:"七天，七枚印记，一场终章。只有真人能集印——每天一枚，拼手气即时到账。集满至少 5 枚，即可进入终章抽奖。", q_stat_daypool:"每日印记池", q_stat_slots:"每日名额", q_stat_finale:"终章奖池", q_stat_min:"终章门槛（印记）", q_my_h:"我的远征", q_day:"第", q_today_claim:"领取今日印记", q_today_done:"今日已集", q_today_full:"今日名额已领完", q_today_left:"今日剩余", q_notstarted:"赛季开始于", q_connect_hint:"连接钱包后参与。", q_finale_h:"终章", q_enter:"进入终章", q_entered:"已进入终章", q_need_more:"还差印记", q_eligible_yes:"已获终章资格", q_genesis:"创世参与", q_seed_lock:"锁定开奖种子", q_draw_btn:"终章开奖", q_drawn_h:"终章已开奖", q_claim_prize:"领取奖金", q_prize_claimed:"奖金已领", q_entries_h:"终章参加者", q_phase_entry:"报名截止", q_winner_tag:"中奖", q_rules_h:"玩法", q_rules_1:"每位真人每天可领一枚印记，每枚按拼手气分当日池，即时到账。", q_rules_2:"7 枚集满至少 5 枚可进入终章，报名一人一份。", q_rules_3:"终章种子在报名截止后链上锁定，任何人可复算中奖名单。印记随机为娱乐级伪随机——每日小额，设计如此。", q_card_h:"远征 · 第 0 季", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_disconnect:"点击断开连接", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", cd_sec:"4 · 参加条件（可选）", cd_bind:"必须已绑定 X 账号", cd_token:"持币门槛", cd_721_hint:"NFT 门槛这样设：上面地址填 NFT 合约，数字填至少持有几个（一般填 1）。参加时合约查 balanceOf，返回他持有几个，够数放行。", cd_721:"这是 NFT（按余额计数）", cd_prior:"必须参加过活动编号 #", cd_stamps:"必须持有远征印记 ≥", cd_hint:"条件在参加时由链上逐条检查。「关注」无法链上验证——绑定条件是它的无信任版本：每位参加者都带着公开账号，任何人可在 X 上对照核对。", cd_err_token:"请填入有效的门槛代币地址。", cd_err_min:"请填入大于零的最低持有量。", cd_err_prior:"请填入前置活动的编号。", cd_err_stamps:"印记门槛需在 1 到 7 之间。", chip_bind:"已绑定 X", chip_token:"持币", chip_nft:"NFT", chip_prior:"参加过", chip_stamps:"印记", m_cond_0:"本活动要求先绑定 X 账号——去身份卡页绑定后再来。", m_cond_1:"你持有的门槛代币不足，暂时参加不了本活动。", m_cond_2:"本活动只对老参加者开放——先去参加前置活动。", m_cond_3:"你的远征印记还不够，集满门槛再来。", chip_allow:"名单制", chip_id:"Agent ID 名单", m_cond_5:"本活动限名单内 Agent ID 参加——你的 Agent ID 不在名单内（或你的地址没有 Agent ID 名字）。若你有名字名单，先到活动详情页导入再参加。", cd_id:"Agent ID 名单——只有名单内的 Agent ID 能参加", cd_id_list:"Agent ID 名单", cd_id_ph:"每行一个 Agent ID 名字（带不带 .ai 都行）", cd_id_dl:"下载名单文件", cd_err_id:"名单为空或含有无效名字。", cd_id_hint:"名单存的是名字本身的哈希——名单里只有身份、没有钱包地址。名字写错不会报错，只是永远没人能对上，请逐个核对。", idlst_h:"Agent ID 名单", idlst_hint:"本活动限名单内 Agent ID 参加。名单以名字哈希的默克尔根存入合约——只有身份、没有钱包地址。导入名字名单即可核对你的名字并参加。", idlst_ph:"把 Agent ID 名字名单粘贴到这里", idlst_in:" · 你的 Agent ID 在名单内 ✓", idlst_out:" · 你的 Agent ID 不在名单内", idlst_nohandle:" · 你的地址没有 Agent ID 名字", m_cond_4:"本活动是名单制——先到活动详情页导入名单文件再参加。", cd_allow:"名单制——只有名单内的地址能参加", cd_allow_list:"地址名单", cd_allow_ph:"每行一个地址(或用逗号分隔)", cd_allow_dl:"下载名单文件", cd_err_allow:"名单为空或含有无效地址。", lst_h:"参加名单", lst_hint:"本活动限定名单内地址参加,名单的默克尔根已存入合约。导入名单即可核对你的地址并参加。", lst_ph:"把地址名单粘贴到这里", lst_save:"保存名单", lst_in:" \u00b7 你的地址在名单内 \u2713", lst_out:" \u00b7 你的地址不在名单内", lst_root_ok:"名单与链上根一致 \u2713", lst_root_bad:"这份名单与链上根不一致 \u2717", vp_on:"给投票加奖池(在投票人中抽奖)", vp_note:"投票结束后,从全部投票人中随机抽取中奖者——投了哪个选项不影响抽奖——平分奖池。中奖者链上自助领取,任何人可复算开奖。", vp_total:"奖池总额", vp_winners:"中奖名额", vp_err_token:"请为投票奖池选择奖品代币。", vp_err_total:"请填入大于零的奖池金额。", c_vote_prize:"投票奖池", nav_quest:"远征", q_kicker:"创世远征 \u00b7 第 0 季", q_title:"真人远征", q_sub:"七天，七枚印记，一场终章。只有真人能集印——每天一枚，拼手气即时到账。集满至少 5 枚，即可进入终章抽奖。", q_stat_daypool:"每日印记池", q_stat_slots:"每日名额", q_stat_finale:"终章奖池", q_stat_min:"终章门槛（印记）", q_my_h:"我的远征", q_day:"第", q_today_claim:"领取今日印记", q_today_done:"今日已集", q_today_full:"今日名额已领完", q_today_left:"今日剩余", q_notstarted:"赛季开始于", q_connect_hint:"连接钱包后参与。", q_finale_h:"终章", q_enter:"进入终章", q_entered:"已进入终章", q_need_more:"还差印记", q_eligible_yes:"已获终章资格", q_genesis:"创世参与", q_seed_lock:"锁定开奖种子", q_draw_btn:"终章开奖", q_drawn_h:"终章已开奖", q_claim_prize:"领取奖金", q_prize_claimed:"奖金已领", q_entries_h:"终章参加者", q_phase_entry:"报名截止", q_winner_tag:"中奖", q_rules_h:"玩法", q_rules_1:"每位真人每天可领一枚印记，每枚按拼手气分当日池，即时到账。", q_rules_2:"7 枚集满至少 5 枚可进入终章，报名一人一份。", q_rules_3:"终章种子在报名截止后链上锁定，任何人可复算中奖名单。印记随机为娱乐级伪随机——每日小额，设计如此。", q_card_h:"远征 · 第 0 季", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -996,6 +998,56 @@ function mkProof(list, target){
   for (let li = 0; li < layers.length - 1; li++){ const level = layers[li]; const sib = idx % 2 === 0 ? idx + 1 : idx - 1; if (sib < level.length) proof.push(level[sib]); idx = Math.floor(idx / 2); }
   return proof;
 }
+/* ---------- Agent ID list (condition 5): identity-leaf Merkle ---------- */
+function idLeaf(h){ return ethers.keccak256(ethers.solidityPacked(["bytes32"], [ethers.keccak256(ethers.toUtf8Bytes(h))])); }
+function idLayers(list){
+  let level = list.map(idLeaf); const layers = [level];
+  while (level.length > 1){ const next = []; for (let i = 0; i < level.length; i += 2) next.push(i + 1 < level.length ? mkPair(level[i], level[i + 1]) : level[i]); level = next; layers.push(level); }
+  return layers;
+}
+function idRootOf(list){ const l = idLayers(list); return l[l.length - 1][0]; }
+function idProofOf(list, handle){
+  const layers = idLayers(list); let idx = list.findIndex(x => x === normName(handle));
+  if (idx < 0) return null;
+  const proof = [];
+  for (let li = 0; li < layers.length - 1; li++){ const level = layers[li]; const sib = idx % 2 === 0 ? idx + 1 : idx - 1; if (sib < level.length) proof.push(level[sib]); idx = Math.floor(idx / 2); }
+  return proof;
+}
+function normName(x){
+  let s = String(x || "").trim().toLowerCase();
+  if (s.endsWith(".ai")) s = s.slice(0, -3);
+  return s;
+}
+function validName(s){ return s.length >= 1 && s.length <= 63 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s); }
+function parseNameList(text){
+  const raw = String(text || "").split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
+  const out = []; const seen = new Set();
+  for (const x of raw){ const s = normName(x); if (!validName(s)) return null; if (!seen.has(s)){ seen.add(s); out.push(s); } }
+  return out;
+}
+function storedIdList(id){ try{ const j = JSON.parse(localStorage.getItem("hg_idlist_" + id) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
+function storeIdList(id, list){ try{ localStorage.setItem("hg_idlist_" + id, JSON.stringify(list)); }catch(e){} }
+function dlIdListJson(list, id){
+  try{
+    const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "becounted-idlist-" + id + ".json"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }catch(e){}
+}
+const HANDLE_ABI = ["function handleOf(address) view returns (string)"];
+async function handleOfAddr(addr){
+  // address -> the caller's OWN handle, read from the very registry the
+  // apps contract itself consults (apps.idRegistry()). This is the only
+  // direction this code ever resolves; a name is never resolved back to
+  // an address anywhere in the frontend.
+  try{
+    chain();
+    const reg = await appsRead.idRegistry();
+    if (!reg || reg === ethers.ZeroAddress) return "";
+    const h = await new ethers.Contract(reg, HANDLE_ABI, providerTest).handleOf(addr);
+    return String(h || "").trim();
+  }catch(e){ return ""; }
+}
 function parseAddrList(text){
   const raw = String(text || "").split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
   const out = []; const seen = new Set();
@@ -1012,6 +1064,9 @@ function dlListJson(list, id){
   }catch(e){}
 }
 window.dlAllowList = () => { const list = parseAddrList($("cdAllowList")?.value || ""); if (list && list.length) dlListJson(list, "new"); };
+window.dlIdList = () => { const list = parseNameList($("cdIdList")?.value || ""); if (list && list.length) dlIdListJson(list, "new"); };
+window.toggleIdList = () => { const on = !!$("cdIdOn")?.checked; if ($("cdIdRow")) $("cdIdRow").style.display = on ? "" : "none"; if ($("cdIdMeta")) $("cdIdMeta").style.display = on ? "" : "none"; if ($("cdIdHintRow")) $("cdIdHintRow").style.display = on ? "" : "none"; updIdCount(); };
+window.updIdCount = () => { const el = $("cdIdCount"); if (!el) return; const list = parseNameList($("cdIdList")?.value || ""); el.textContent = list ? (list.length + " \u00b7 " + idRootOf(list).slice(0, 14) + "\u2026") : ""; };
 window.toggleAllow = () => { const on = !!$("cdAllowOn")?.checked; if ($("cdAllowRow")) $("cdAllowRow").style.display = on ? "" : "none"; if ($("cdAllowMeta")) $("cdAllowMeta").style.display = on ? "" : "none"; updAllowCount(); };
 window.updAllowCount = () => { const el = $("cdAllowCount"); if (!el) return; const list = parseAddrList($("cdAllowList")?.value || ""); el.textContent = list ? (list.length + " \u00b7 " + mkRoot(list).slice(0, 14) + "\u2026") : ""; };
 window.toggleVPrize = () => switchCreateTab(createKind);
@@ -1021,18 +1076,30 @@ window.toggle721 = () => {
   const hint = $("cd721Hint"); if (hint) hint.style.display = on ? "" : "none";
   const min = $("cdTokenMin"); if (min) min.placeholder = on ? "1" : "100";
 };
-async function proofFor(id, who){
-  // [] = no allowlist; array = proof; null = list missing or who not on it
+async function proofsFor(id, who){
+  // { p4, p5 }: each is [] (condition off), a proof array, or null
+  // (condition on but unprovable from here: list missing / not on the
+  // list / no handle). Callers map null to m_cond_4 / m_cond_5.
+  const out = { p4: [], p5: [] };
   try{
     chain();
     const cd = await appsRead.conditionsOf(id);
-    if (!cd.allowRoot || cd.allowRoot === ethers.ZeroHash) return [];
-    const list = storedList(id);
-    if (!list) return null;
-    return mkProof(list, who);
-  }catch(e){ return []; }
+    if (cd.allowRoot && cd.allowRoot !== ethers.ZeroHash){
+      const list = storedList(id);
+      out.p4 = list ? mkProof(list, who) : null;
+    }
+    if (cd.idListRoot && cd.idListRoot !== ethers.ZeroHash){
+      const list = storedIdList(id);
+      if (!list) out.p5 = null;
+      else {
+        const h = await handleOfAddr(who);
+        out.p5 = h ? idProofOf(list, h) : null;
+      }
+    }
+  }catch(e){ /* fail-open like before: the chain is the final judge */ }
+  return out;
 }
-function listPanelHtml(id, cd){
+function addrListPanelHtml(id, cd){
   if (!cd || !cd.allowRoot || cd.allowRoot === ethers.ZeroHash) return "";
   const list = storedList(id);
   let status = "";
@@ -1043,6 +1110,32 @@ function listPanelHtml(id, cd){
     status = `<div class="count" style="margin-top:6px">${rootOk ? t("lst_root_ok") : t("lst_root_bad")}${mine}</div>`;
   }
   return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("lst_h")}</h2><p>${t("lst_hint")}</p></div><textarea id="lstText-${id}" rows="3" placeholder="${t("lst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveList(${id})">${t("lst_save")}</button> <span class="camp-msg" id="lstMsg-${id}"></span></div>${status}</div>`;
+}
+function listPanelHtml(id, cd){ return addrListPanelHtml(id, cd) + idListPanelHtml(id, cd); }
+function idListPanelHtml(id, cd){
+  if (!cd || !cd.idListRoot || cd.idListRoot === ethers.ZeroHash) return "";
+  const list = storedIdList(id);
+  let status = "";
+  if (list){
+    const rootOk = idRootOf(list).toLowerCase() === String(cd.idListRoot).toLowerCase();
+    status = `<div class="count" style="margin-top:6px">${rootOk ? t("lst_root_ok") : t("lst_root_bad")}<span id="idlstMine-${id}"></span></div>`;
+  }
+  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("idlst_h")}</h2><p>${t("idlst_hint")}</p></div><textarea id="idlstText-${id}" rows="3" placeholder="${t("idlst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveIdList(${id})">${t("lst_save")}</button> <span class="camp-msg" id="idlstMsg-${id}"></span></div>${status}</div>`;
+}
+window.saveIdList = id => {
+  const list = parseNameList($("idlstText-" + id)?.value || "");
+  const m = $("idlstMsg-" + id);
+  if (!list || !list.length){ if (m) m.textContent = t("cd_err_id"); return; }
+  storeIdList(id, list);
+  loadDetail();
+};
+async function fillIdMine(id){
+  const el = $("idlstMine-" + id);
+  if (!el || !myAddr) return;
+  const list = storedIdList(id);
+  if (!list) return;
+  const h = await handleOfAddr(myAddr);
+  el.textContent = !h ? t("idlst_nohandle") : (idProofOf(list, h) ? t("idlst_in") : t("idlst_out"));
 }
 window.saveList = id => {
   const list = parseAddrList($("lstText-" + id)?.value || "");
@@ -1060,11 +1153,12 @@ function condChipsHtml(cd){
     if (cd.requireEnteredId !== ethers.MaxUint256) chips.push(`${t("chip_prior")} #${cd.requireEnteredId}`);
     if (Number(cd.minStamps) > 0) chips.push(`${t("chip_stamps")} \u2265 ${cd.minStamps}`);
     if (cd.allowRoot && cd.allowRoot !== ethers.ZeroHash) chips.push(t("chip_allow"));
+    if (cd.idListRoot && cd.idListRoot !== ethers.ZeroHash) chips.push(t("chip_id"));
   }catch(e){}
   return chips.length ? `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${chips.map(x => `<span class="chip" style="color:var(--gold);border-color:rgba(240,185,11,.45)">${x}</span>`).join("")}</div>` : "";
 }
 async function checkConditions(id, who){
-  // returns failing condition index 0..4, -1 when all pass, null on read error (fail-open)
+  // returns failing condition index 0..5, -1 when all pass, null on read error (fail-open)
   try{
     chain();
     const cd = await appsRead.conditionsOf(id);
@@ -1076,6 +1170,7 @@ async function checkConditions(id, who){
     if (cd.requireEnteredId !== ethers.MaxUint256){ const ok = await appsRead.hasEntered(cd.requireEnteredId, who); if (!ok) return 2; }
     if (Number(cd.minStamps) > 0){ const n = await new ethers.Contract(cd.questRef, QUEST_ABI, providerTest).stampCount(who); if (Number(n) < Number(cd.minStamps)) return 3; }
     if (cd.allowRoot && cd.allowRoot !== ethers.ZeroHash){ const list = storedList(id); if (!list || !mkProof(list, who)) return 4; }
+    if (cd.idListRoot && cd.idListRoot !== ethers.ZeroHash){ const list = storedIdList(id); if (!list) return 5; const h = await handleOfAddr(who); if (!h || !idProofOf(list, h)) return 5; }
     return -1;
   }catch(e){ return null; }
 }
@@ -1113,12 +1208,12 @@ async function withSigner(fn, id, gated){
   catch(e){ if(msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0,110); }
   finally{ btns.forEach(b => b.disabled = false); }
 }
-window.enterRaffle = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofFor(id, myAddr); if (pf === null) throw new Error(t("m_cond_4")); await sendAndWait(msg, a.enterRaffle(id, pf)); }, id, true);
-window.voteCampaign = (id,o) => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofFor(id, myAddr); if (pf === null) throw new Error(t("m_cond_4")); await sendAndWait(msg, a.castVote(id, o, pf)); }, id, true);
+window.enterRaffle = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.enterRaffle(id, pf.p4, pf.p5)); }, id, true);
+window.voteCampaign = (id,o) => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.castVote(id, o, pf.p4, pf.p5)); }, id, true);
 window.drawCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.draw(id)); }, id);
 window.setPostUrlMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("posturl-" + id)?.value || "").trim(); await sendAndWait(msg, a.setPostUrl(id, v)); loadMine(); }, id);
 window.setSeriesMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("series-" + id)?.value || "").trim(); await sendAndWait(msg, a.setSeries(id, v)); loadMine(); }, id);
-window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofFor(id, myAddr); if (pf === null) throw new Error(t("m_cond_4")); await sendAndWait(msg, a.claim(id, pf)); }, id, true);
+window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.claim(id, pf.p4, pf.p5)); }, id, true);
 window.claimPrize = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claimPrize(id)); }, id);
 window.reclaimCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.reclaim(id)); }, id);
 window.onLangChange = () => { renderConnectBtn(); labelPresetOptions(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); if ($("questBox")) loadQuest(); };
@@ -1295,7 +1390,7 @@ function renderPreview(){
   </div>`;
 }
 async function buildCond(msg){
-  const cond = { requireBinding: !!$("cdBind")?.checked, gateToken: ethers.ZeroAddress, gateMin: 0n, gateIs721: false, requireEnteredId: ethers.MaxUint256, minStamps: 0, questRef: ethers.ZeroAddress, allowRoot: ethers.ZeroHash };
+  const cond = { requireBinding: !!$("cdBind")?.checked, gateToken: ethers.ZeroAddress, gateMin: 0n, gateIs721: false, requireEnteredId: ethers.MaxUint256, minStamps: 0, questRef: ethers.ZeroAddress, allowRoot: ethers.ZeroHash, idListRoot: ethers.ZeroHash };
   if ($("cdTokenOn")?.checked){
     const a = ($("cdTokenAddr")?.value || "").trim();
     if (!ethers.isAddress(a)){ msg.textContent = t("cd_err_token"); return null; }
@@ -1321,6 +1416,12 @@ async function buildCond(msg){
     if (!list || list.length === 0){ msg.textContent = t("cd_err_allow"); return null; }
     cond.allowRoot = mkRoot(list);
     window.__newList = list;
+  }
+  if ($("cdIdOn")?.checked){
+    const list = parseNameList($("cdIdList")?.value || "");
+    if (!list || list.length === 0){ msg.textContent = t("cd_err_id"); return null; }
+    cond.idListRoot = idRootOf(list);
+    window.__newIdList = list;
   }
   return cond;
 }
@@ -1419,6 +1520,14 @@ async function submitCreate(){
         dlListJson(window.__newList, nid);
       }catch(e){ /* list stays in the create form */ }
       window.__newList = null;
+    }
+    if (window.__newIdList){
+      try{
+        const nid = Number(await appsRead.campaignCount()) - 1;
+        storeIdList(nid, window.__newIdList);
+        dlIdListJson(window.__newIdList, nid);
+      }catch(e){ /* list stays in the create form */ }
+      window.__newIdList = null;
     }
     msg.textContent = t("f_ok");
   }catch(e){ msg.textContent = (e.shortMessage || e.message || "Failed").slice(0,130); }
@@ -1718,6 +1827,7 @@ async function loadDetail(){
       ${proof}
       ${condChipsHtml(cond)}${listPanelHtml(id, cond)}
       <div class="trust-row">${t("d_contract")} <a href="https://testnet.bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 BeCounted <a href="https://testnet.bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : (c.prizeLabel ? t("d_custom_note") : t("d_escrow_no"))}</div>`;
+    fillIdMine(id);
     window.__partEntries = entries;
     const sb = $("stickyBar");
     if (sb){

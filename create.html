@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1122h">
+<link rel="stylesheet" href="assets/style.css?v=1122i">
 </head>
 <body>
 <nav>
@@ -152,6 +152,10 @@
       <div class="f-row"><label><input type="checkbox" id="cdAllowOn" onchange="toggleAllow()"> <span data-i18n="cd_allow"></span></label></div>
       <div class="f-row" id="cdAllowRow" style="display:none"><label data-i18n="cd_allow_list"></label><textarea id="cdAllowList" rows="4" data-i18n-ph="cd_allow_ph" spellcheck="false" style="flex:1" oninput="updAllowCount()"></textarea></div>
       <div class="f-row" id="cdAllowMeta" style="display:none"><label></label><span class="hint" id="cdAllowCount"></span><button type="button" class="btn sm ghost" onclick="dlAllowList()" data-i18n="cd_allow_dl"></button></div>
+      <div class="f-row"><label><input type="checkbox" id="cdIdOn" onchange="toggleIdList()"> <span data-i18n="cd_id"></span></label></div>
+      <div class="f-row" id="cdIdRow" style="display:none"><label data-i18n="cd_id_list"></label><textarea id="cdIdList" rows="4" data-i18n-ph="cd_id_ph" spellcheck="false" style="flex:1" oninput="updIdCount()"></textarea></div>
+      <div class="f-row" id="cdIdMeta" style="display:none"><label></label><span class="hint" id="cdIdCount"></span><button type="button" class="btn sm ghost" onclick="dlIdList()" data-i18n="cd_id_dl"></button></div>
+      <div class="f-row" id="cdIdHintRow" style="display:none"><label></label><div class="hint" data-i18n="cd_id_hint"></div></div>
       <div class="f-row"><div class="hint" data-i18n="cd_hint"></div></div>
       <div id="fErrors" style="display:none;color:#ff8a8a;font-size:13.5px;line-height:1.75;margin-bottom:10px"></div>
       <button class="btn" id="createSubmit" data-i18n="f_submit_raffle"></button>
@@ -173,6 +177,6 @@
 </footer>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1122h"></script>
+<script src="assets/app.js?v=1122i"></script>
 </body>
 </html>

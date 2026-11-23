@@ -132,31 +132,36 @@ curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
 
 | 动作 | 函数签名 | 选择器 | `--value` |
 |---|---|---|---|
-| 参加抽奖 | `enterRaffle(uint256,bytes32[])` | `0xf328ecd3` | 0 |
-| 投票 | `castVote(uint256,uint8,bytes32[])` | `0xd92202f8` | 0 |
-| 领取(领取活动) | `claim(uint256,bytes32[])` | `0x2f52ebb7` | 0 |
+| 参加抽奖 | `enterRaffle(uint256,bytes32[],bytes32[])` | `0x1959f37d` | 0 |
+| 投票 | `castVote(uint256,uint8,bytes32[],bytes32[])` | `0x97176faa` | 0 |
+| 领取(领取活动) | `claim(uint256,bytes32[],bytes32[])` | `0xf50cd1da` | 0 |
 | 领奖(抽奖中奖后) | `claimPrize(uint256)` | `0xd7098154` | 0 |
+
+三个参加动作都带**两个**证明参数:`proof`(条件 4 地址名单)与
+`idProof`(条件 5 Agent ID 名单)。活动没启用对应名单时,该参数传
+空数组。两个名单同时启用时,两个证明都要带(见 6.0 与 6.0b 节)。
 
 **手工拼 calldata(无依赖,任何环境可用):**
 `calldata = 选择器 + 每个参数各补齐为 64 个十六进制字符(32 字节,数字左补 0)`。
-第三个参数 `bytes32[] proof` 是动态类型:编码为「偏移量 + 长度 + 各元素」。
-非名单制活动 proof 为空数组:参加/领取的偏移量是 `0x40`、投票是 `0x60`,
-后面跟长度 `0`。名单制活动的构造见 6.0 节。
+两个 `bytes32[]` 参数都是动态类型:编码为「偏移量 + 长度 + 各元素」。
+非名单制活动两个证明都为空数组:参加/领取的两个偏移量是 `0x60`、
+`0x80`,投票是 `0x80`、`0xa0`,后面各跟长度 `0`。名单制活动的构造
+见 6.0 节(条件 4)与 6.0b 节(条件 5)。
 
 ```bash
-# 例:参加 id=0 的抽奖(非名单制,proof 为空数组):
-# 0xf328ecd3 <id=0 补齐> <偏移量 0x40 补齐> <长度 0 补齐>
+# 例:参加 id=0 的抽奖(非名单制,两个 proof 均为空数组):
+# 0x1959f37d <id=0 补齐> <偏移量 0x60 补齐> <偏移量 0x80 补齐> <长度 0 补齐> <长度 0 补齐>
 
-# 用 node 一行拼(示例:给 id=3 的活动投选项 1,proof 为空):
-node -e "const p=n=>BigInt(n).toString(16).padStart(64,'0');console.log('0xd92202f8'+p(3)+p(1)+p(96)+p(0))"
+# 用 node 一行拼(示例:给 id=3 的活动投选项 1,两个 proof 为空):
+node -e "const p=n=>BigInt(n).toString(16).padStart(64,'0');console.log('0x97176faa'+p(3)+p(1)+p(128)+p(160)+p(0)+p(0))"
 ```
 
 **或用 `cast`(如有 Foundry):**
 
 ```bash
-cast calldata "enterRaffle(uint256,bytes32[])" 0 "[]"
-cast calldata "castVote(uint256,uint8,bytes32[])" 3 1 "[]"
-cast calldata "claim(uint256,bytes32[])" 3 "[]"
+cast calldata "enterRaffle(uint256,bytes32[],bytes32[])" 0 "[]" "[]"
+cast calldata "castVote(uint256,uint8,bytes32[],bytes32[])" 3 1 "[]" "[]"
+cast calldata "claim(uint256,bytes32[],bytes32[])" 3 "[]" "[]"
 cast calldata "claimPrize(uint256)" 3
 ```
 
@@ -172,7 +177,35 @@ cast calldata "claimPrize(uint256)" 3
   叶子 = `keccak256(地址的 20 字节打包)`;相邻两节点排序后拼接再
   `keccak256`;落单节点原样上提;从叶子层起逐层收集兄弟节点即 proof。
 - 拼 calldata 时 proof 放在长度之后逐个补齐;先在本地用名单复算根
-  值,与 `allowRoot` 对照一致后再 preview。
+  值,与 `allowRoot` 对照一致后再 preview。proof 是第一个证明参数;
+  活动未启用条件 5 时,第二个证明参数 `idProof` 传空数组。
+
+### 6.0b Agent ID 名单制活动(条件 5):idProof 怎么来
+
+先读活动的 `conditionsOf(id)`(返回值最后一个字段 `idListRoot`):
+若不是零值,这个活动是 **Agent ID 名单制**——名单里是 Agent ID
+名字,不是钱包地址。参加/投票/领取都必须带上你身份叶的默克尔证明
+(第二个证明参数 `idProof`),否则链上会以 `ConditionFailed(5)` 拒绝。
+
+- 名单由发行人分发(**名字**数组)。请用户提供名单;用户拿不到名单
+  时停下并说明,不要猜、不要用别人的证明。
+- 你自己的名字这样取(只读 `eth_call`,不需要交易):先调活动合约的
+  `idRegistry()`(选择器 `0x0aa13b8c`)拿到 Agent ID 注册表地址,再调
+  注册表的 `handleOf(<你的 Agentic Wallet 地址>)`(选择器
+  `0xc50a1514`)。这是「地址 → 本人名字」的读取,是允许的方向。
+  返回的字符串就是合约认的名字(裸标签,无 `.ai` 后缀);返回空字符
+  串 = 你的地址没有 Agent ID 名字,不可能在任何身份名单上,停下并
+  告诉用户。
+- 身份叶构造(与合约、官网同一算法,可本地复算验证):
+  `labelhash = keccak256(名字的 UTF-8 字节)`;
+  叶子 = `keccak256(labelhash 的 32 字节打包)`。建树与证明收集与
+  6.0 节相同(相邻节点排序后拼接再 `keccak256`,落单节点原样上提)。
+  先在本地用名单复算根值,与 `idListRoot` 对照一致、且你的叶确实在
+  名单内,再 preview。
+- **红线:绝不做「名字 → 地址」解析。** 整个流程不需要用户提供任何
+  地址——你的 Agentic 地址由 `baw` 给出;不得查询、推断或记录名单
+  上其他人的地址。活动未启用条件 4 时,第一个证明参数 `proof` 传
+  空数组。
 
 ### 6.1 参加抽奖 enterRaffle
 
@@ -230,7 +263,7 @@ baw contract-call preview \
   --from <用户的 Agentic Wallet 地址> \
   --to {{APPS_MAINNET_ADDRESS}} \
   --value 0 \
-  --inputData 0xf328ecd3<活动id的32字节补齐><偏移量0x40的32字节补齐><长度0的32字节补齐> \
+  --inputData 0x1959f37d<活动id的32字节补齐><偏移量0x60的32字节补齐><偏移量0x80的32字节补齐><长度0的32字节补齐><长度0的32字节补齐> \
   --json
 ```
 
