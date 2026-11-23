@@ -99,7 +99,7 @@ en: {
   hero_note:"One person, one entry — enforced by structure, not by rules.",
   check_label:"Check any address against the live Agent ID registry (BNB mainnet)",
   check_btn:"Is human?",
-  check_try:"Try a known holder:", check_try_link:"9nosing.ai's wallet", check_try2:"— or paste your own Agentic Wallet address.",
+  check_try:"Try a known holder:",check_sample_mask:"9nosing.ai's Agentic Wallet address (hidden in this demo)", check_try_link:"9nosing.ai's wallet", check_try2:"— or paste your own Agentic Wallet address.",
   stat_campaigns:"campaigns on testnet", stat_entries:"verified-human entries",
   stat_per:"Agent IDs per human — structural, not policy", stat_funds:"funds held by the contracts, ever",
   demo_h:"Watch the gate work \u2014 no wallet needed", demo_sub:"A live-fire demo against the real Agent ID registry on BNB mainnet. Send a bot farm at the gate, then send one real human. Same entrance, same one-line check.",
@@ -107,7 +107,7 @@ en: {
   demo_c_try:"attempted", demo_c_pass:"passed", demo_c_reject:"rejected",
   demo_stage:"DEMO RAFFLE \u2014 ENTRY GATE", demo_empty:"Nobody has tried the gate yet. Pick a side.",
   demo_checking:"checking registry\u2026", demo_rejected:"REJECTED \u00b7 not in registry", demo_passed:"PASSED \u00b7 ticket #1 issued",
-  demo_bot_tag:"BOT", demo_human_tag:"HUMAN \u00b7 sample holder 9nosing.ai",
+  demo_bot_tag:"BOT", demo_human_tag:"HUMAN \u00b7 sample holder",
   demo_cap0:"Bots don\u2019t lose on speed, budget or numbers \u2014 they lose because the registry has never heard of them.",
   demo_cap_bots:"100 fresh addresses, 100 registry lookups, 0 found. On-chain, every one of these entries reverts NotHuman before it can touch the prize pool.",
   demo_cap_human:"One address, one lookup, found instantly. That is the whole trick: the gate asks the registry, not the crowd.",
@@ -338,7 +338,7 @@ zh: {
   hero_note:"一人一票——不是规则定的，是结构定的。",
   check_label:"用主网真实 Agent ID 注册表，查任意地址",
   check_btn:"是真人吗？",
-  check_try:"试试已知持有者：", check_try_link:"9nosing.ai 的钱包", check_try2:"——也可以粘贴你自己的 Agentic Wallet 地址。",
+  check_try:"试试已知持有者：",check_sample_mask:"9nosing.ai 的 Agentic Wallet 地址（演示中不显示）", check_try_link:"9nosing.ai 的钱包", check_try2:"——也可以粘贴你自己的 Agentic Wallet 地址。",
   stat_campaigns:"测试网上的活动", stat_entries:"真人报名人次",
   stat_per:"每个真人可领的 Agent ID——结构决定，非规则", stat_funds:"合约经手的资金，永远为零",
   demo_h:"不用连钱包，看闸门怎么工作", demo_sub:"对着 BNB 主网真实的 Agent ID 注册表实弹演示。先放一群机器人进场，再放一个真人\u2014\u2014同一个入口，同一行检查。",
@@ -346,7 +346,7 @@ zh: {
   demo_c_try:"尝试进场", demo_c_pass:"通过", demo_c_reject:"被拒",
   demo_stage:"演示抽奖 \u2014 进场闸门", demo_empty:"还没有人试过这道门。选一边开始。",
   demo_checking:"查注册表中\u2026", demo_rejected:"被拒 \u00b7 注册表查无此人", demo_passed:"通过 \u00b7 已发 1 号票",
-  demo_bot_tag:"机器人", demo_human_tag:"真人 \u00b7 样例持有人 9nosing.ai",
+  demo_bot_tag:"机器人", demo_human_tag:"真人 \u00b7 样例持有人",
   demo_cap0:"机器人输的不是手速、预算或数量\u2014\u2014是注册表里根本没有它们。",
   demo_cap_bots:"100 个全新地址，100 次注册表查询，0 个查到。在链上，这每一次进场都会在碰到奖池之前就 revert NotHuman。",
   demo_cap_human:"一个地址，查一次，立刻查到。全部诀窍就在这里：闸门问的是注册表，不是人群。",
@@ -2418,12 +2418,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }catch(e){}
   })();
   if (window.ethereum && window.ethereum.on) window.ethereum.on("accountsChanged", accs => { if (!accs || !accs[0]){ if (myAddr) disconnectWallet(); return; } if (myAddr && accs[0].toLowerCase() !== myAddr.toLowerCase()){ try{ sessionStorage.removeItem("hg_dc"); }catch(e){} myAddr = accs[0]; location.reload(); } });
+  let sampleArmed = false;
   const cb = $("checkBtn");
-  if (cb) cb.onclick = () => checkAddress($("checkInput").value.trim(), $("verdict"));
+  if (cb) cb.onclick = () => { if (sampleArmed) { checkAddress(SAMPLE_HOLDER, $("verdict")); } else { checkAddress($("checkInput").value.trim(), $("verdict")); } };
   const ci = $("checkInput");
-  if (ci) ci.addEventListener("keydown", e => { if(e.key === "Enter") cb.click(); });
+  if (ci) { ci.addEventListener("keydown", e => { if(e.key === "Enter") cb.click(); }); ci.addEventListener("input", () => { sampleArmed = false; }); }
   const ts = $("trySample");
-  if (ts) ts.onclick = () => { $("checkInput").value = SAMPLE_HOLDER; cb.click(); };
+  if (ts) ts.onclick = () => { sampleArmed = true; $("checkInput").value = t("check_sample_mask"); checkAddress(SAMPLE_HOLDER, $("verdict")); };
   const db = $("demoBots"); if (db) db.onclick = () => window.demoBots();
   const dh = $("demoHuman"); if (dh) dh.onclick = () => window.demoHuman();
   const dr = $("demoReset"); if (dr) dr.onclick = () => window.demoReset();
@@ -2435,10 +2436,11 @@ function demoCounts(){
   if ($("demoPassed")) $("demoPassed").textContent = demoState.passed;
   if ($("demoRejected")) $("demoRejected").textContent = demoState.rejected;
 }
-function demoRow(addr, tag){
+function demoRow(addr, tag, label){
   const li = document.createElement("li");
   li.className = "demo-row";
-  li.innerHTML = `<span class="demo-addr">${addr.slice(0, 10)}\u2026${addr.slice(-6)}</span><span class="demo-tag">${tag}</span><span class="demo-state">${t("demo_checking")}</span>`;
+  const shown = label || (addr.slice(0, 10) + "\u2026" + addr.slice(-6));
+  li.innerHTML = `<span class="demo-addr">${shown}</span><span class="demo-tag">${tag}</span><span class="demo-state">${t("demo_checking")}</span>`;
   return li;
 }
 function demoSetRow(li, ok, text){
@@ -2506,7 +2508,7 @@ window.demoHuman = async () => {
   demoState.running = true;
   $("demoBots").disabled = true; $("demoHuman").disabled = true;
   const empty = list.querySelector(".demo-empty"); if (empty) empty.remove();
-  const li = demoRow(SAMPLE_HOLDER, t("demo_human_tag"));
+  const li = demoRow(SAMPLE_HOLDER, t("demo_human_tag"), "9nosing.ai");
   list.prepend(li);
   demoState.tried++; demoCounts();
   try{
