@@ -1,7 +1,7 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0x1ebff25f093c798ea301008b13c54fbc00348aec"; // OneIDCampaignsV9
-const BINDINGS_TESTNET = "0x6e17c5ddc3be1cb4443b6cbb64c1b520fd80d5f2"; // IdentityBindings
+const APPS_TESTNET     = "0x9dac1ccb350a3568a7858f3874b06a69a61aa426"; // OneIDCampaignsV9 (instance bound to IdentityBindingsV2)
+const BINDINGS_TESTNET = "0x3b5a6cd4ae21cf100da21197a58be6d6d406f843"; // IdentityBindings
 const PROFILE_TESTNET  = "0x03b4a3129199b16ccf144a100b1fc65f31d907c1"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
   "function setProfile(string bio, tuple(string title, string url)[] links)",
@@ -25,7 +25,7 @@ const QUEST_ABI = [
 ];
 const GATE_ABI = ["function isHuman(address) view returns (bool)"];
 const BINDINGS_ABI = [
-  "function registerBinding(string,bytes)",
+  "function registerBinding(string,bytes)", "function proofTypeOf(address) view returns (uint8)", "function registerByAttestation(address,string)",
   "function removeBinding()",
   "function bindingOf(address) view returns (string,bytes,uint64)",
   "function isBindingValid(address) view returns (bool)"
@@ -73,7 +73,7 @@ const NETWORK = {
   appsRpcs: ["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet-dataseed.bnbchain.org", "https://data-seed-prebsc-1-s1.bnbchain.org:8545"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 144329082; // V9 deployment block: event scans start here
+const APPS_DEPLOY_BLOCK = 144360363; // V9 deployment block: event scans start here
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-26: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
@@ -233,6 +233,7 @@ en: {
     bind_registered: "Binding registered \u2014 your @handle now shows on your campaigns.",
     bind_need_sig: "Generate the signature first (step 2).",
     bind_onchain: "Binding also registered on-chain",
+  bind_attest_h:"Bind an Agentic Wallet address (post attestation)", bind_attest_sub:"An Agentic Wallet cannot sign messages, so it cannot use the signature flow above. Post one public tweet from your X account naming your Agentic address; the project verifies it and registers the binding on-chain, labelled as attested. Weaker than a signature — and labelled as such, permanently.", bind_attest_make:"Generate my verification tweet", bind_attest_post:"Post it on X", bind_attest_note:"After posting, send the tweet link to the project (X DM or the community thread). The registrar completes the registration — you make no contract call. Then check the status here.", bind_attest_check:"Check registration status", bind_attest_none:"No binding registered for this address yet.", bind_attest_sig:"Registered — signature proof.", bind_attest_proof:"Registered — public-post attestation.", bind_attested_tag:"attested", bind_agentic_ph:"0x… (Agentic Wallet address)",
     card_copy_link: "Copy card link",
     series_set: "Set series",
     series_ph: "Series label, e.g. Season 2",
@@ -260,7 +261,7 @@ en: {
   guide_1:"Open the Binance app and go to Wallet",
   guide_2:"Tap the Agent ID banner on the wallet home page",
   guide_3:"Claim your name.ai — one KYC, one ID, free (a little BNB covers gas)",
-  guide_4:"Come back here, connect the Agentic Wallet, and you are in",
+  guide_4:"Join through your agent with the BeCounted Skill — an Agent ID never connects to a website directly",
   cd_ends:"ends in", cd_starts:"starts in", cd_d:"d", cd_h:"h", cd_m:"m",
   soon_h:"Ending soon", soon_sub:"Live now, closing first — do not miss the window.",
   hot_h:"Trending", hot_camps:"Hot campaigns", hot_creators:"Top creators", hot_entries:"entries",
@@ -451,6 +452,7 @@ zh: {
     bind_registered: "\u767b\u8bb0\u6210\u529f\u2014\u2014\u4f60\u7684\u6d3b\u52a8\u5361\u7247\u4e0a\u4f1a\u663e\u793a @\u8d26\u53f7\u4e86\u3002",
     bind_need_sig: "\u5148\u5728\u7b2c\u4e8c\u6b65\u751f\u6210\u7b7e\u540d\u3002",
     bind_onchain: "\u8be5\u7ed1\u5b9a\u5df2\u5728\u94fe\u4e0a\u767b\u8bb0",
+  bind_attest_h:"绑定 Agentic Wallet 地址（帖文见证）", bind_attest_sub:"Agentic Wallet 不能签消息，走不了上面的签名流程。改用公开证明：用你的 X 账号发一条写明 Agentic 地址的推文，项目方核对后上链登记，并永久标注为见证。它比签名弱——这一点如实标明。", bind_attest_make:"生成我的验证推文", bind_attest_post:"去 X 发推", bind_attest_note:"发完把推文链接发给项目方（X 私信或社群帖）。登记由登记员完成，你不需要调合约；之后在这里查状态。", bind_attest_check:"查登记状态", bind_attest_none:"这个地址还没有登记绑定。", bind_attest_sig:"已登记——签名证明。", bind_attest_proof:"已登记——公开帖文见证。", bind_attested_tag:"见证", bind_agentic_ph:"0x…（Agentic Wallet 地址）",
     card_copy_link: "\u590d\u5236\u540d\u7247\u94fe\u63a5",
     series_set: "\u8bbe\u7f6e\u7cfb\u5217",
     series_ph: "\u7cfb\u5217\u6807\u7b7e\uff0c\u5982\uff1a\u7b2c\u4e8c\u671f",
@@ -478,7 +480,7 @@ zh: {
   guide_1:"打开币安 App，进入钱包",
   guide_2:"点钱包首页的 Agent ID 横幅",
   guide_3:"领取你的 name.ai——一个 KYC 一个、免费（备一点点 BNB 付 gas）",
-  guide_4:"回到这里，连接 Agentic Wallet，就能参加了",
+  guide_4:"用 BeCounted 参与 Skill 让你的 Agent 代你参加——Agent ID 本身不直连网站",
   cd_ends:"距结束", cd_starts:"距开始", cd_d:"天", cd_h:"小时", cd_m:"分",
   soon_h:"即将结束", soon_sub:"正在进行、先到截止时间的排前面——别错过窗口。",
   hot_h:"热度榜", hot_camps:"热门活动", hot_creators:"创作者榜", hot_entries:"人参与",
@@ -1795,17 +1797,19 @@ async function creatorBinding(addr){
         if(!bindingsRead) chain();
         const b = await bindingsRead.bindingOf(addr);
         if(!b[0]) return null;
-        return (await bindingsRead.isBindingValid(addr)) ? b[0] : null;
+        if(!(await bindingsRead.isBindingValid(addr))) return null;
+        let pt = 0; try{ pt = Number(await bindingsRead.proofTypeOf(addr)); }catch(e){}
+        return { h: b[0], pt };
       }catch(e){ return null; }
     })();
   }
   return __bindCache[k];
 }
 async function creatorLabel(addr){
-  const h = await creatorBinding(addr);
-  return h
-    ? `<a href="creator.html?a=${addr}" style="color:var(--gold);text-decoration:none">@${h} \u2713</a>`
-    : `<a href="creator.html?a=${addr}" style="color:inherit;text-decoration:none">${short(addr)}</a>`;
+  const cb = await creatorBinding(addr);
+  if(!cb) return `<a href="creator.html?a=${addr}" style="color:inherit;text-decoration:none">${short(addr)}</a>`;
+  const mark = cb.pt === 1 ? ` \u00b7 ${t("bind_attested_tag")}` : " \u2713";
+  return `<a href="creator.html?a=${addr}" style="color:var(--gold);text-decoration:none">@${cb.h}${mark}</a>`;
 }
 let lastBind = null;
 window.makeBinding = async () => {
@@ -1828,6 +1832,33 @@ Sig: ${sig}
       <p style="margin-top:14px;color:var(--muted)">${t("bind_tweet")}</p>
       <button class="btn sm" onclick="window.open('${tweetUrl}', '_blank')">${t("bind_post")}</button>`;
   }catch(e){ if(out) out.innerHTML = `<span style="color:#ff7a7a">${t("tx_fail")}</span>`; }
+};
+window.makeAttestation = async () => {
+  const out = $("attestOut"); if(out) out.innerHTML = "…";
+  try{
+    const handle = ($("aHandle").value || "").trim().replace(/^@/, "").toLowerCase();
+    const address = ethers.getAddress(($("aAddr").value || "").trim());
+    if(!handle) throw new Error("handle");
+    const code = "BC-" + ethers.keccak256(ethers.toUtf8Bytes(address.toLowerCase() + "@" + handle)).slice(2, 8).toUpperCase();
+    const tweet = `BeCounted binding verification\nHandle: @${handle}\nAddress: ${address}\nCode: ${code}\n#BeCountedBind`;
+    const tweetUrl = "https://x.com/intent/tweet?text=" + encodeURIComponent(tweet);
+    out.innerHTML = `<div class="rows"><div class="row"><span>X</span><b>@${handle}</b></div>
+      <div class="row"><span>Address</span><b style="word-break:break-all;text-align:right;max-width:60%">${address}</b></div>
+      <div class="row"><span>Code</span><b>${code}</b></div></div>
+      <p style="margin-top:14px;color:var(--muted)">${t("bind_attest_note")}</p>
+      <button class="btn sm" onclick="window.open('${tweetUrl}', '_blank')">${t("bind_attest_post")}</button>`;
+  }catch(e){ if(out) out.innerHTML = `<span style="color:#ff7a7a">${t("tx_fail")}</span>`; }
+};
+window.attestStatus = async () => {
+  const out = $("attestStatusOut"); if(out) out.textContent = "…";
+  try{
+    const address = ethers.getAddress(($("aAddr").value || "").trim());
+    chain();
+    const b = await bindingsRead.bindingOf(address);
+    if(!b[0]){ out.textContent = t("bind_attest_none"); return; }
+    const pt = Number(await bindingsRead.proofTypeOf(address));
+    out.textContent = "@" + b[0] + " — " + (pt === 1 ? t("bind_attest_proof") : t("bind_attest_sig"));
+  }catch(e){ if(out) out.textContent = t("tx_fail"); }
 };
 window.verifyBinding = async () => {
   const out = $("bindVerifyOut"); if(out) out.innerHTML = "…";
@@ -1856,17 +1887,21 @@ async function loadPlatformStats(){
   _statsLoading = true;
   chain();
   try{
-    const latest = await providerTest.getBlockNumber();
-    const logs = await getLogsChunked({ address: APPS_TESTNET }, APPS_DEPLOY_BLOCK, latest);
-    const iface = new ethers.Interface(APPS_ABI);
+    // Direct contract reads only. The previous version scanned every event
+    // log since the deploy block, so the homepage got slower with every new
+    // block the chain produced; this stays flat as history grows.
+    const n = Number(await appsRead.campaignCount());
     const humans = new Set(); let payouts = 0;
-    for (const log of logs){
-      let p; try{ p = iface.parseLog(log); }catch(e){ continue; }
-      if(!p) continue;
-      if (p.name === "Entered") humans.add(p.args.participant);
-      else if (p.name === "Voted") humans.add(p.args.participant);
-      else if (p.name === "Claimed"){ humans.add(p.args.participant); payouts++; }
-      else if (p.name === "PrizeClaimed") payouts++;
+    for (let i = 0; i < n; i++){
+      const c = await appsRead.getCampaign(i);
+      const entries = await appsRead.getEntries(i);
+      for (const a of entries) humans.add(a);
+      if (Number(c.kind) === 2) payouts += entries.length; // claim drop: every entry was paid on entry
+      else if (c.drawn) { // raffle / vote pool: count winners who actually claimed
+        let winners = [];
+        try { winners = await appsRead.getWinners(i); } catch(e) {}
+        for (const w of winners) { try { if (await appsRead.prizeClaimed(i, w)) payouts++; } catch(e) {} }
+      }
     }
     $("statHumans").textContent = humans.size;
     if($("statPayouts")) $("statPayouts").textContent = payouts;

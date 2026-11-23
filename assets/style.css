@@ -318,3 +318,11 @@ footer .mono{font-family:var(--mono);font-size:12px}
 .demo-list::-webkit-scrollbar{width:8px}
 .demo-list::-webkit-scrollbar-thumb{background:#2c2c31;border-radius:4px}
 .demo-list::-webkit-scrollbar-track{background:transparent}
+
+/* nav: lang + connect stay pinned; only the link row scrolls on mobile */
+.nav-in>.lang{flex:none}
+.nav-in>.connectBtn{flex:none;white-space:nowrap}
+@media(max-width:820px){.nav-links{min-width:0}}
+
+/* mobile nav fit (lesson from hosted build): brand may shrink, wordmark truncates, connect stays whole */
+@media(max-width:820px){.brand{min-width:0}.brand b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nav-in>.connectBtn{padding-left:12px;padding-right:12px}}

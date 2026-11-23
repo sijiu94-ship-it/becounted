@@ -7,8 +7,8 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 地址上链——这正是门禁要验的地址。
 
 > ## ⚠️ 先读这一条:占位符未替换 = 禁止执行
-> 本文件中的合约地址目前是占位符:`{{APPS_MAINNET_ADDRESS}}` 与
-> `{{BECOUNTED_MAINNET_ADDRESS}}`。
+> 本文件中的合约地址目前是占位符:`{{APPS_MAINNET_ADDRESS}}`、
+> `{{BECOUNTED_MAINNET_ADDRESS}}` 与 `{{QUEST_MAINNET_ADDRESS}}`。
 > **只要文件里还能看到 `{{...}}`,就说明主网地址尚未填入。此时不要执行
 > 任何合约调用**,直接告诉用户「参与 Skill 尚未就绪,主网地址待填」并停下。
 >
@@ -23,6 +23,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 | 角色 | 地址 | 说明 |
 |---|---|---|
 | OneIDCampaigns(活动合约) | `{{APPS_MAINNET_ADDRESS}}` | 所有参加调用的目标合约 |
+| QuestPass(真人远征) | `{{QUEST_MAINNET_ADDRESS}}` | 集印记 / 终章报名 / 领奖的目标合约 |
 | BeCounted(真人门禁) | `{{BECOUNTED_MAINNET_ADDRESS}}` | 活动合约内部用它验真人;**你不需要直接调用它** |
 
 - 网络恒定:**BNB Smart Chain 主网,`--binanceChainId 56`**。
@@ -200,6 +201,25 @@ cast calldata "claimPrize(uint256)" 3
 - 前置:第 5 节的三项领奖预检全部通过。
 - 奖金由合约托管直接发到用户地址;金额以 preview 解析与链上结果为准。
 
+
+### 6.5 真人远征 QuestPass(集印记 / 终章 / 领奖)
+
+目标合约:`{{QUEST_MAINNET_ADDRESS}}`。赛季节奏:集印期 7 天,每天可领
+1 枚印记(领印即按当日奖池分一份小额 USDC,立即到账);集满 5 枚可报
+名终章;报名窗在集印结束后 24 小时;终章奖池 45 USDC 抽 3 人。
+
+先读状态(eth_call,选择器 + 地址参数补齐到 32 字节):
+- `phase()` `0xb1c9fe6e` → 0 未开始 / 1 集印期 / 2 终章报名期 / 3 待开奖 / 4 已开奖
+- `stampCount(address)` `0xb5353221`、`hasStampedOn(address,uint32)` `0x0ae81079`(uint32 为 `currentDay()` `0x5c9302c9` 的返回值)
+- `eligible(address)` `0x0713b139`、`hasEnteredFinale(address)` `0x028a3c9c`
+- `isWinner(address)` `0x9d9ca28d`、`prizeClaimed(address)` `0xdc8a55c2`
+
+写操作(每个仍走第 4 节流程:预览 → 用户逐次明确确认 → 执行):
+- 领印记 `claimStamp()` calldata `0x74cdcabc`。phase 必须为 1,且当天未领过;一天只能领一次,重复调用必然失败,不要重试轰炸。
+- 终章报名 `enterFinale()` calldata `0x612f5430`。phase 必须为 2,且 `eligible` 为 true、未报名过。
+- 领奖 `claimPrize()` calldata `0x70740ac9`。phase 必须为 4,`isWinner` 为 true 且未领过。
+- 锁定种子与开奖(lockFinaleSeed / drawFinale)由项目方执行,不在参与者 Agent 的范围内;phase 为 3 时只需告诉用户「等待项目方开奖」。
+
 ## 7. 执行与结果 / Preview, execute, report
 
 先 preview(以参加抽奖为例,其余动作换 calldata 即可):
@@ -233,10 +253,12 @@ baw contract-call execute --requestId <requestId> --json
 
 ## 8. 边界 / Boundaries — 本文件不管什么
 
-- **X 绑定不能走 Agent 路径。** 绑定需要 EIP-191 `personal_sign` 签名,
-  而 Agentic Wallet 只支持 EIP-712、且密钥不可导出,无处可签。绑定
-  请让用户去 BeCounted 网站用普通钱包完成;不要尝试用 contract-call
-  或 sign-message 绕过。
+- **X 绑定不能走 Agent 路径。** 签名绑定需要 EIP-191 `personal_sign`,
+  而 Agentic Wallet 只支持 EIP-712、且密钥不可导出,无处可签;不要尝试
+  用 contract-call 或 sign-message 绕过。Agentic 地址改走网站绑定页的
+  「帖文见证」:让用户用自己的 X 发一条写明其 Agentic 地址与验证码的
+  公开推文,再把链接发给项目方登记(链上标注为见证证明)。普通钱包仍
+  在网站用签名完成绑定。
 - **查真人不要用 contract-call。** 判断某地址是否真人,用只读的
   is-human 工具(读 Agent ID 注册表),不要用合约调用模拟替代,更不要
   为此发起任何交易。BeCounted 合约地址在本文件里仅供核对,参加活动
