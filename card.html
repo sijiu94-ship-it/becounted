@@ -3,22 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ID Card — HumanGate</title>
-<meta name="description" content="HumanGate — one real human, one entry. The on-chain anti-sybil primitive for Binance Agent ID: raffles, votes and claim drops that bot farms cannot enter.">
-<meta property="og:title" content="HumanGate — One Human, One Entry">
+<title>ID Card — BeCounted</title>
+<meta name="description" content="BeCounted — one real human, one entry. The on-chain anti-sybil primitive for Binance Agent ID: raffles, votes and claim drops that bot farms cannot enter.">
+<meta property="og:title" content="BeCounted — One Human, One Entry">
 <meta property="og:description" content="Raffles, votes and claim drops gated by Binance Agent ID. One KYC, one ID, zero bot farms. Draws anyone can recompute.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="assets/og.png">
+<meta property="og:image" content="https://becounted.9nosing.com/assets/og.png">
+<meta property="og:url" content="https://becounted.9nosing.com/">
 <meta name="twitter:image" content="assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#0a0a0b">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 <nav>
   <div class="wrap nav-in">
     <a class="brand" href="index.html">
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="1" y="1" width="24" height="24" rx="6" stroke="#f0b90b" stroke-width="2"/><circle cx="13" cy="12" r="3.4" fill="#f0b90b"/><rect x="11.9" y="14" width="2.2" height="5" rx="1.1" fill="#f0b90b"/></svg>
-      <b>HumanGate</b><span>testnet</span>
+      <img class="brand-ic" src="assets/icon-192.png" alt="BeCounted">
+      <b>BeCounted</b><span>testnet</span>
     </a>
     <div class="nav-links">
       <a href="campaigns.html" data-i18n="nav_campaigns"></a>
@@ -127,7 +133,7 @@
       <div id="shareCardBox" style="display:none;margin-top:16px">
         <canvas id="shareCanvas" width="1200" height="630" style="width:100%;max-width:680px;border-radius:12px;border:1px solid var(--line)"></canvas>
         <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-          <a class="btn sm" id="shareDl" download="humangate-card.png" data-i18n="card_img_dl" style="text-decoration:none"></a>
+          <a class="btn sm" id="shareDl" download="becounted-card.png" data-i18n="card_img_dl" style="text-decoration:none"></a>
           <button class="btn sm ghost" onclick="shareCardPost()" data-i18n="card_img_share"></button>
         </div>
       </div>
@@ -144,6 +150,6 @@
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-<script src="assets/app.js?v=1121o"></script>
+<script src="assets/app.js?v=1121s"></script>
 </body>
 </html>

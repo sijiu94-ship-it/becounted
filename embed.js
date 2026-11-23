@@ -1,7 +1,7 @@
-/* HumanGate embeddable human-check widget.
+/* BeCounted embeddable human-check widget.
    Usage:
-     <div data-humangate-check></div>
-     <script src="https://sijiu94-ship-it.github.io/humangate/embed.js"></script>
+     <div data-becounted-check></div>
+     <script src="https://becounted.9nosing.com/embed.js"></script>
    Optional: data-lang="zh" | "en" on the div (default: browser language).
    Read-only: one eth_call (balanceOf) to the Agent ID registry on BNB Chain.
    No keys, no signing, no tracking. */
@@ -9,8 +9,8 @@
   var REGISTRY = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
   var RPCS = ["https://bsc-dataseed.binance.org", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"];
   var STR = {
-    en: { label: "Is this address a unique human?", btn: "Check", reading: "Reading the registry...", yes: "Verified unique human - holds an Agent ID.", no: "No Agent ID found for this address.", invalid: "That does not look like an address.", err: "Could not read the registry. Try again.", by: "Powered by HumanGate" },
-    zh: { label: "这个地址是真人吗？", btn: "查真人", reading: "正在读取注册表…", yes: "已验证真人——持有 Agent ID。", no: "这个地址没有 Agent ID。", invalid: "这不像一个地址。", err: "注册表读取失败，请重试。", by: "由 HumanGate 提供" }
+    en: { label: "Is this address a unique human?", btn: "Check", reading: "Reading the registry...", yes: "Verified unique human - holds an Agent ID.", no: "No Agent ID found for this address.", invalid: "That does not look like an address.", err: "Could not read the registry. Try again.", by: "Powered by BeCounted" },
+    zh: { label: "这个地址是真人吗？", btn: "查真人", reading: "正在读取注册表…", yes: "已验证真人——持有 Agent ID。", no: "这个地址没有 Agent ID。", invalid: "这不像一个地址。", err: "注册表读取失败，请重试。", by: "由 BeCounted 提供" }
   };
   function isAddr(a) { return /^0x[0-9a-fA-F]{40}$/.test(a); }
   function call(addr) {
@@ -49,7 +49,7 @@
     var by = document.createElement("div");
     by.style.cssText = "margin-top:10px;font-size:11.5px;color:#6d6d75";
     var link = document.createElement("a");
-    link.href = "https://sijiu94-ship-it.github.io/humangate/";
+    link.href = "https://becounted.9nosing.com/";
     link.target = "_blank"; link.rel = "noopener";
     link.style.cssText = "color:#9a9aa3;text-decoration:none";
     link.textContent = s.by + " \u2197";
@@ -70,6 +70,6 @@
     btn.addEventListener("click", go);
     inp.addEventListener("keydown", function (e) { if (e.key === "Enter") go(); });
   }
-  function init() { document.querySelectorAll("[data-humangate-check]").forEach(render); }
+  function init() { document.querySelectorAll("[data-becounted-check]").forEach(render); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

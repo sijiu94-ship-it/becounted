@@ -3,22 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Create — HumanGate</title>
-<meta name="description" content="HumanGate — one real human, one entry. The on-chain anti-sybil primitive for Binance Agent ID: raffles, votes and claim drops that bot farms cannot enter.">
-<meta property="og:title" content="HumanGate — One Human, One Entry">
+<title>Create — BeCounted</title>
+<meta name="description" content="BeCounted — one real human, one entry. The on-chain anti-sybil primitive for Binance Agent ID: raffles, votes and claim drops that bot farms cannot enter.">
+<meta property="og:title" content="BeCounted — One Human, One Entry">
 <meta property="og:description" content="Raffles, votes and claim drops gated by Binance Agent ID. One KYC, one ID, zero bot farms. Draws anyone can recompute.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="assets/og.png">
+<meta property="og:image" content="https://becounted.9nosing.com/assets/og.png">
+<meta property="og:url" content="https://becounted.9nosing.com/">
 <meta name="twitter:image" content="assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#0a0a0b">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 <nav>
   <div class="wrap nav-in">
     <a class="brand" href="index.html">
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="1" y="1" width="24" height="24" rx="6" stroke="#f0b90b" stroke-width="2"/><circle cx="13" cy="12" r="3.4" fill="#f0b90b"/><rect x="11.9" y="14" width="2.2" height="5" rx="1.1" fill="#f0b90b"/></svg>
-      <b>HumanGate</b><span>testnet</span>
+      <img class="brand-ic" src="assets/icon-192.png" alt="BeCounted">
+      <b>BeCounted</b><span>testnet</span>
     </a>
     <div class="nav-links">
       <a href="campaigns.html" data-i18n="nav_campaigns"></a>
@@ -111,6 +117,19 @@
         <label data-i18n="f_options"></label>
         <input id="fOptions" type="number" min="2" max="16" value="2">
       </div>
+      <div class="f-row" id="fOptLabelsRow" style="display:none">
+        <label data-i18n="f_opt_labels"></label>
+        <div id="fOptLabels" style="flex:1;display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div class="f-row" id="fVPrizeRow" style="display:none"><label><input type="checkbox" id="fVPrizeOn" onchange="toggleVPrize()"> <span data-i18n="vp_on"></span></label><div class="hint" data-i18n="vp_note"></div></div>
+      <div class="f-row" id="fVTotalRow" style="display:none">
+        <label data-i18n="vp_total"></label>
+        <input id="fVTotal" type="text" inputmode="decimal" placeholder="10">
+      </div>
+      <div class="f-row" id="fVWinnersRow" style="display:none">
+        <label data-i18n="vp_winners"></label>
+        <input id="fVWinners" type="number" min="1" value="3">
+      </div>
       <div class="f-row" id="fSeedHint"><div class="hint" data-i18n="f_seed_hint"></div></div>
       <div class="f-sec" data-i18n="f_sec3"></div>
       <div class="f-row"><label data-i18n="f_posturl"></label><input type="text" id="fPostUrl" data-i18n-ph="post_ph" autocomplete="off"></div>
@@ -118,9 +137,13 @@
       <div class="f-sec" data-i18n="cd_sec"></div>
       <div class="f-row"><label><input type="checkbox" id="cdBind"> <span data-i18n="cd_bind"></span></label></div>
       <div class="f-row"><label><input type="checkbox" id="cdTokenOn"> <span data-i18n="cd_token"></span></label><input id="cdTokenAddr" placeholder="0x…" spellcheck="false" style="flex:1"><input id="cdTokenMin" type="text" inputmode="decimal" placeholder="100" style="width:90px"></div>
-      <div class="f-row"><label></label><label style="font-weight:400"><input type="checkbox" id="cdToken721"> <span data-i18n="cd_721"></span></label></div>
+      <div class="f-row"><label></label><label style="font-weight:400"><input type="checkbox" id="cdToken721" onchange="toggle721()"> <span data-i18n="cd_721"></span></label></div>
+      <div class="f-row" id="cd721Hint" style="display:none"><label></label><div class="hint" data-i18n="cd_721_hint"></div></div>
       <div class="f-row"><label><input type="checkbox" id="cdPriorOn"> <span data-i18n="cd_prior"></span></label><input id="cdPriorId" type="number" min="0" placeholder="0" style="width:90px"></div>
       <div class="f-row"><label><input type="checkbox" id="cdStampOn"> <span data-i18n="cd_stamps"></span></label><input id="cdStampMin" type="number" min="1" max="7" value="5" style="width:90px"></div>
+      <div class="f-row"><label><input type="checkbox" id="cdAllowOn" onchange="toggleAllow()"> <span data-i18n="cd_allow"></span></label></div>
+      <div class="f-row" id="cdAllowRow" style="display:none"><label data-i18n="cd_allow_list"></label><textarea id="cdAllowList" rows="4" data-i18n-ph="cd_allow_ph" spellcheck="false" style="flex:1" oninput="updAllowCount()"></textarea></div>
+      <div class="f-row" id="cdAllowMeta" style="display:none"><label></label><span class="hint" id="cdAllowCount"></span><button type="button" class="btn sm ghost" onclick="dlAllowList()" data-i18n="cd_allow_dl"></button></div>
       <div class="f-row"><div class="hint" data-i18n="cd_hint"></div></div>
       <div id="fErrors" style="display:none;color:#ff8a8a;font-size:13.5px;line-height:1.75;margin-bottom:10px"></div>
       <button class="btn" id="createSubmit" data-i18n="f_submit_raffle"></button>
@@ -139,6 +162,6 @@
 </footer>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1121o"></script>
+<script src="assets/app.js?v=1121s"></script>
 </body>
 </html>
