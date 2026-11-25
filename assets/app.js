@@ -186,7 +186,7 @@ en: {
   share_btn:"Share", c_option:"Option", m_draw:"Draw now", m_drawn:"Drawn", tx_fail:"Transaction failed", post_btn:"Creator's post", post_set:"X post link", post_ph:"Paste the post URL (https://x.com/...)", post_save:"Save link", f_posturl:"Your X post link (optional — can add later)",
   nav_bind:"Bind X",
   flt_search_ph:"Search campaigns…", flt_all:"All", flt_live:"Live", flt_upcoming:"Upcoming", flt_ended:"Ended",
-  d_details:"Details", d_participants:"Participants", d_winners:"Winners", d_back:"All campaigns",
+  d_details:"Details", d_participants:"Participants", exp_btn:"Export list (CSV)", d_winners:"Winners", d_back:"All campaigns",
   d_proof_h:"Draw proof — verify it yourself", d_proof_seedblock:"Seed block",
   d_proof_fallback:"Fallback seed used (original seed block aged out)", d_proof_verify:"Recompute winners",
   d_proof_ok:"Recomputed winners match the on-chain winners exactly.", d_proof_bad:"Mismatch — do not trust this draw.",
@@ -434,7 +434,7 @@ zh: {
   share_btn:"分享", c_option:"选项", m_draw:"立即开奖", m_drawn:"已开奖", tx_fail:"交易失败", post_btn:"发行人的帖子", post_set:"X 帖子链接", post_ph:"粘贴帖子链接（https://x.com/…）", post_save:"保存链接", f_posturl:"你的 X 帖子链接（选填，可稍后补）",
   nav_bind:"绑定 X",
   flt_search_ph:"搜索活动…", flt_all:"全部", flt_live:"进行中", flt_upcoming:"未开始", flt_ended:"已结束",
-  d_details:"详情", d_participants:"参与者", d_winners:"中奖名单", d_back:"全部活动",
+  d_details:"详情", d_participants:"参与者", exp_btn:"导出名单 CSV", d_winners:"中奖名单", d_back:"全部活动",
   d_proof_h:"开奖证明 — 自己验一遍", d_proof_seedblock:"种子区块",
   d_proof_fallback:"用了备用种子（原种子区块已过期）", d_proof_verify:"复算中奖名单",
   d_proof_ok:"复算结果与链上中奖名单完全一致。", d_proof_bad:"对不上——这次开奖不可信。",
@@ -2059,7 +2059,7 @@ async function loadDetail(){
       ${postBtn ? `<div style="margin-bottom:6px">${postBtn}</div>` : ""}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert(${id})">${t("cert_btn")}</button>` : ""}</div>
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
-      <div class="panel"><div id="partList">${entries.length ? entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}</div>
+      <div class="panel"><div id="partList">${entries.length ? entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}${entries.length ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportList(${id})">${t("exp_btn")}</button></div>` : ""}</div>
       ${proof}
       ${condChipsHtml(cond)}${listPanelHtml(id, cond)}
       <div class="trust-row">${t("d_contract")} <a href="https://bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 BeCounted <a href="https://bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : (c.prizeLabel ? t("d_custom_note") : t("d_escrow_no"))}</div>`;
@@ -2134,6 +2134,77 @@ window.showAllParticipants = () => {
   const box = $("partList"); if (!box) return;
   box.innerHTML = (window.__partEntries || []).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("");
   const more = $("partMore"); if (more) more.style.display = "none";
+};
+/* One-click CSV export of the participant list. Every read mirrors the
+   detail page itself: entries/winners/prizeClaimed/conditionsOf on the
+   apps contract, per-person vote options and claim marks from the same
+   Voted/Claimed log scans loadDetail runs for the connected wallet.
+   The x_handle column exists ONLY when the campaign required a bound X
+   account (conditionsOf.requireBinding): those entrants bound publicly
+   precisely so anyone can check them. For any other campaign the column
+   is omitted entirely — a name is never paired with an address the
+   entrant did not publicly bind. Handles resolve through creatorBinding,
+   the same bindingOf + isBindingValid read the identity card uses. */
+window.exportList = async id => {
+  const msg = $("msg-" + id);
+  try{
+    if (msg) msg.textContent = "\u2026";
+    chain();
+    const c = await appsRead.getCampaign(id);
+    const kind = Number(c.kind);
+    const entries = await appsRead.getEntries(id);
+    let cond = null; try{ cond = await appsRead.conditionsOf(id); }catch(e){}
+    const withHandle = !!(cond && cond.requireBinding);
+    const winnerSet = new Set(), prizeSet = new Set();
+    if (c.drawn && (kind === 0 || (kind === 1 && c.pool > 0n))){
+      const winners = await appsRead.getWinners(id);
+      for (const w of winners){
+        const k = String(w).toLowerCase(); winnerSet.add(k);
+        try{ if (await appsRead.prizeClaimed(id, w)) prizeSet.add(k); }catch(e){}
+      }
+    }
+    const optOf = new Map(), claimSet = new Set();
+    if (kind === 1 || kind === 2){
+      const latestB = await providerTest.getBlockNumber();
+      const topicId = ethers.zeroPadValue(ethers.toBeHex(id), 32);
+      const ifaceS = new ethers.Interface(APPS_ABI);
+      if (kind === 1){
+        const vl = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Voted(uint256,address,uint8)"), topicId] }, APPS_DEPLOY_BLOCK, latestB);
+        for (const lg of vl){ const pv = ifaceS.parseLog(lg); if (pv) optOf.set(String(pv.args.participant).toLowerCase(), Number(pv.args.option)); }
+        await voteLabels(appsRead, id);
+      } else {
+        const cl = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Claimed(uint256,address,uint256)"), topicId] }, APPS_DEPLOY_BLOCK, latestB);
+        for (const lg of cl){ const pv = ifaceS.parseLog(lg); if (pv) claimSet.add(String(pv.args.participant).toLowerCase()); }
+      }
+    }
+    const cell = v => { v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    const head = ["address", "status"];
+    if (kind === 1) head.push("option");
+    if (withHandle) head.push("x_handle");
+    const lines = [head.join(",")];
+    for (const a of entries){
+      const k = String(a).toLowerCase();
+      let status;
+      if (kind === 0) status = winnerSet.has(k) ? (prizeSet.has(k) ? "winner_claimed" : "winner") : "entered";
+      else if (kind === 1) status = winnerSet.has(k) ? (prizeSet.has(k) ? "winner_claimed" : "winner") : "voted";
+      else status = claimSet.has(k) ? "claimed" : "entered";
+      const row = [a, status];
+      if (kind === 1){
+        const oi = optOf.get(k);
+        const lab = oi !== undefined && LABELS[id] ? LABELS[id][oi] : "";
+        row.push(oi === undefined ? "" : (lab ? oi + ": " + lab : String(oi)));
+      }
+      if (withHandle){
+        const cb = await creatorBinding(a);
+        row.push(cb ? cb.h : "");
+      }
+      lines.push(row.map(cell).join(","));
+    }
+    const blob = new Blob(["\ufeff" + lines.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "becounted-campaign-" + id + ".csv"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    if (msg) msg.textContent = "";
+  }catch(e){ if (msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0, 110); }
 };
 window.verifyDraw = async id => {
   const msg = $("proofMsg"); if(msg) msg.textContent = "…";
