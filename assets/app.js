@@ -85,6 +85,9 @@ const TOKEN_PRESETS = {
   usdt: "0x55d398326f99059fF775485246999027B3197955",
   usdc: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"
 };
+// Lowercased preset address set, derived from TOKEN_PRESETS so the presets
+// stay the single source of truth (detail-page custom-token warning).
+const PRESET_TOKEN_ADDRS = new Set(Object.values(TOKEN_PRESETS).map(a => String(a).toLowerCase()));
 const ERC20_ABI = [
   "function approve(address, uint256) returns (bool)",
   "function symbol() view returns (string)",
@@ -236,6 +239,7 @@ en: {
     e_dust: "Pool per slot is dust \u2014 increase the pool or reduce slots.",
     d_escrow: "Prize escrowed in the contract \u2014 winners claim it themselves",
     d_escrow_no: "No prize escrow in this campaign",
+    warn_token: "Custom prize token — its value and transferability are not verified. Check the token contract before entering.",
     d_contract: "Contract",
     hero_cta_join: "Join a campaign",
     hero_cta_create: "Create a campaign",
@@ -484,6 +488,7 @@ zh: {
     e_dust: "\u5e73\u5747\u6bcf\u4efd\u91d1\u989d\u592a\u5c0f\u2014\u2014\u8bf7\u52a0\u5927\u5956\u6c60\u6216\u51cf\u5c11\u4efd\u6570\u3002",
     d_escrow: "\u5956\u91d1\u7531\u5408\u7ea6\u6258\u7ba1 \u00b7 \u4e2d\u5956\u8005\u81ea\u52a9\u9886\u53d6",
     d_escrow_no: "\u672c\u6d3b\u52a8\u65e0\u5956\u91d1\u6258\u7ba1",
+    warn_token: "\u81ea\u5b9a\u4e49\u5956\u54c1\u4ee3\u5e01\u2014\u2014\u5176\u4ef7\u503c\u4e0e\u53ef\u8f6c\u8ba9\u6027\u672a\u7ecf\u9a8c\u8bc1\uff0c\u53c2\u52a0\u524d\u8bf7\u81ea\u884c\u6838\u67e5\u8be5\u4ee3\u5e01\u5408\u7ea6\u3002",
     d_contract: "\u5408\u7ea6",
     hero_cta_join: "\u53c2\u52a0\u6d3b\u52a8",
     hero_cta_create: "\u521b\u5efa\u6d3b\u52a8",
@@ -2051,10 +2056,18 @@ async function loadDetail(){
       if (pu && pu.startsWith("https://")) postBtn = `<a class="btn sm ghost" href="${pu.replace(/"/g, "%22")}" target="_blank" rel="noopener">${t("post_btn")} ↗</a>`;
     }catch(e){}
     const creatorHtmlD = await creatorLabel(c.creator);
+    // Custom-token warning: escrowed token prize whose token is neither the
+    // zero address (BNB) nor one of the TOKEN_PRESETS — value/transferability
+    // unverified (honeypot risk). prizeLabel campaigns escrow no token and
+    // already carry their own note, so they never reach this (amounts are 0).
+    const warnToken = (c.prizePerWinner > 0n || c.pool > 0n)
+      && !!c.prizeToken && c.prizeToken !== ethers.ZeroAddress
+      && !PRESET_TOKEN_ADDRS.has(String(c.prizeToken).toLowerCase());
     box.innerHTML = `
       <div class="kicker">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")} · #${id}</div>
       <h1 style="font-size:clamp(26px,4.4vw,40px);margin:10px 0 6px">${String(c.title).replace(/</g,"&lt;")}</h1>
       <p style="color:var(--muted)">${t("creator_by")} ${creatorHtmlD} · ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}${live || !ended ? ` · <span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span>` : ""}</p>
+      ${warnToken ? `<div class="warn-banner">⚠ ${t("warn_token")}</div>` : ""}
       <div style="margin:16px 0">${foot} <span class="camp-msg" role="status" id="msg-${id}"></span></div>
       ${postBtn ? `<div style="margin-bottom:6px">${postBtn}</div>` : ""}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert(${id})">${t("cert_btn")}</button>` : ""}</div>
