@@ -7,8 +7,8 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 地址上链——这正是门禁要验的地址。
 
 > ## ⚠️ 先读这一条:占位符未替换 = 禁止执行
-> 本文件中的合约地址目前是占位符:`{{APPS_MAINNET_ADDRESS}}`、
-> `{{BECOUNTED_MAINNET_ADDRESS}}` 与 `{{QUEST_MAINNET_ADDRESS}}`。
+> 本文件中的合约地址目前是占位符:`0x4858c1c6a4428c65ee6f60aac21a3f404d85d598`、
+> `0xda585a4ae5b73ee2728aada3e877a3a1f84027cd`。
 > **只要文件里还能看到 `{{...}}`,就说明主网地址尚未填入。此时不要执行
 > 任何合约调用**,直接告诉用户「参与 Skill 尚未就绪,主网地址待填」并停下。
 >
@@ -22,9 +22,8 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 
 | 角色 | 地址 | 说明 |
 |---|---|---|
-| OneIDCampaigns(活动合约) | `{{APPS_MAINNET_ADDRESS}}` | 所有参加调用的目标合约 |
-| QuestPass(真人远征) | `{{QUEST_MAINNET_ADDRESS}}` | 集印记 / 终章报名 / 领奖的目标合约 |
-| BeCounted(真人门禁) | `{{BECOUNTED_MAINNET_ADDRESS}}` | 活动合约内部用它验真人;**你不需要直接调用它** |
+| OneIDCampaigns(活动合约) | `0x4858c1c6a4428c65ee6f60aac21a3f404d85d598` | 所有参加调用的目标合约 |
+| BeCounted(真人门禁) | `0xda585a4ae5b73ee2728aada3e877a3a1f84027cd` | 活动合约内部用它验真人;**你不需要直接调用它** |
 
 - 网络恒定:**BNB Smart Chain 主网,`--binanceChainId 56`**。
 - Agentic Wallet 没有测试网。不要尝试测试网链 ID,不要自行替换网络。
@@ -104,7 +103,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 用 `cast`(如有 Foundry):
 
 ```bash
-cast call {{APPS_MAINNET_ADDRESS}} \
+cast call 0x4858c1c6a4428c65ee6f60aac21a3f404d85d598 \
   "getCampaign(uint256)(address,uint8,string,uint64,uint64,uint32,uint64,bool,bool,uint8,uint256,address,uint256,uint256,uint256,uint32,bool,uint256,bool,string)" \
   <CAMPAIGN_ID> --rpc-url https://bsc-dataseed.binance.org
 ```
@@ -114,7 +113,7 @@ cast call {{APPS_MAINNET_ADDRESS}} \
 
 ```bash
 curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"{{APPS_MAINNET_ADDRESS}}","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0x4858c1c6a4428c65ee6f60aac21a3f404d85d598","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
 ```
 
 `getCampaign` 关键字段(序号 = 返回元组中的位置,从 0 数;`cast` 的
@@ -158,7 +157,7 @@ curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
 | 3 | `gateIs721` | 条件 1 的代币是否为 NFT(见下) |
 | 4 | `requireEnteredId` | ≠ `uint256` 最大值(`0xffff…ffff`)→ 条件 2 启用 |
 | 5 | `minStamps` | > 0 → 条件 3 启用 |
-| 6 | `questRef` | 条件 3 读印记数用的 QuestPass 合约地址 |
+| 6 | `questRef` | 条件 3 读印记数用的合约地址 |
 | 7 | `allowRoot` | ≠ 零值 → 条件 4 启用(见 6.0 节) |
 | 8 | `idListRoot` | ≠ 零值 → 条件 5 启用(见 6.0b 节) |
 
@@ -181,10 +180,10 @@ curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
 - **条件 2(前置参与)**:`hasEntered(<requireEnteredId>, <用户地址>)`
   (选择器 `0x073c74f3`)。为 `false` → 停下:「本场要求先参加过活动
   #<requireEnteredId>,你还没有参加记录。先去参加那一场,再回来。」
-- **条件 3(远征印记)**:对 `questRef` 调 `stampCount(<用户地址>)`
+- **条件 3(印记数)**:对 `questRef` 调 `stampCount(<用户地址>)`
   (选择器 `0xb5353221`)。小于 `minStamps` → 停下:「本场要求至少
-  <minStamps> 枚真人远征印记,你目前有 <读到的枚数> 枚。先去领印记
-  (见 6.5 节),集够了再回来。」
+  <minStamps> 枚印记,你目前有 <读到的枚数> 枚。本站当前没有领印
+  途径,如实告诉用户差额,不要编造领取方法。」
 
 注意:读状态以 `eth_call` 为准;`preview` 的职责是执行前的最终模拟与
 风险检查,不要用它代替读状态。
@@ -275,7 +274,7 @@ cast calldata "claimPrize(uint256)" 3
 
 - 前置:活动 `kind = 0`、在时间窗内、`hasEntered` 为 `false`。
 - 确认展示示例:「参加抽奖『<标题>』(id=<id>),奖金 <prizePerWinner 换算>
-  × <winnerCount> 人,目标合约 {{APPS_MAINNET_ADDRESS}}」。
+  × <winnerCount> 人,目标合约 0x4858c1c6a4428c65ee6f60aac21a3f404d85d598」。
 
 ### 6.2 投票 castVote — 选项序号从 0 开始
 
@@ -303,26 +302,6 @@ cast calldata "claimPrize(uint256)" 3
 - 奖金由合约托管直接发到用户地址;金额以 preview 解析与链上结果为准。
 
 
-### 6.5 真人远征 QuestPass(集印记 / 终章 / 领奖)
-
-目标合约:`{{QUEST_MAINNET_ADDRESS}}`。赛季节奏:集印期 7 天,每天可领
-1 枚印记(领印即按当日奖池分一份小额 USDC,立即到账);集满 5 枚可报
-名终章;报名窗在集印结束后 24 小时;终章奖池 45 USDC 抽 3 人。
-注意:本段数字(集满 5 枚、45 USDC 抽 3 人等)为当前赛季参数,执行时
-以链上读数与 preview 解析为准,不要凭本段文字向用户承诺数额。
-
-先读状态(eth_call,选择器 + 地址参数补齐到 32 字节):
-- `phase()` `0xb1c9fe6e` → 0 未开始 / 1 集印期 / 2 终章报名期 / 3 待开奖 / 4 已开奖
-- `stampCount(address)` `0xb5353221`、`hasStampedOn(address,uint32)` `0x0ae81079`(uint32 为 `currentDay()` `0x5c9302c9` 的返回值)
-- `eligible(address)` `0x0713b139`、`hasEnteredFinale(address)` `0x028a3c9c`
-- `isWinner(address)` `0x9d9ca28d`、`prizeClaimed(address)` `0xdc8a55c2`
-
-写操作(每个仍走第 4 节流程:预览 → 用户逐次明确确认 → 执行):
-- 领印记 `claimStamp()` calldata `0x74cdcabc`。phase 必须为 1,且当天未领过;一天只能领一次,重复调用必然失败,不要重试轰炸。领之前先做名额预检:读 `currentDay()`(`0x5c9302c9`)、当天的 `dayClaims(<day>)`(选择器 `0x112d87dd`)与 `slotsPerDay()`(选择器 `0x2e6716cc`);`dayClaims` ≥ `slotsPerDay` → 今天的名额已领完,停下并告诉用户「今天的印记名额已领完,明天再来」,不要发交易(必然以 `NoSlots` 失败)。
-- 终章报名 `enterFinale()` calldata `0x612f5430`。phase 必须为 2,且 `eligible` 为 true、未报名过。
-- 领奖 `claimPrize()` calldata `0x70740ac9`。phase 必须为 4,`isWinner` 为 true 且未领过。
-- 锁定种子与开奖(lockFinaleSeed / drawFinale)由项目方执行,不在参与者 Agent 的范围内;phase 为 3 时只需告诉用户「等待项目方开奖」。
-
 ## 7. 执行与结果 / Preview, execute, report
 
 先 preview(以参加抽奖为例,其余动作换 calldata 即可):
@@ -331,7 +310,7 @@ cast calldata "claimPrize(uint256)" 3
 baw contract-call preview \
   --binanceChainId 56 \
   --from <用户的 Agentic Wallet 地址> \
-  --to {{APPS_MAINNET_ADDRESS}} \
+  --to 0x4858c1c6a4428c65ee6f60aac21a3f404d85d598 \
   --value 0 \
   --inputData 0x1959f37d<活动id的32字节补齐><偏移量0x60的32字节补齐><偏移量0x80的32字节补齐><长度0的32字节补齐><长度0的32字节补齐> \
   --json
@@ -352,8 +331,7 @@ baw contract-call execute --requestId <requestId> --json
   交易照样会上链失败),先做下一步复核。
 - **执行后复核(报成功前必做)**:只读复核这笔是否真的生效——参加
   抽奖 / 投票 / 领取后,`hasEntered(<id>, <用户地址>)` 应为 `true`;
-  领印记后,`stampCount` 应比执行前 +1(或 `hasStampedOn` 当天为
-  `true`);领奖后,`prizeClaimed` 应为 `true`;也可以查这笔交易的
+  领奖后,`prizeClaimed` 应为 `true`;也可以查这笔交易的
   收据 `status` 应为成功。复核通过 → 向用户报告成功(带 txHash)。
   复核不符 → 如实告诉用户这笔没有生效,附 txHash 与链上实际状态,
   **不要报成功,也不要自行重发**(护栏第 4、6 条)。
@@ -375,13 +353,13 @@ preview / execute 报错时,错误数据以 4 字节**选择器**开头,对照�
 | `ConditionFailed(0)`(`0x075c760f` + 参数 0) | 本场要求先完成 X 绑定,你还没绑 | 按第 8 节先完成绑定,再回来参加 |
 | `ConditionFailed(1)`(参数 1) | 持币门槛没达到 | 把第 5 节预检读到的门槛与余额告诉用户;不要替用户买币 |
 | `ConditionFailed(2)`(参数 2) | 本场要求先参加过指定活动,你还没参加 | 告诉用户先去参加那一场,再回来 |
-| `ConditionFailed(3)`(参数 3) | 真人远征印记不够 | 告诉用户还差几枚,先去领印记(6.5 节) |
+| `ConditionFailed(3)`(参数 3) | 印记数不够 | 告诉用户还差几枚;本站当前没有领印途径,如实告知 |
 | `ConditionFailed(4)`(参数 4) | 你的地址不在本场地址名单里(或名单证明不对) | 请用户提供发行人分发的名单核对;拿不到名单就停下,不要猜 |
 | `ConditionFailed(5)`(参数 5) | 你的 Agent ID 名字不在本场身份名单里(或名单证明不对) | 请用户提供发行人分发的名字名单核对;拿不到就停下 |
 | `NotHuman`(`0xb54e834c`) | 这个钱包没有 Agent ID,过不了真人门禁 | 让用户确认用的是 Agentic Wallet 地址、且已在币安 App 领取 Agent ID |
 | `AlreadyCounted`(`0x41852f58`) | 你已经参加过了 | 不用重复操作,告诉用户已参加 |
-| `NotOpen`(`0xddafad98`) | 不在开放时间(活动未开始 / 已结束,或远征不在对应阶段) | 把第 5 节读到的时间窗 / phase 告诉用户 |
-| `NoSlots`(`0x093fe961`) | 名额已满(领取上限已满,或当天印记名额已领完) | 告诉用户已满;远征印记名额是明天再来 |
+| `NotOpen`(`0xddafad98`) | 不在开放时间(活动未开始 / 已结束) | 把第 5 节读到的时间窗告诉用户 |
+| `NoSlots`(`0x093fe961`) | 名额已满(领取上限已满) | 告诉用户已满 |
 | `NotWinner`(`0x618c7242`) | 你没有中奖 | 如实告诉用户,不要安慰性编造 |
 | `BadOption`(`0xb28dea74`) | 选项序号超出范围 | 按 `optionCount` 与选项文字重新向用户确认要投哪个 |
 | `ClaimExpired`(`0x82a49d9e`) | 领奖已过期:开奖后超过 30 天(以活动 `endAt` + 30 天为界),这份奖金不能再领了 | 如实告诉用户已过期,不要重试;未领奖金之后由创建者回收 |

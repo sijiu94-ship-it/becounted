@@ -1,15 +1,15 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0x8Ce3052c7CcAFd29a58306981D2235433d386d32"; // OneIDCampaignsV11 trial stack (own gate + MockRegistryV2 with handleOf; bindings = IdentityBindingsV3)
-const BINDINGS_TESTNET = "0x727dfCc0d86bD58B16Ed607c8CEa146AC396bf30"; // IdentityBindingsV3
-const PROFILE_TESTNET  = "0x03b4a3129199b16ccf144a100b1fc65f31d907c1"; // IdentityProfile (Wave 2)
+const APPS_TESTNET     = "0x4858c1c6a4428c65ee6f60aac21a3f404d85d598"; // OneIDCampaignsV11 trial stack (own gate + MockRegistryV2 with handleOf; bindings = IdentityBindingsV3)
+const BINDINGS_TESTNET = "0xe90F1Aeadc08d832dc34eC1EdE3E7e934A31E165"; // IdentityBindingsV3
+const PROFILE_TESTNET  = "0x42c9f4bfa02e0b4365d9701f962b4dcd4bf39a07"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
   "function setProfile(string bio, tuple(string title, string url)[] links)",
   "function removeProfile()",
   "function profileOf(address who) view returns (string bio, tuple(string title, string url)[] links, uint64 updatedAt)"
 ];
-const GATE_TESTNET     = "0x2464F16146EA45C8b30fe3FED5E8f536C5344296"; // BeCounted (testnet, V11 trial stack gate)
-const QUEST_TESTNET = "0x90c3320557db7540a5899e7d3bc0577e399ec378";
+const GATE_TESTNET     = "0xda585a4ae5b73ee2728aada3e877a3a1f84027cd"; // BeCounted (testnet, V11 trial stack gate)
+const QUEST_TESTNET = "0x0000000000000000000000000000000000000000";
 const QUEST_ABI = [
   "function claimStamp()", "function enterFinale()", "function lockFinaleSeed()", "function drawFinale()", "function claimPrize()",
   "function phase() view returns (uint8)", "function currentDay() view returns (uint32)",
@@ -73,17 +73,17 @@ const SITE_URL = "https://becounted.9nosing.com/";
 /* Network config — mainnet launch changes ONLY this block plus the APPS
    address above, TOKEN_PRESETS and SITE_URL. */
 const NETWORK = {
-  appsChainId: 97, appsChainHex: "0x61",
-  appsRpcs: ["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet-dataseed.bnbchain.org", "https://data-seed-prebsc-1-s1.bnbchain.org:8545"],
+  appsChainId: 56, appsChainHex: "0x38",
+  appsRpcs: ["https://bsc-dataseed.binance.org","https://bsc-rpc.publicnode.com","https://rpc.ankr.com/bsc","https://bsc-dataseed1.bnbchain.org","https://bsc-dataseed2.bnbchain.org"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com", "https://rpc.ankr.com/bsc", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 144405789; // V11 deployment block: event scans start here
+const APPS_DEPLOY_BLOCK = 135587980; // V11 deployment block: event scans start here
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-25: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
 const TOKEN_PRESETS = {
-  usdt: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
-  usdc: "0x64544969ed7EBf5f083679233325356EbE738930"
+  usdt: "0x55d398326f99059fF775485246999027B3197955",
+  usdc: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"
 };
 const ERC20_ABI = [
   "function approve(address, uint256) returns (bool)",
@@ -102,7 +102,7 @@ en: {
   check_label:"Check any address against the live Agent ID registry (BNB mainnet)",
   check_btn:"Is human?",
   check_try:"Try a known holder:",check_sample_mask:"9nosing.ai's Agentic Wallet address (hidden in this demo)", check_try_link:"9nosing.ai's wallet", check_try2:"— or paste your own Agentic Wallet address.",
-  stat_campaigns:"campaigns on testnet", stat_entries:"verified-human entries",
+  stat_campaigns:"campaigns on mainnet", stat_entries:"verified-human entries",
   
   demo_h:"Watch the gate work \u2014 no wallet needed", demo_sub:"A live-fire demo against the real Agent ID registry on BNB mainnet. Send a bot farm at the gate, then send one real human. Same entrance, same one-line check.",
   demo_btn_bots:"Send 100 bots", demo_btn_human:"Send 1 human", demo_btn_reset:"Reset",
@@ -119,7 +119,7 @@ en: {
   t2_no:"02 / How it works", t2_h:"Two questions, two keys", t2_p:"Why the gate is stateless, why dedup belongs to each campaign, and the three things BeCounted will never do.", t_go2:"Read →",
   t3_no:"03 / Builders", t3_h:"One read call is the API", t3_p:"Contract addresses, the integration snippet, and the is-human skill any AI agent can run before it acts.", t_go3:"Build →",
   foot_l:"BeCounted — built for the Binance Wallet × BNB Chain Agent ID Hackathon. Token prizes are escrowed in the contract and claimed by winners on-chain; off-chain prizes are delivered by creators to the drawn winner list. The chain proves who entered and who won.",
-  foot_r:"testnet demo · mainnet launch follows the hackathon schedule",
+  foot_r:"live on mainnet · Binance Wallet × BNB Chain Agent ID Hackathon",
   v_invalid_t:"INVALID", v_invalid:"That is not a wallet address.",
   v_reading:"Reading the registry…",
   v_yes_t:"UNIQUE HUMAN", v_yes:"Holds an Agent ID — exactly one KYC-anchored human is behind this address.",
@@ -128,18 +128,18 @@ en: {
   v_no_s:"Agent IDs live in the Agentic Wallet. Check you pasted that address, not your main wallet.",
   v_err_t:"ERROR", v_err:"Registry read failed — try again in a moment.",
   // campaigns page
-  kick_camp:"Live on BNB testnet",
+  kick_camp:"Live on BNB mainnet",
   h_camp:"Campaigns",
-  camp_sub:"Every entry below passed the BeCounted check. Testnet runs on a mock registry — on mainnet, the same contracts read the real Agent ID registry and any holder can enter.",
-  loading:"Loading campaigns from chain…", load_fail:"Could not reach the testnet right now — refresh in a moment.", no_camp:"No campaigns yet.",
+  camp_sub:"Every entry below passed the BeCounted check. The contracts read the real Agent ID registry on BNB mainnet — any holder can enter.",
+  loading:"Loading campaigns from chain…", load_fail:"Could not reach BNB mainnet right now — refresh in a moment.", no_camp:"No campaigns yet.",
   c_raffle:"Raffle", c_vote:"Vote", c_live:"Live", c_ended:"Ended", c_upcoming:"Upcoming", c_drawn:"Drawn",
   c_window:"Window", c_winners:"Winners", c_options:"Options",
   c_entries:"verified entries", c_winner:"Winner:", c_enter:"Enter raffle", c_draw:"Draw now",
   c_opt:"Option", c_vote_btn:"Vote",
-  m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
+  m_connect_first:"Connect your wallet first (top right). Entry requires an Agent ID in your Agentic Wallet.",
   m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
   m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
-  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC testnet - switch to BSC testnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", cd_sec:"4 \u00b7 Entry conditions (optional)", cd_bind:"Must have a bound X account", cd_token:"Token holding gate", cd_721:"This is an NFT (count by balance)", cd_721_hint:"NFT gate: the address above is the NFT contract, the number is how many they must hold (usually 1). At entry the contract checks balanceOf - it returns the count they hold.", cd_prior:"Must have entered campaign #", cd_stamps:"Must hold expedition stamps \u2265", cd_hint:"Conditions are checked on-chain at entry. A follow on X cannot be verified on-chain - the binding condition is its trustless counterpart: every entrant carries a public handle anyone can check.", cd_err_token:"Enter a valid gate token address.", cd_err_min:"Enter a minimum holding above zero.", cd_err_prior:"Enter the earlier campaign number.", cd_err_stamps:"Stamps required: 1 to 7.", chip_bind:"X bound", chip_token:"Hold", chip_nft:"NFT", chip_prior:"Entered", chip_stamps:"Stamps", m_cond_0:"This campaign requires a bound X account - bind yours from your identity card first.", m_cond_1:"You do not hold enough of the gate token for this campaign.", m_cond_2:"This campaign is for returning participants - enter the earlier campaign first.", m_cond_3:"You need more expedition stamps for this campaign.", chip_allow:"Allowlist", chip_id:"Agent ID list", m_cond_5:"This campaign is limited to listed Agent IDs - your Agent ID is not on the list (or your address has no Agent ID name). If you have the name list, import it on the campaign page first.", cd_id:"Agent ID allowlist - only listed Agent IDs can join", cd_id_list:"Agent ID list", cd_id_ph:"One Agent ID name per line (.ai suffix optional)", cd_id_dl:"Download list file", cd_err_id:"The list is empty or contains an invalid name.", cd_id_hint:"The list is committed as hashes of the names themselves - it holds identities, never wallet addresses. A mistyped name fails silently: it simply never matches anyone. Check every name carefully.", idlst_h:"Agent ID allowlist", idlst_hint:"This campaign is limited to the Agent IDs on a list committed on-chain as a Merkle root of name hashes - identities only, no wallet addresses. Import the name list to check yours and join.", idlst_ph:"Paste the Agent ID name list here", idlst_in:" \u00b7 your Agent ID is on the list \u2713", idlst_out:" \u00b7 your Agent ID is not on the list", idlst_nohandle:" \u00b7 your address has no Agent ID name", m_cond_4:"This campaign is allowlist-only. Import the address list on the campaign page, then try again.", cd_allow:"Allowlist only - only listed addresses can join", cd_allow_list:"Address list", cd_allow_ph:"One address per line (or comma-separated)", cd_allow_dl:"Download list file", cd_err_allow:"The list is empty or contains an invalid address.", lst_h:"Allowlist", lst_hint:"This campaign is limited to an address list committed on-chain as a Merkle root. Import the list to check your address and join.", lst_ph:"Paste the address list here", lst_save:"Save list", lst_in:" \u00b7 your address is on the list \u2713", lst_out:" \u00b7 your address is not on the list", lst_root_ok:"List matches the on-chain root \u2713", lst_root_bad:"This list does not match the on-chain root \u2717", vp_on:"Add a prize pool drawn among voters", vp_note:"After the vote ends, winners are drawn at random from ALL voters - the option picked plays no role - and split the pool equally. Winners claim on-chain; anyone can recompute the draw.", vp_total:"Total prize pool", vp_winners:"Prize winners", vp_err_token:"Pick a prize token for the voter prize.", vp_err_total:"Enter a prize pool above zero.", c_vote_prize:"voter prize", nav_quest:"Expedition", q_kicker:"GENESIS EXPEDITION \u00b7 SEASON 0", q_title:"The Human Expedition", q_sub:"Seven days, seven stamps, one finale. Only verified humans can stamp - one per day, paid instantly in lucky shares. Collect at least 5 stamps to enter the finale draw.", q_stat_daypool:"stamp pool / day", q_stat_slots:"stamp slots / day", q_stat_finale:"finale pool", q_stat_min:"stamps to enter finale", q_my_h:"My expedition", q_day:"Day", q_today_claim:"Claim today's stamp", q_today_done:"Stamped today", q_today_full:"Today's stamps are gone", q_today_left:"left today:", q_notstarted:"Season starts", q_connect_hint:"Connect your wallet to play.", q_skill_hint:"Holding an Agent ID? The Agentic Wallet can't connect to websites — join through your Agent instead, with the participation Skill:", q_skill_link:"Open the participation Skill", q_finale_h:"Finale", q_enter:"Enter the finale", q_entered:"Entered the finale", q_need_more:"stamps short:", q_eligible_yes:"Finale eligible", q_genesis:"Genesis participant", q_seed_lock:"Lock the draw seed", q_draw_btn:"Draw the finale", q_drawn_h:"Finale drawn", q_claim_prize:"Claim prize", q_prize_claimed:"Prize claimed", q_entries_h:"Finale entries", q_phase_entry:"entries close", q_winner_tag:"WINNER", q_rules_h:"How it works", q_rules_1:"One stamp per human per day. Each stamp pays a lucky share of the day's pool, instantly.", q_rules_2:"Collect at least 5 of 7 stamps to enter the finale. Entry is one per human.", q_rules_3:"The finale draw seed is locked on-chain after entries close; anyone can recompute the winners. Stamp randomness is entertainment-grade pseudo-randomness - small daily amounts by design.", q_card_h:"Expedition - Season 0", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
+  m_connected:"Connected on BSC mainnet: ", m_rejected:"Connection rejected or failed.", m_wrongnet:"Connected, but your wallet is not on BSC mainnet - switch to BSC mainnet before joining a campaign.", m_pending:"Your wallet already has a pending request - open the wallet and confirm it first.", m_disconnected:"Disconnected.", nav_switch:"Switch account", nav_exit:"Disconnect", m_checking:"Checking eligibility\u2026", m_waiting:"Sent \u2014 waiting for on-chain confirmation\u2026", m_need_human:"This address has no Agent ID, so it cannot join yet. Claim an Agent ID in the Binance App first \u2014 see the guide.", f_live_only:"Live only", qr_h:"Card QR code", qr_sub:"Scan to open this card", cert_btn:"Draw certificate", cert_entries:"Entries", cert_winners:"Winners", cert_each:"each", cert_recompute:"anyone can recompute this draw on the campaign page", cert_done:"Certificate downloaded.", mine_joined_h:"Campaigns I joined", j_mystatus:"My status", j_entered:"Entered", j_notwon:"Not a winner this time", j_winner:"You won - claim your prize on the campaign page", j_won_claimed:"Prize claimed", j_voted:"Voted", j_claimed:"Claimed", j_none:"You have not joined any campaigns yet.", d_show_all:"Show all", cd_sec:"4 \u00b7 Entry conditions (optional)", cd_bind:"Must have a bound X account", cd_token:"Token holding gate", cd_721:"This is an NFT (count by balance)", cd_721_hint:"NFT gate: the address above is the NFT contract, the number is how many they must hold (usually 1). At entry the contract checks balanceOf - it returns the count they hold.", cd_prior:"Must have entered campaign #", cd_stamps:"Must hold expedition stamps \u2265", cd_hint:"Conditions are checked on-chain at entry. A follow on X cannot be verified on-chain - the binding condition is its trustless counterpart: every entrant carries a public handle anyone can check.", cd_err_token:"Enter a valid gate token address.", cd_err_min:"Enter a minimum holding above zero.", cd_err_prior:"Enter the earlier campaign number.", cd_err_stamps:"Stamps required: 1 to 7.", chip_bind:"X bound", chip_token:"Hold", chip_nft:"NFT", chip_prior:"Entered", chip_stamps:"Stamps", m_cond_0:"This campaign requires a bound X account - bind yours from your identity card first.", m_cond_1:"You do not hold enough of the gate token for this campaign.", m_cond_2:"This campaign is for returning participants - enter the earlier campaign first.", m_cond_3:"You need more expedition stamps for this campaign.", chip_allow:"Allowlist", chip_id:"Agent ID list", m_cond_5:"This campaign is limited to listed Agent IDs - your Agent ID is not on the list (or your address has no Agent ID name). If you have the name list, import it on the campaign page first.", cd_id:"Agent ID allowlist - only listed Agent IDs can join", cd_id_list:"Agent ID list", cd_id_ph:"One Agent ID name per line (.ai suffix optional)", cd_id_dl:"Download list file", cd_err_id:"The list is empty or contains an invalid name.", cd_id_hint:"The list is committed as hashes of the names themselves - it holds identities, never wallet addresses. A mistyped name fails silently: it simply never matches anyone. Check every name carefully.", idlst_h:"Agent ID allowlist", idlst_hint:"This campaign is limited to the Agent IDs on a list committed on-chain as a Merkle root of name hashes - identities only, no wallet addresses. Import the name list to check yours and join.", idlst_ph:"Paste the Agent ID name list here", idlst_in:" \u00b7 your Agent ID is on the list \u2713", idlst_out:" \u00b7 your Agent ID is not on the list", idlst_nohandle:" \u00b7 your address has no Agent ID name", m_cond_4:"This campaign is allowlist-only. Import the address list on the campaign page, then try again.", cd_allow:"Allowlist only - only listed addresses can join", cd_allow_list:"Address list", cd_allow_ph:"One address per line (or comma-separated)", cd_allow_dl:"Download list file", cd_err_allow:"The list is empty or contains an invalid address.", lst_h:"Allowlist", lst_hint:"This campaign is limited to an address list committed on-chain as a Merkle root. Import the list to check your address and join.", lst_ph:"Paste the address list here", lst_save:"Save list", lst_in:" \u00b7 your address is on the list \u2713", lst_out:" \u00b7 your address is not on the list", lst_root_ok:"List matches the on-chain root \u2713", lst_root_bad:"This list does not match the on-chain root \u2717", vp_on:"Add a prize pool drawn among voters", vp_note:"After the vote ends, winners are drawn at random from ALL voters - the option picked plays no role - and split the pool equally. Winners claim on-chain; anyone can recompute the draw.", vp_total:"Total prize pool", vp_winners:"Prize winners", vp_err_token:"Pick a prize token for the voter prize.", vp_err_total:"Enter a prize pool above zero.", c_vote_prize:"voter prize", nav_quest:"Expedition", q_kicker:"GENESIS EXPEDITION \u00b7 SEASON 0", q_title:"The Human Expedition", q_sub:"Seven days, seven stamps, one finale. Only verified humans can stamp - one per day, paid instantly in lucky shares. Collect at least 5 stamps to enter the finale draw.", q_stat_daypool:"stamp pool / day", q_stat_slots:"stamp slots / day", q_stat_finale:"finale pool", q_stat_min:"stamps to enter finale", q_my_h:"My expedition", q_day:"Day", q_today_claim:"Claim today's stamp", q_today_done:"Stamped today", q_today_full:"Today's stamps are gone", q_today_left:"left today:", q_notstarted:"Season starts", q_connect_hint:"Connect your wallet to play.", q_skill_hint:"Holding an Agent ID? The Agentic Wallet can't connect to websites — join through your Agent instead, with the participation Skill:", q_skill_link:"Open the participation Skill", q_finale_h:"Finale", q_enter:"Enter the finale", q_entered:"Entered the finale", q_need_more:"stamps short:", q_eligible_yes:"Finale eligible", q_genesis:"Genesis participant", q_seed_lock:"Lock the draw seed", q_draw_btn:"Draw the finale", q_drawn_h:"Finale drawn", q_claim_prize:"Claim prize", q_prize_claimed:"Prize claimed", q_entries_h:"Finale entries", q_phase_entry:"entries close", q_winner_tag:"WINNER", q_rules_h:"How it works", q_rules_1:"One stamp per human per day. Each stamp pays a lucky share of the day's pool, instantly.", q_rules_2:"Collect at least 5 of 7 stamps to enter the finale. Entry is one per human.", q_rules_3:"The finale draw seed is locked on-chain after entries close; anyone can recompute the winners. Stamp randomness is entertainment-grade pseudo-randomness - small daily amounts by design.", q_card_h:"Expedition - Season 0", m_switch_hint:"This wallet cannot switch accounts here. Switch the account inside your wallet, then refresh.", prof_h:"Profile links", prof_self:"Self-described \u00b7 on-chain", prof_edit_h:"Edit your profile", prof_bio:"One-line bio", prof_bio_ph:"Say who you are in one line", prof_title_ph:"Title, e.g. X", prof_url_ph:"https://\u2026", prof_save:"Save on-chain", prof_remove:"Remove profile", prof_saved:"Profile saved on-chain.", prof_removed:"Profile removed.", prof_note:"Bio and links are written by the owner and stored on-chain. Self-described, not verified.",
   // how page
   kick_how:"The design", h_how:"Two questions. Two keys.",
   how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
@@ -159,7 +159,7 @@ en: {
   kick_build:"Integration", h_build:"For builders",
   build_sub:"One read call is the whole integration. If your contract can call a view function, you have sybil resistance.",
   code_note:"Gate any function with one line. The primitive is stateless — your contract keeps its own per-campaign dedup, keyed by the human.",
-  a_gate:"BeCounted — BSC testnet", a_apps:"OneIDCampaigns — BSC testnet", a_bind:"IdentityBindingsV3 (testnet)", a_quest:"QuestPass — BSC testnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
+  a_gate:"BeCounted — BSC mainnet", a_apps:"OneIDCampaigns — BSC mainnet", a_bind:"IdentityBindingsV3", a_quest:"QuestPass — BSC mainnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
   a_skill_v:"is-human — a zero-dependency checker any AI agent can run before it acts. Source in the project repo.",
   a_profile:"IdentityProfile (bio + links)", embed_h:"Embed the check on your site", embed_p:"Two lines of code put a live Agent ID check on any web page. It reads the registry directly - no API key, no backend, read-only. For on-chain gating, use the contract interface or the template instead.",
   nav_white:"Whitepaper", kick_wp:"WHITEPAPER", h_wp:"The BeCounted Whitepaper", wp_sub:"What this is, how it works, what it refuses to do, and where its limits are - in one page.",
@@ -169,7 +169,7 @@ en: {
   wp4_h:"Security model", wp4_1:"The gate is read-only: a view function with no owner, no upgrade path, and no pause switch. Nobody can change its answer, including us.", wp4_2:"Prizes are escrowed by the campaign contract the moment a campaign is created. Winners claim for themselves; a prize unclaimed after 30 days returns to the creator.", wp4_3:"Draws are reproducible: after a campaign ends, anyone can lock the seed on-chain — the hash of the second block after locking, unknowable in advance because entries are already closed — and anyone can recompute the winner list from public data - the campaign page does it in one click.", wp4_4:"Honest randomness: the lucky-claim mode uses blockhash pseudo-randomness, labelled in the contract and the UI as entertainment-grade, for small pools only.", wp4_5:"The site never asks for unlimited approvals: token escrow approves the exact amount, once.",
   wp5_h:"Built to the contest's security red lines", wp5_p:"No third-party Agentic Wallet login (participation happens through the user's own agent with per-call confirmation \u2014 the Agentic Wallet never connects to this or any third-party site). No silent or bundled transfers. No unlimited approvals. Contracts are open source, with owner powers disclosed - there are none. No name impersonates Binance or BNB. And no mnemonics, private keys, or pairing codes are ever collected. Our own agent tooling is read-only by design.",
   wp6_h:"Known limitations", wp6_1:"The gate is not narrow in supply: Agent ID holders already number over 263,000 (registry count, November 2026) and issuance keeps growing. The real limit is reach - most holders have never heard of any given campaign, so every gated campaign still starts from a zero audience. The contract does not change; the discovery does.", wp6_2:"Uniqueness is capped by KYC, not by mathematics: one person holding several verified identities could hold several IDs. We claim 'one identity, one entry' - not 'one soul, one entry'.", wp6_3:"If Binance rebuilds or replaces the Agentic Wallet, how an ID carries over is Binance's call, not ours. Our claim is narrower, and honest: the first working interface for a proven pattern - not 'the standard'.",
-  wp7_h:"Contracts", wp7_p:"Currently live on BSC testnet. Mainnet addresses replace these at launch, verified on BscScan.", wp8_h:"The Mark", wp8_1:"At the center stands the human. BeCounted verifies one thing — that a participant is a unique real human — so the human stands in front, and everything else serves them.", wp8_2:"Behind the human, two keys are crossed like a swordsman's blades: the two-key principle. One key answers 'is this a unique human?' — checked on every entry. The other answers 'has this human been counted in this campaign?' — once per campaign, never twice. Together they guard the fairness of every campaign: one human, one entry, no bot farms.", wp8_3:"The disc is a golden seal. To be counted is to be stamped — the same stamp a participant earns each day of the Genesis Expedition. Gold is the color of the ecosystem we build on; the circle means no one missing, no one counted twice.",
+  wp7_h:"Contracts", wp7_p:"Live on BSC mainnet. Addresses verified on BscScan.", wp8_h:"The Mark", wp8_1:"At the center stands the human. BeCounted verifies one thing — that a participant is a unique real human — so the human stands in front, and everything else serves them.", wp8_2:"Behind the human, two keys are crossed like a swordsman's blades: the two-key principle. One key answers 'is this a unique human?' — checked on every entry. The other answers 'has this human been counted in this campaign?' — once per campaign, never twice. Together they guard the fairness of every campaign: one human, one entry, no bot farms.", wp8_3:"The disc is a golden seal. To be counted is to be stamped — the one mark every counted participant carries. Gold is the color of the ecosystem we build on; the circle means no one missing, no one counted twice.",
   skill_h:"For agents, not just contracts",
   skill_p:"The same check ships as a skill: an AI agent about to enter, claim or pay can ask “is a unique human behind this address?” and get an answer whose evidence is on-chain — not issued by us, not stored by us.",
   // card page
@@ -275,7 +275,7 @@ en: {
   guide_4:"Join through your agent with the BeCounted Skill — an Agent ID never connects to a website directly",
   join_h:"Have an Agent ID? Join through your agent — three steps",
   join_1:"Send your agent the BeCounted participation Skill (button below)",
-  join_2:"Tell it in plain words: “Join the BeCounted genesis raffle for me”, or “Claim today's Human Expedition stamp for me”",
+  join_2:"Tell it in plain words: “Join the BeCounted genesis raffle for me”",
   join_3:"Your agent previews the call first — confirm once, and the transaction goes out from your own Agentic Wallet address",
   join_note:"Season activities need no X binding and no sign-up beforehand — your address is your identity.",
   join_btn:"Open the participation Skill →",
@@ -318,7 +318,7 @@ en: {
   rec_entered:"raffles entered", rec_voted:"votes cast", rec_claimed:"shares claimed", rec_won:"raffles won",
 
   mq1:"One human", mq2:"One entry", mq3:"No reverse lookup", mq4:"No character judgement", mq5:"Stateless · Read-only · No owner", mq6:"Sybil resistance as a primitive",
-  feed_h:"Live from the gate — BSC testnet", feed_blk:"block",
+  feed_h:"Live from the gate — BSC mainnet", feed_blk:"block",
   ev_created:"campaign created", ev_entered:"entered raffle", ev_voted:"voted", ev_drawn:"raffle drawn",
   feed_empty:"No events yet in the recent window.", feed_fail:"Feed unavailable right now.",
   cta_h:"Run your own draw — gated by real humans",
@@ -354,7 +354,7 @@ zh: {
   check_label:"用主网真实 Agent ID 注册表，查任意地址",
   check_btn:"是真人吗？",
   check_try:"试试已知持有者：",check_sample_mask:"9nosing.ai 的 Agentic Wallet 地址（演示中不显示）", check_try_link:"9nosing.ai 的钱包", check_try2:"——也可以粘贴你自己的 Agentic Wallet 地址。",
-  stat_campaigns:"测试网上的活动", stat_entries:"真人报名人次",
+  stat_campaigns:"主网上的活动", stat_entries:"真人报名人次",
   
   demo_h:"不用连钱包，看闸门怎么工作", demo_sub:"对着 BNB 主网真实的 Agent ID 注册表实弹演示。先放一群机器人进场，再放一个真人\u2014\u2014同一个入口，同一行检查。",
   demo_btn_bots:"放 100 个机器人进场", demo_btn_human:"放 1 个真人进场", demo_btn_reset:"重置",
@@ -371,7 +371,7 @@ zh: {
   t2_no:"02 / 原理", t2_h:"两个问题，两把钥匙", t2_p:"为什么门禁本身无状态、为什么去重状态归每个活动自己管，以及 BeCounted 永远不会做的三件事。", t_go2:"查看 →",
   t3_no:"03 / 开发者", t3_h:"一次只读调用就是 API", t3_p:"合约地址、接入代码片段，以及任何 AI Agent 动手前都能先跑一遍的 is-human 技能。", t_go3:"接入 →",
   foot_l:"BeCounted——为币安钱包 × BNB 链 Agent ID 黑客松而建。代币奖品由合约全额托管、中奖者链上自助领取；链下奖品由发起人按中奖名单发放。链负责证明谁报了名、谁中了奖。",
-  foot_r:"测试网演示 · 主网按黑客松排期上线",
+  foot_r:"主网已上线 · 币安钱包 × BNB 链 Agent ID 黑客松",
   v_invalid_t:"无效", v_invalid:"这不是一个钱包地址。",
   v_reading:"正在读取注册表…",
   v_yes_t:"唯一真人", v_yes:"持有 Agent ID——这个地址背后恰好站着一个 KYC 锚定的真人。",
@@ -379,18 +379,18 @@ zh: {
   v_no_t:"未验证", v_no:"这个地址没有 Agent ID——过不了这道门。",
   v_no_s:"Agent ID 在 Agentic Wallet 里。确认你粘贴的是那个地址，而不是主钱包。",
   v_err_t:"出错", v_err:"注册表读取失败——稍等片刻再试。",
-  kick_camp:"BNB 测试网运行中",
+  kick_camp:"BNB 主网运行中",
   h_camp:"活动",
-  camp_sub:"下面每一次报名都通过了 BeCounted 的核验。测试网用的是模拟注册表；主网上线后，同一套合约读取真实 Agent ID 注册表，任何持有者都能报名。",
-  loading:"正在从链上加载活动…", load_fail:"暂时连不上测试网——稍后刷新。", no_camp:"暂无活动。",
+  camp_sub:"下面每一次报名都通过了 BeCounted 的核验。合约读取 BNB 主网真实 Agent ID 注册表，任何持有者都能报名。",
+  loading:"正在从链上加载活动…", load_fail:"暂时连不上 BNB 主网——稍后刷新。", no_camp:"暂无活动。",
   c_raffle:"抽奖", c_vote:"投票", c_live:"进行中", c_ended:"已结束", c_upcoming:"未开始", c_drawn:"已开奖",
   c_window:"时间", c_winners:"中奖名额", c_options:"选项数",
   c_entries:"人已报名", c_winner:"中奖者：", c_enter:"报名抽奖", c_draw:"立即开奖",
   c_opt:"选项", c_vote_btn:"投",
-  m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
+  m_connect_first:"先连接钱包（右上角）。参加需要 Agentic Wallet 里的 Agent ID。",
   m_signing:"等待签名…", m_done:"完成——刷新中…",
   m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
-  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 测试网——参加活动前请先切换到 BSC 测试网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", cd_sec:"4 · 参加条件（可选）", cd_bind:"必须已绑定 X 账号", cd_token:"持币门槛", cd_721_hint:"NFT 门槛这样设：上面地址填 NFT 合约，数字填至少持有几个（一般填 1）。参加时合约查 balanceOf，返回他持有几个，够数放行。", cd_721:"这是 NFT（按余额计数）", cd_prior:"必须参加过活动编号 #", cd_stamps:"必须持有远征印记 ≥", cd_hint:"条件在参加时由链上逐条检查。「关注」无法链上验证——绑定条件是它的无信任版本：每位参加者都带着公开账号，任何人可在 X 上对照核对。", cd_err_token:"请填入有效的门槛代币地址。", cd_err_min:"请填入大于零的最低持有量。", cd_err_prior:"请填入前置活动的编号。", cd_err_stamps:"印记门槛需在 1 到 7 之间。", chip_bind:"已绑定 X", chip_token:"持币", chip_nft:"NFT", chip_prior:"参加过", chip_stamps:"印记", m_cond_0:"本活动要求先绑定 X 账号——去身份卡页绑定后再来。", m_cond_1:"你持有的门槛代币不足，暂时参加不了本活动。", m_cond_2:"本活动只对老参加者开放——先去参加前置活动。", m_cond_3:"你的远征印记还不够，集满门槛再来。", chip_allow:"名单制", chip_id:"Agent ID 名单", m_cond_5:"本活动限名单内 Agent ID 参加——你的 Agent ID 不在名单内（或你的地址没有 Agent ID 名字）。若你有名字名单，先到活动详情页导入再参加。", cd_id:"Agent ID 名单——只有名单内的 Agent ID 能参加", cd_id_list:"Agent ID 名单", cd_id_ph:"每行一个 Agent ID 名字（带不带 .ai 都行）", cd_id_dl:"下载名单文件", cd_err_id:"名单为空或含有无效名字。", cd_id_hint:"名单存的是名字本身的哈希——名单里只有身份、没有钱包地址。名字写错不会报错，只是永远没人能对上，请逐个核对。", idlst_h:"Agent ID 名单", idlst_hint:"本活动限名单内 Agent ID 参加。名单以名字哈希的默克尔根存入合约——只有身份、没有钱包地址。导入名字名单即可核对你的名字并参加。", idlst_ph:"把 Agent ID 名字名单粘贴到这里", idlst_in:" · 你的 Agent ID 在名单内 ✓", idlst_out:" · 你的 Agent ID 不在名单内", idlst_nohandle:" · 你的地址没有 Agent ID 名字", m_cond_4:"本活动是名单制——先到活动详情页导入名单文件再参加。", cd_allow:"名单制——只有名单内的地址能参加", cd_allow_list:"地址名单", cd_allow_ph:"每行一个地址(或用逗号分隔)", cd_allow_dl:"下载名单文件", cd_err_allow:"名单为空或含有无效地址。", lst_h:"参加名单", lst_hint:"本活动限定名单内地址参加,名单的默克尔根已存入合约。导入名单即可核对你的地址并参加。", lst_ph:"把地址名单粘贴到这里", lst_save:"保存名单", lst_in:" \u00b7 你的地址在名单内 \u2713", lst_out:" \u00b7 你的地址不在名单内", lst_root_ok:"名单与链上根一致 \u2713", lst_root_bad:"这份名单与链上根不一致 \u2717", vp_on:"给投票加奖池(在投票人中抽奖)", vp_note:"投票结束后,从全部投票人中随机抽取中奖者——投了哪个选项不影响抽奖——平分奖池。中奖者链上自助领取,任何人可复算开奖。", vp_total:"奖池总额", vp_winners:"中奖名额", vp_err_token:"请为投票奖池选择奖品代币。", vp_err_total:"请填入大于零的奖池金额。", c_vote_prize:"投票奖池", nav_quest:"远征", q_kicker:"创世远征 \u00b7 第 0 季", q_title:"真人远征", q_sub:"七天，七枚印记，一场终章。只有真人能集印——每天一枚，拼手气即时到账。集满至少 5 枚，即可进入终章抽奖。", q_stat_daypool:"每日印记池", q_stat_slots:"每日名额", q_stat_finale:"终章奖池", q_stat_min:"终章门槛（印记）", q_my_h:"我的远征", q_day:"第", q_today_claim:"领取今日印记", q_today_done:"今日已集", q_today_full:"今日名额已领完", q_today_left:"今日剩余", q_notstarted:"赛季开始于", q_connect_hint:"连接钱包后参与。", q_skill_hint:"持有 Agent ID？Agentic Wallet 无法连接网站——请通过你的 Agent 用参与 Skill 加入：", q_skill_link:"打开参与 Skill", q_finale_h:"终章", q_enter:"进入终章", q_entered:"已进入终章", q_need_more:"还差印记", q_eligible_yes:"已获终章资格", q_genesis:"创世参与", q_seed_lock:"锁定开奖种子", q_draw_btn:"终章开奖", q_drawn_h:"终章已开奖", q_claim_prize:"领取奖金", q_prize_claimed:"奖金已领", q_entries_h:"终章参加者", q_phase_entry:"报名截止", q_winner_tag:"中奖", q_rules_h:"玩法", q_rules_1:"每位真人每天可领一枚印记，每枚按拼手气分当日池，即时到账。", q_rules_2:"7 枚集满至少 5 枚可进入终章，报名一人一份。", q_rules_3:"终章种子在报名截止后链上锁定，任何人可复算中奖名单。印记随机为娱乐级伪随机——每日小额，设计如此。", q_card_h:"远征 · 第 0 季", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
+  m_connected:"已在 BSC 主网连接：", m_rejected:"连接被拒绝或失败。", m_wrongnet:"已连接，但钱包不在 BSC 主网——参加活动前请先切换到 BSC 主网。", m_pending:"钱包里已有一个待确认的请求——请先打开钱包把它处理掉。", m_disconnected:"已断开连接。", nav_switch:"切换账号", nav_exit:"退出连接", m_checking:"正在校验真人资格…", m_waiting:"已发送，等待上链确认…", m_need_human:"这个地址还没有 Agent ID，暂时参加不了。先在币安 App 里领取 Agent ID（见下方指南）。", f_live_only:"只看进行中", qr_h:"名片二维码", qr_sub:"扫码打开这张名片", cert_btn:"生成验奖图", cert_entries:"参与", cert_winners:"中奖", cert_each:"每人", cert_recompute:"任何人可在活动页复算本次开奖", cert_done:"验奖图已下载。", mine_joined_h:"我参加的活动", j_mystatus:"我的状态", j_entered:"已参加", j_notwon:"未中奖", j_winner:"中奖了，去活动页领奖", j_won_claimed:"奖金已领", j_voted:"已投票", j_claimed:"已领取", j_none:"你还没有参加过活动。", d_show_all:"显示全部", cd_sec:"4 · 参加条件（可选）", cd_bind:"必须已绑定 X 账号", cd_token:"持币门槛", cd_721_hint:"NFT 门槛这样设：上面地址填 NFT 合约，数字填至少持有几个（一般填 1）。参加时合约查 balanceOf，返回他持有几个，够数放行。", cd_721:"这是 NFT（按余额计数）", cd_prior:"必须参加过活动编号 #", cd_stamps:"必须持有远征印记 ≥", cd_hint:"条件在参加时由链上逐条检查。「关注」无法链上验证——绑定条件是它的无信任版本：每位参加者都带着公开账号，任何人可在 X 上对照核对。", cd_err_token:"请填入有效的门槛代币地址。", cd_err_min:"请填入大于零的最低持有量。", cd_err_prior:"请填入前置活动的编号。", cd_err_stamps:"印记门槛需在 1 到 7 之间。", chip_bind:"已绑定 X", chip_token:"持币", chip_nft:"NFT", chip_prior:"参加过", chip_stamps:"印记", m_cond_0:"本活动要求先绑定 X 账号——去身份卡页绑定后再来。", m_cond_1:"你持有的门槛代币不足，暂时参加不了本活动。", m_cond_2:"本活动只对老参加者开放——先去参加前置活动。", m_cond_3:"你的远征印记还不够，集满门槛再来。", chip_allow:"名单制", chip_id:"Agent ID 名单", m_cond_5:"本活动限名单内 Agent ID 参加——你的 Agent ID 不在名单内（或你的地址没有 Agent ID 名字）。若你有名字名单，先到活动详情页导入再参加。", cd_id:"Agent ID 名单——只有名单内的 Agent ID 能参加", cd_id_list:"Agent ID 名单", cd_id_ph:"每行一个 Agent ID 名字（带不带 .ai 都行）", cd_id_dl:"下载名单文件", cd_err_id:"名单为空或含有无效名字。", cd_id_hint:"名单存的是名字本身的哈希——名单里只有身份、没有钱包地址。名字写错不会报错，只是永远没人能对上，请逐个核对。", idlst_h:"Agent ID 名单", idlst_hint:"本活动限名单内 Agent ID 参加。名单以名字哈希的默克尔根存入合约——只有身份、没有钱包地址。导入名字名单即可核对你的名字并参加。", idlst_ph:"把 Agent ID 名字名单粘贴到这里", idlst_in:" · 你的 Agent ID 在名单内 ✓", idlst_out:" · 你的 Agent ID 不在名单内", idlst_nohandle:" · 你的地址没有 Agent ID 名字", m_cond_4:"本活动是名单制——先到活动详情页导入名单文件再参加。", cd_allow:"名单制——只有名单内的地址能参加", cd_allow_list:"地址名单", cd_allow_ph:"每行一个地址(或用逗号分隔)", cd_allow_dl:"下载名单文件", cd_err_allow:"名单为空或含有无效地址。", lst_h:"参加名单", lst_hint:"本活动限定名单内地址参加,名单的默克尔根已存入合约。导入名单即可核对你的地址并参加。", lst_ph:"把地址名单粘贴到这里", lst_save:"保存名单", lst_in:" \u00b7 你的地址在名单内 \u2713", lst_out:" \u00b7 你的地址不在名单内", lst_root_ok:"名单与链上根一致 \u2713", lst_root_bad:"这份名单与链上根不一致 \u2717", vp_on:"给投票加奖池(在投票人中抽奖)", vp_note:"投票结束后,从全部投票人中随机抽取中奖者——投了哪个选项不影响抽奖——平分奖池。中奖者链上自助领取,任何人可复算开奖。", vp_total:"奖池总额", vp_winners:"中奖名额", vp_err_token:"请为投票奖池选择奖品代币。", vp_err_total:"请填入大于零的奖池金额。", c_vote_prize:"投票奖池", nav_quest:"远征", q_kicker:"创世远征 \u00b7 第 0 季", q_title:"真人远征", q_sub:"七天，七枚印记，一场终章。只有真人能集印——每天一枚，拼手气即时到账。集满至少 5 枚，即可进入终章抽奖。", q_stat_daypool:"每日印记池", q_stat_slots:"每日名额", q_stat_finale:"终章奖池", q_stat_min:"终章门槛（印记）", q_my_h:"我的远征", q_day:"第", q_today_claim:"领取今日印记", q_today_done:"今日已集", q_today_full:"今日名额已领完", q_today_left:"今日剩余", q_notstarted:"赛季开始于", q_connect_hint:"连接钱包后参与。", q_skill_hint:"持有 Agent ID？Agentic Wallet 无法连接网站——请通过你的 Agent 用参与 Skill 加入：", q_skill_link:"打开参与 Skill", q_finale_h:"终章", q_enter:"进入终章", q_entered:"已进入终章", q_need_more:"还差印记", q_eligible_yes:"已获终章资格", q_genesis:"创世参与", q_seed_lock:"锁定开奖种子", q_draw_btn:"终章开奖", q_drawn_h:"终章已开奖", q_claim_prize:"领取奖金", q_prize_claimed:"奖金已领", q_entries_h:"终章参加者", q_phase_entry:"报名截止", q_winner_tag:"中奖", q_rules_h:"玩法", q_rules_1:"每位真人每天可领一枚印记，每枚按拼手气分当日池，即时到账。", q_rules_2:"7 枚集满至少 5 枚可进入终章，报名一人一份。", q_rules_3:"终章种子在报名截止后链上锁定，任何人可复算中奖名单。印记随机为娱乐级伪随机——每日小额，设计如此。", q_card_h:"远征 · 第 0 季", m_switch_hint:"当前钱包不支持在这里切换，请在钱包内切换账号后刷新页面。", prof_h:"个人主页", prof_self:"自述 \u00b7 已上链", prof_edit_h:"编辑我的主页资料", prof_bio:"一句话简介", prof_bio_ph:"用一句话介绍你自己", prof_title_ph:"标题，如：X", prof_url_ph:"https://\u2026", prof_save:"保存上链", prof_remove:"删除资料", prof_saved:"资料已上链保存。", prof_removed:"资料已删除。", prof_note:"简介与链接由本人填写并存于链上，属于自述内容、未经验证。",
   kick_how:"设计", h_how:"两个问题。两把钥匙。",
   how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
   q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
@@ -408,7 +408,7 @@ zh: {
   kick_build:"接入", h_build:"开发者",
   build_sub:"一次只读调用，就是全部接入工作。你的合约只要能调 view 函数，就拥有了抗女巫能力。",
   code_note:"一行代码给任何函数加门。原语无状态——去重状态由你的合约按「人」自己记。",
-  a_gate:"BeCounted — BSC 测试网", a_apps:"OneIDCampaigns — BSC 测试网", a_bind:"绑定登记合约（测试网）", a_quest:"QuestPass — BSC 测试网", a_reg:"Agent ID 注册表 — BSC 主网", a_skill:"Agent 技能",
+  a_gate:"BeCounted — BSC 主网", a_apps:"OneIDCampaigns — BSC 主网", a_bind:"绑定登记合约", a_quest:"QuestPass — BSC 主网", a_reg:"Agent ID 注册表 — BSC 主网", a_skill:"Agent 技能",
   a_skill_v:"is-human——零依赖的小工具，任何 AI Agent 在动手之前都能先跑一遍。源码在项目仓库里。",
   a_profile:"个人主页资料（简介 + 链接）", embed_h:"把查真人嵌入你的网站", embed_p:"两行代码就能把实时查真人放到任何网页上：直读注册表、无需密钥、无需后端、纯只读。链上门禁请用上方的合约接口或模板。",
   nav_white:"白皮书", kick_wp:"白皮书", h_wp:"BeCounted 白皮书", wp_sub:"它是什么、怎么工作、拒绝做什么、局限在哪里——一页说清。",
@@ -418,7 +418,7 @@ zh: {
   wp4_h:"安全模型", wp4_1:"门禁只读：一个 view 函数，无 owner、不可升级、没有暂停开关。没人能改它的答案，包括我们自己。", wp4_2:"奖品在活动创建时就托管进活动合约。中奖者自助领取；30 天无人领的奖金才退回创作者。", wp4_3:"开奖可复算：活动结束后，任何人都能在链上锁定种子——锁定后第 2 个区块的哈希，报名已关闭、无人能提前知道——任何人都能用公开数据重算中奖名单，活动页一键就能验。", wp4_4:"诚实的随机：拼手气用的是区块哈希伪随机，合约与页面都明示为娱乐级，只适合小额奖池。", wp4_5:"网站从不要无限授权：代币托管只批准确切金额、只批一次。",
   wp5_h:"按比赛安全红线建造", wp5_p:"不在第三方站点做 Agentic Wallet 登录（参与由用户自己的 Agent 逐笔确认完成——Agentic Wallet 不连接本站或任何第三方网站）；没有静默或捆绑转账；没有无限授权；合约开源且 owner 权限如实披露——答案是：没有；任何名称不冒充币安或 BNB；永不收集助记词、私钥或配对码。我们自己的 Agent 工具按设计就是只读的。",
   wp6_h:"已知局限", wp6_1:"门的供给并不窄：Agent ID 持有人已超 26.3 万（2026 年 11 月注册表数据），且仍在增长。真正的局限是触达——绝大多数持有人没听说过任何一场具体的门禁活动，每场活动仍要从零开始找人。合约不用改，要变的是被看见的程度。", wp6_2:"唯一性的上限是 KYC，不是数学：一个人有多个实名身份，就可能有多个 ID。我们声称的是「一个身份一份」，不是「一个灵魂一份」。", wp6_3:"若币安重构或更换 Agentic Wallet，ID 如何迁移由币安决定，不由我们。我们的定位更窄、也更诚实：一个已被验证的模式的第一个可用接口——不是「标准」。",
-  wp7_h:"合约地址", wp7_p:"当前运行于 BSC 测试网；主网地址将在上线时替换此处，并已在 BscScan 验证。", wp8_h:"标志", wp8_1:"中央是真人。BeCounted 验的始终只有一件事——参加者是不是独一无二的真人；所以人站在最前面，其余一切为他服务。", wp8_2:"人身后交叉着两把钥匙，如侠客背后的双剑，即两键原则。一把回答「是不是唯一的真人」，每次参加都查；一把回答「这个人算没算过」，每场活动只数一次。两把钥匙守的是公平：一人一次，机器人进不来。", wp8_3:"金盘是一枚印。被数上，即为印记——与真人远征中每日盖下的印记同一枚。金色是所建生态的颜色；圆，取一个不多、一个不少之意。",
+  wp7_h:"合约地址", wp7_p:"当前运行于 BSC 主网；地址已在 BscScan 验证。", wp8_h:"标志", wp8_1:"中央是真人。BeCounted 验的始终只有一件事——参加者是不是独一无二的真人；所以人站在最前面，其余一切为他服务。", wp8_2:"人身后交叉着两把钥匙，如侠客背后的双剑，即两键原则。一把回答「是不是唯一的真人」，每次参加都查；一把回答「这个人算没算过」，每场活动只数一次。两把钥匙守的是公平：一人一次，机器人进不来。", wp8_3:"金盘是一枚印。被数上，即为印记——每位被数上的参与者，都带着这同一枚印。金色是所建生态的颜色；圆，取一个不多、一个不少之意。",
   skill_h:"不只给合约，也给 Agent",
   skill_p:"同一套核验也做成了技能：AI Agent 在报名、领取或付款之前，可以先问一句「这个地址背后是不是唯一真人？」——答案的证据在链上，不由我们签发，也不经我们存储。",
   kick_card:"只读身份", h_card:"身份卡",
@@ -523,7 +523,7 @@ zh: {
   guide_4:"用 BeCounted 参与 Skill 让你的 Agent 代你参加——Agent ID 本身不直连网站",
   join_h:"已有 Agent ID？让你的 Agent 代你参加——三步",
   join_1:"把 BeCounted 参与 Skill 发给你的 Agent（下方按钮）",
-  join_2:"对它说一句人话：「帮我参加 BeCounted 创世抽奖」，或「帮我领今天的真人远征印记」",
+  join_2:"对它说一句人话：「帮我参加 BeCounted 创世抽奖」",
   join_3:"Agent 会先预览这笔调用，你确认一次即可——交易从你自己的 Agentic Wallet 地址发出",
   join_note:"赛季活动不需要绑定 X、不需要提前注册，地址本身就是身份。",
   join_btn:"打开参与 Skill →",
@@ -566,7 +566,7 @@ zh: {
   rec_entered:"参加抽奖", rec_voted:"参与投票", rec_claimed:"领取份额", rec_won:"中奖次数",
 
   mq1:"一个真人", mq2:"一张票", mq3:"不做反查", mq4:"不判人品", mq5:"无状态 · 只读 · 无所有者", mq6:"把抗女巫做成原语",
-  feed_h:"门边的实时动态 — BSC 测试网", feed_blk:"区块",
+  feed_h:"门边的实时动态 — BSC 主网", feed_blk:"区块",
   ev_created:"新建了活动", ev_entered:"报名了抽奖", ev_voted:"投了一票", ev_drawn:"抽奖已开奖",
   feed_empty:"最近还没有事件。", feed_fail:"动态暂时不可用。",
   cta_h:"办你自己的抽奖——只认真人",
@@ -741,7 +741,7 @@ async function connectWallet(){
         try{ await window.ethereum.request({ method:"wallet_switchEthereumChain", params:[{ chainId: NETWORK.appsChainHex }] }); }
         catch(swErr){
           if(swErr && swErr.code === 4902){
-            await window.ethereum.request({ method:"wallet_addEthereumChain", params:[{ chainId: NETWORK.appsChainHex, chainName:"BNB Smart Chain Testnet", nativeCurrency:{ name:"tBNB", symbol:"tBNB", decimals:18 }, rpcUrls:["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet-dataseed.bnbchain.org"], blockExplorerUrls:["https://testnet.bscscan.com"] }] });
+            await window.ethereum.request({ method:"wallet_addEthereumChain", params:[{ chainId: NETWORK.appsChainHex, chainName:"BNB Smart Chain", nativeCurrency:{ name:"BNB", symbol:"BNB", decimals:18 }, rpcUrls:["https://bsc-dataseed.binance.org","https://bsc-rpc.publicnode.com","https://rpc.ankr.com/bsc","https://bsc-dataseed1.bnbchain.org","https://bsc-dataseed2.bnbchain.org"], blockExplorerUrls:["https://bscscan.com"] }] });
           } else throw swErr;
         }
       }
@@ -2062,7 +2062,7 @@ async function loadDetail(){
       <div class="panel"><div id="partList">${entries.length ? entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}</div>
       ${proof}
       ${condChipsHtml(cond)}${listPanelHtml(id, cond)}
-      <div class="trust-row">${t("d_contract")} <a href="https://testnet.bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 BeCounted <a href="https://testnet.bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : (c.prizeLabel ? t("d_custom_note") : t("d_escrow_no"))}</div>`;
+      <div class="trust-row">${t("d_contract")} <a href="https://bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 BeCounted <a href="https://bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : (c.prizeLabel ? t("d_custom_note") : t("d_escrow_no"))}</div>`;
     fillIdMine(id);
     window.__partEntries = entries;
     const sb = $("stickyBar");
@@ -2346,7 +2346,7 @@ window.makePoster = async id => {
     x.fillText(`${fmtTime(c.startAt)} \u2192 ${fmtTime(c.endAt)}`, 80, y0 + 124);
     let seriesTag = ""; try{ seriesTag = await appsRead.series(id); }catch(e){}
     x.fillStyle = "#8a8a93"; x.font = "26px monospace";
-    x.fillText((seriesTag ? seriesTag + " \u00b7 " : "") + "Agent ID gated \u00b7 BNB Chain Testnet", 80, H - 84);
+    x.fillText((seriesTag ? seriesTag + " \u00b7 " : "") + "Agent ID gated \u00b7 BNB Chain", 80, H - 84);
     const a = document.createElement("a");
     a.download = `becounted-campaign-${id}.png`;
     a.href = cv.toDataURL("image/png");
