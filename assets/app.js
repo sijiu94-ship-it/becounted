@@ -24,6 +24,25 @@ const QUEST_ABI = [
   "function getFinaleEntries() view returns (address[])", "function getWinners() view returns (address[])"
 ];
 const GATE_ABI = ["function isHuman(address) view returns (bool)"];
+/* CheckIn — daily check-in feeding the activity weight. Address below is
+   the BSC TESTNET trial deployment (checkin-address.json, 2026-11-25);
+   swap it and CHECKIN_DEPLOY_BLOCK when the mainnet contract deploys.
+   Until then the check-in page probes for code at this address on the
+   apps chain and degrades to a "coming soon" state when there is none. */
+const CHECKIN_TESTNET  = "0x74b413451a5244bc0630c176badaddab981366e8"; // CheckIn (testnet trial)
+const CHECKIN_DEPLOY_BLOCK = 135653273; // CheckIn deployment block: CheckedIn scans start here
+const CHECKIN_ABI = [
+  "function checkIn()",
+  "function todayIndex() view returns (uint256)",
+  "function hasCheckedInToday(address) view returns (bool)",
+  "function windowCountOf(address) view returns (uint256)",
+  "function weightOf(address) view returns (uint256)",
+  "function totalCheckInsOf(address) view returns (uint256)",
+  "function lastCheckInDayOf(address) view returns (uint256)",
+  "event CheckedIn(address indexed user, uint256 dayIndex, uint256 totalCheckIns)",
+  "error NotHuman(address account)",
+  "error AlreadyCheckedIn(address account, uint256 dayIndex)"
+];
 const BINDINGS_ABI = [
   "function registerBinding(string,bytes)", "function proofTypeOf(address) view returns (uint8)", "function registerByAttestation(address,string)",
   "function removeBinding()",
@@ -96,7 +115,7 @@ const ERC20_ABI = [
 
 const I18N = {
 en: {
-  nav_campaigns:"Campaigns", nav_how:"How it works", nav_builders:"Builders", nav_card:"ID Card",
+  nav_campaigns:"Campaigns", nav_how:"How it works", nav_builders:"Builders", nav_card:"ID Card", nav_checkin:"Check-in",
   connect:"Connect wallet",
   kick_home:"Agent ID · BNB Chain · Sybil Resistance",
   h1a:"One human.", h1b:"One", h1c:"entry.",
@@ -347,9 +366,32 @@ en: {
   stat_fail:"unavailable",
   f_ok:"Campaign created — it's live on the Campaigns page now. Share it!",
   f_creating:"Creating on-chain…",
+  kick_ci:"Daily check-in · activity weight", h_ci:"Daily check-in",
+  ci_sub:"One check-in per human per day — gated by Agent ID and recorded on-chain. Your check-in days inside the last 30 days set your activity weight: <b>weight = 1 + days</b>. Anyone can recompute it from the event log.",
+  ci_bj:"Beijing time",
+  ci_status_connect:"Connect your wallet to see your check-in status.",
+  ci_status_ready:"You have not checked in yet today.",
+  ci_status_done:"Checked in today ✓ — see you tomorrow.",
+  ci_stat_total:"Total check-ins", ci_stat_window:"Days in last 30", ci_stat_weight:"My weight",
+  ci_weight_formula:"weight = 1 + check-in days in the last 30 days · days older than 30 slide out of the window",
+  ci_stat_next:"Next check-in opens in", ci_btn:"Check in", ci_btn_done:"Checked in ✓",
+  ci_not_holder:"This wallet holds no Agent ID, so it cannot check in. Check-in is for Agent ID holders only — one ID, one check-in per day.",
+  ci_note_agent:"Your Agent ID lives in the Agentic Wallet? It can't connect to websites — ask your Agent to check in for you with the participation Skill:",
+  ci_note_link:"Open the participation Skill",
+  ci_soon_h:"Check-in opens soon",
+  ci_soon:"The check-in contract is not live on this network yet. The moment it is deployed, this page lights up on its own — nothing to update.",
+  ci_board_h:"Most active",
+  ci_board_sub:"Ranked by total check-in days, read straight from the on-chain CheckedIn log. Truncated addresses only — names never appear next to addresses on this site.",
+  ci_col_addr:"Address", ci_col_days:"days total", ci_col_weight:"weight",
+  ci_board_empty:"No check-ins yet — be the first.",
+  ci_board_loading:"Reading the check-in log…",
+  ci_board_fail:"Could not read the check-in log right now — try again in a moment.",
+  ci_done_toast:"Checked in — see you tomorrow.",
+  ci_err_already:"You have already checked in today.",
+  ci_err_nothuman:"This wallet holds no Agent ID — it cannot pass the human gate.",
 },
 zh: {
-  nav_campaigns:"活动", nav_how:"原理", nav_builders:"开发者", nav_card:"身份卡",
+  nav_campaigns:"活动", nav_how:"原理", nav_builders:"开发者", nav_card:"身份卡", nav_checkin:"签到",
   connect:"连接钱包",
   kick_home:"Agent ID · BNB 链 · 抗女巫",
   h1a:"一个真人。", h1b:"一张", h1c:"票。",
@@ -596,6 +638,29 @@ zh: {
   stat_fail:"暂不可用",
   f_ok:"活动创建成功——已经出现在活动页了。快分享出去！",
   f_creating:"正在上链创建…",
+  kick_ci:"每日签到 · 活跃权重", h_ci:"每日签到",
+  ci_sub:"每位真人每天签到一次——由 Agent ID 门禁、链上记录。近 30 天内的签到天数决定你的活跃权重：<b>权重 = 1 + 天数</b>。任何人都能从事件日志独立复算。",
+  ci_bj:"北京时间",
+  ci_status_connect:"连接钱包后查看你的签到状态。",
+  ci_status_ready:"你今天还没有签到。",
+  ci_status_done:"今日已签到 ✓——明天见。",
+  ci_stat_total:"累计签到", ci_stat_window:"近 30 天签到", ci_stat_weight:"我的权重",
+  ci_weight_formula:"权重 = 1 + 近 30 天签到天数 · 超过 30 天的签到滑出窗口",
+  ci_stat_next:"下次签到开启倒计时", ci_btn:"签到", ci_btn_done:"已签到 ✓",
+  ci_not_holder:"这个钱包没有 Agent ID，不能签到。签到只对 Agent ID 持有人开放——一人一号、每天一次。",
+  ci_note_agent:"你的 Agent ID 在 Agentic Wallet 里？它连不上网站——让你的 Agent 用参与 Skill 替你签到：",
+  ci_note_link:"打开参与 Skill",
+  ci_soon_h:"签到即将开放",
+  ci_soon:"签到合约尚未在此网络上线。部署完成的那一刻，本页会自动开放——无需更新。",
+  ci_board_h:"活跃榜",
+  ci_board_sub:"按累计签到天数排序，数据直接来自链上的 CheckedIn 日志。这里只显示截断地址——在本站，名字永不与地址同屏。",
+  ci_col_addr:"地址", ci_col_days:"累计天数", ci_col_weight:"权重",
+  ci_board_empty:"还没有人签到——来做第一个。",
+  ci_board_loading:"正在读取签到日志…",
+  ci_board_fail:"暂时读不到签到日志——稍后再试。",
+  ci_done_toast:"签到成功——明天见。",
+  ci_err_already:"今天已经签过到了。",
+  ci_err_nothuman:"这个钱包没有 Agent ID，过不了真人门禁。",
 }};
 
 let LANG = localStorage.getItem("hg-lang") || ((navigator.language || "en").startsWith("zh") ? "zh" : "en");
@@ -619,7 +684,7 @@ function short(a){ return a.slice(0,6)+"…"+a.slice(-4); }
 function escHtml(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 function fmtTime(ts){ const d = new Date(Number(ts)*1000); return d.toLocaleString(LANG === "zh" ? "zh-CN" : "en-GB", {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"}); }
 
-let providerMain = null, providerTest = null, registry = null, appsRead = null, bindingsRead = null, profileRead = null, gateRead = null, questRead = null;
+let providerMain = null, providerTest = null, registry = null, appsRead = null, bindingsRead = null, profileRead = null, gateRead = null, questRead = null, checkinRead = null;
 function chain(){
   if (!providerMain){
     const fb = (urls, chainId) => new ethers.FallbackProvider(urls.map(u => new ethers.JsonRpcProvider(u, chainId, { staticNetwork: true })), chainId, { quorum: 1 });
@@ -631,6 +696,7 @@ function chain(){
     profileRead = new ethers.Contract(PROFILE_TESTNET, PROFILE_ABI, providerTest);
     questRead = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, providerTest);
     gateRead = new ethers.Contract(GATE_TESTNET, GATE_ABI, providerTest);
+    checkinRead = new ethers.Contract(CHECKIN_TESTNET, CHECKIN_ABI, providerTest);
   }
 }
 
@@ -1346,7 +1412,9 @@ const ERR_TEXT = [
   ["InsufficientReceived()", "m_err_insufficient"],
   ["SeedNotLocked()", "m_err_seed_notlocked"],
   ["SeedExpired()", "m_err_seed_expired"],
-  ["SeedLocked()", "m_err_seed_locked"]
+  ["SeedLocked()", "m_err_seed_locked"],
+  ["NotHuman(address)", "ci_err_nothuman"],
+  ["AlreadyCheckedIn(address,uint256)", "ci_err_already"]
 ];
 function mappedErr(e){
   try{
@@ -1388,7 +1456,7 @@ window.setSeriesMine = id => withSigner(async (msg) => { const a = new ethers.Co
 window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.claim(id, pf.p4, pf.p5)); }, id, true);
 window.claimPrize = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claimPrize(id)); }, id);
 window.reclaimCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.reclaim(id)); }, id);
-window.onLangChange = () => { renderConnectBtn(); labelPresetOptions(); if (typeof window.__refillSampleMask === "function") window.__refillSampleMask(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); if ($("questBox")) loadQuest(); if ($("detailBox")) loadDetail(); if ($("creatorBox")) loadCreator(); };
+window.onLangChange = () => { renderConnectBtn(); labelPresetOptions(); if (typeof window.__refillSampleMask === "function") window.__refillSampleMask(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); if ($("questBox")) loadQuest(); if ($("detailBox")) loadDetail(); if ($("creatorBox")) loadCreator(); if ($("checkinBox")) loadCheckin(); };
 function labelPresetOptions(){
   const sel = $("fTokenSel"); if (!sel) return;
   const chain = t(NETWORK.appsChainId === 56 ? "f_chain_main" : "f_chain_test");
@@ -1776,6 +1844,161 @@ async function getLogsCached(base, from, to){
 }
 
 
+
+/* ---------- daily check-in + activity weight ----------
+   The CheckIn contract keeps one record per human per day (Beijing-time
+   day boundary) and derives an activity weight = 1 + check-in days in
+   the trailing 30-day window. This page is a thin window on that public
+   record: my status comes from the contract's views, the leaderboard is
+   aggregated from the CheckedIn event log (anyone can recompute it the
+   same way). The board shows truncated addresses only — never a name
+   next to an address. If no code sits at CHECKIN_TESTNET on the apps
+   chain (pre-deployment), the page degrades to a "coming soon" panel
+   instead of throwing errors. */
+let ciLive = null;   // null = not probed yet; true/false once a probe answered
+let ciTimer = null;
+let ciDayKey = null; // Beijing calendar day currently shown, for rollover refresh
+async function ciContractLive(){
+  if (ciLive !== null) return ciLive;
+  if (!CHECKIN_TESTNET || CHECKIN_TESTNET === ethers.ZeroAddress){ ciLive = false; return false; }
+  chain();
+  try{
+    const code = await providerTest.getCode(CHECKIN_TESTNET);
+    ciLive = !!code && code !== "0x";
+    return ciLive;
+  }catch(e){ return false; } // probe failed: show "soon" this time, re-probe next load
+}
+function ciNextMidnightMs(){
+  // Next 00:00 Beijing time (UTC+8), as a UTC epoch ms.
+  const bj = Date.now() + 8 * 3600 * 1000;
+  return (Math.floor(bj / 86400000) + 1) * 86400000 - 8 * 3600 * 1000;
+}
+function ciTick(){
+  const el = $("ciCount"); if (!el) return;
+  const left = ciNextMidnightMs() - Date.now();
+  const s = Math.max(0, Math.floor(left / 1000));
+  const p = n => String(n).padStart(2, "0");
+  el.textContent = p(Math.floor(s / 3600)) + ":" + p(Math.floor(s % 3600 / 60)) + ":" + p(s % 60);
+  const dayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Shanghai" });
+  if (ciDayKey && dayKey !== ciDayKey && ciLive) loadCheckin(); // Beijing day rolled over: new day, new status
+  ciDayKey = dayKey;
+}
+function ciSetStats(total, win, weight){
+  if ($("ciTotal")) $("ciTotal").textContent = total === null ? "—" : total;
+  if ($("ciWindow")) $("ciWindow").textContent = win === null ? "—" : win;
+  if ($("ciWeight")) $("ciWeight").textContent = weight === null ? "—" : weight;
+}
+async function loadCheckin(){
+  if (!$("checkinBox")) return;
+  if ($("ciToday")) $("ciToday").textContent = new Date().toLocaleDateString(LANG === "zh" ? "zh-CN" : "en-GB", { timeZone: "Asia/Shanghai", year: "numeric", month: "short", day: "numeric" });
+  ciTick();
+  if (!ciTimer) ciTimer = setInterval(ciTick, 1000);
+  const live = await ciContractLive();
+  const soon = $("ciSoon"), main = $("ciMain");
+  if (!live){
+    if (soon) soon.style.display = "";
+    if (main) main.style.display = "none";
+    if ($("ciBoard")) $("ciBoard").innerHTML = `<div class="ci-empty">${t("ci_soon")}</div>`;
+    return;
+  }
+  if (soon) soon.style.display = "none";
+  if (main) main.style.display = "";
+  refreshCiMine();
+  loadCiBoard();
+}
+async function refreshCiMine(){
+  const btn = $("ciBtn"), st = $("ciStatus");
+  if (!btn || !st) return;
+  if (!myAddr){
+    st.textContent = t("ci_status_connect");
+    ciSetStats(null, null, null);
+    btn.disabled = false;
+    btn.textContent = t("connect");
+    return;
+  }
+  btn.disabled = true;
+  try{
+    chain();
+    const [done, total, win, weight] = await Promise.all([
+      checkinRead.hasCheckedInToday(myAddr),
+      checkinRead.totalCheckInsOf(myAddr),
+      checkinRead.windowCountOf(myAddr),
+      checkinRead.weightOf(myAddr)
+    ]);
+    ciSetStats(Number(total), Number(win), Number(weight));
+    if (done){
+      st.textContent = t("ci_status_done");
+      btn.disabled = true;
+      btn.textContent = t("ci_btn_done");
+      return;
+    }
+    st.textContent = t("ci_status_ready");
+    btn.disabled = false;
+    btn.textContent = t("ci_btn");
+    // Pre-flight the gate so a non-holder gets the reason up front
+    // instead of a reverted transaction.
+    const human = await readGateHuman(myAddr);
+    if (human === false){
+      st.textContent = t("ci_not_holder");
+      btn.disabled = true;
+    }
+  }catch(e){
+    st.textContent = t("ci_board_fail");
+    btn.disabled = false;
+    btn.textContent = t("ci_btn");
+  }
+}
+window.doCheckIn = async () => {
+  const btn = $("ciBtn"), msg = $("ciMsg");
+  try{
+    if (!myAddr || !signer){
+      await connectWallet();
+      if (!signer){ if (msg) msg.textContent = t("m_wrongnet"); refreshCiMine(); return; }
+    }
+    const human = await readGateHuman(myAddr);
+    if (human === false){ if (msg) msg.textContent = t("ci_not_holder"); refreshCiMine(); return; }
+    btn.disabled = true;
+    if (msg) msg.textContent = t("m_signing");
+    const w = new ethers.Contract(CHECKIN_TESTNET, CHECKIN_ABI, signer);
+    await (await w.checkIn()).wait();
+    if (msg) msg.textContent = "";
+    toast(t("ci_done_toast"));
+    // The log cache predates this check-in; drop this stream so the
+    // board re-reads the delta (same watermark key getLogsCached uses).
+    try{ localStorage.removeItem("hg_logs_" + CHECKIN_TESTNET.toLowerCase() + "_" + ethers.id("CheckedIn(address,uint256,uint256)").toLowerCase()); }catch(e){}
+    refreshCiMine();
+    loadCiBoard();
+  }catch(e){
+    if (msg) msg.textContent = mappedErr(e) || (e.shortMessage || e.message || "Failed").slice(0, 130);
+    btn.disabled = false;
+    refreshCiMine();
+  }
+};
+async function loadCiBoard(){
+  const box = $("ciBoard"); if (!box) return;
+  box.innerHTML = `<div class="ci-empty">${t("ci_board_loading")}</div>`;
+  try{
+    chain();
+    const latest = await providerTest.getBlockNumber();
+    const logs = await getLogsCached({ address: CHECKIN_TESTNET, topics: [ethers.id("CheckedIn(address,uint256,uint256)")] }, CHECKIN_DEPLOY_BLOCK, latest);
+    // Each event carries the user's cumulative total, so the last event
+    // per user is their lifetime count — no per-user reads needed here.
+    const totals = new Map();
+    const dec = ethers.AbiCoder.defaultAbiCoder();
+    for (const l of logs){
+      const user = ("0x" + l.topics[1].slice(26)).toLowerCase();
+      totals.set(user, Number(dec.decode(["uint256", "uint256"], l.data)[1]));
+    }
+    const rows = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
+    if (!rows.length){ box.innerHTML = `<div class="ci-empty">${t("ci_board_empty")}</div>`; return; }
+    const weights = await Promise.all(rows.map(([a]) => checkinRead.weightOf(a).then(Number).catch(() => null)));
+    box.innerHTML = rows.map(([a, total], i) =>
+      `<div class="ci-row"><span class="ci-rank">${i + 1}</span><span class="ci-addr">${short(a)}</span><span class="ci-n">${total}</span><span class="ci-w">${weights[i] === null ? "—" : weights[i]}</span></div>`
+    ).join("");
+  }catch(e){
+    box.innerHTML = `<div class="ci-empty">${t("ci_board_fail")}</div>`;
+  }
+}
 
 /* ---------- filters (campaigns page) ---------- */
 let liveOnly = false;
@@ -2779,6 +3002,7 @@ document.addEventListener("DOMContentLoaded", () => {
       readHuman(myAddr).then(h => { myHuman = h; renderConnectBtn(); }).catch(() => {});
       if ($("campGrid") || $("soonGrid")) loadCampaigns();
       if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
+      if ($("checkinBox")) loadCheckin();
       if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
     }catch(e){}
   })();
@@ -2954,6 +3178,9 @@ window.demoReset = () => {
   if ($("statHumans")) loadPlatformStats();
   if ($("creatorBox")) loadCreator();
   if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
+  if ($("checkinBox")) loadCheckin();
+  const cib = $("ciBtn");
+  if (cib) cib.addEventListener("click", () => window.doCheckIn());
   const scb = $("makeCardBtn");
   if (scb) scb.addEventListener("click", drawShareCard);
   if ($("feedList")){ loadFeed(); setInterval(loadFeed, 25000); }
