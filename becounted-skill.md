@@ -21,7 +21,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 
 | 角色 | 地址 | 说明 |
 |---|---|---|
-| OneIDCampaigns(活动合约) | `0xb8E544739B9C79C3180A287d865A7B8a2317311f` | 所有参加调用的目标合约 |
+| OneIDCampaigns(活动合约) | `0x119541Cafa25118cd54F5548Df2A7D1aeE99B0f8` | 所有参加调用的目标合约 |
 | BeCounted(真人门禁) | `0xda585a4ae5b73ee2728aada3e877a3a1f84027cd` | 活动合约内部用它验真人;**你不需要直接调用它** |
 | IdentityBindingsV4(绑定登记) | `0x5FC906B394BA23Dd1B546aea8F217101DEc07F85` | X 绑定登记合约;只有第 8 节的自助登记调它,**不要**拿它参加活动 |
 | CheckIn(每日签到) | `0x74b413451a5244bc0630c176badaddab981366e8` | 每日签到合约;只有第 9 节的签到动作调它,**不要**拿它参加活动 |
@@ -104,7 +104,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 用 `cast`(如有 Foundry):
 
 ```bash
-cast call 0xb8e544739b9c79c3180a287d865a7b8a2317311f \
+cast call 0x119541cafa25118cd54f5548df2a7d1aee99b0f8 \
   "getCampaign(uint256)(address,uint8,string,uint64,uint64,uint32,uint64,bool,bool,uint8,uint256,address,uint256,uint256,uint256,uint32,bool,uint256,bool,string)" \
   <CAMPAIGN_ID> --rpc-url https://bsc-dataseed.binance.org
 ```
@@ -114,7 +114,7 @@ cast call 0xb8e544739b9c79c3180a287d865a7b8a2317311f \
 
 ```bash
 curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0xb8e544739b9c79c3180a287d865a7b8a2317311f","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0x119541cafa25118cd54f5548df2a7d1aee99b0f8","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
 ```
 
 `getCampaign` 关键字段(序号 = 返回元组中的位置,从 0 数;`cast` 的
@@ -274,7 +274,7 @@ cast calldata "claimPrize(uint256)" 3
 
 - 前置:活动 `kind = 0`、在时间窗内、`hasEntered` 为 `false`。
 - 确认展示示例:「参加抽奖『<标题>』(id=<id>),奖金 <prizePerWinner 换算>
-  × <winnerCount> 人,目标合约 0xb8e544739b9c79c3180a287d865a7b8a2317311f」。
+  × <winnerCount> 人,目标合约 0x119541cafa25118cd54f5548df2a7d1aee99b0f8」。
 
 ### 6.2 投票 castVote — 选项序号从 0 开始
 
@@ -310,6 +310,10 @@ cast calldata "claimPrize(uint256)" 3
 - 你的动作到「把链接和说明原样交给用户」为止:不要替用户打开表单、
   不要代填、更不要向用户索取或经手任何个人信息。链接为空则没有
   这一步,不必提。
+- 交给用户时顺带提醒一句:任何表单都不会向你索要助记词、私钥或
+  密码——开口要的都是骗局。链接由发起人在开奖前设定、开奖后在
+  合约层冻结(`setWinnerInfo` 开奖后调用会以 `WinnerInfoLocked`
+  回滚),你读到的就是开奖那一刻定格的链接。
 
 
 ## 7. 执行与结果 / Preview, execute, report
@@ -320,7 +324,7 @@ cast calldata "claimPrize(uint256)" 3
 baw contract-call preview \
   --binanceChainId 56 \
   --from <用户的 Agentic Wallet 地址> \
-  --to 0xb8e544739b9c79c3180a287d865a7b8a2317311f \
+  --to 0x119541cafa25118cd54f5548df2a7d1aee99b0f8 \
   --value 0 \
   --inputData 0x1959f37d<活动id的32字节补齐><偏移量0x60的32字节补齐><偏移量0x80的32字节补齐><长度0的32字节补齐><长度0的32字节补齐> \
   --json
