@@ -829,11 +829,7 @@ async function connectWallet(){
       renderConnectBtn();
     }catch(e){}
     toast(t("m_connected") + myAddr);
-    if ($("campGrid")) loadCampaigns();
-    if ($("mineGrid")) loadMine();
-  if ($("statHumans")) loadPlatformStats();
-  if ($("creatorBox")) loadCreator();
-  if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
+    loadPageViews();
   if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
   }catch(e){
     if(e && e.code === -32002) toast(t("m_pending"));
@@ -870,11 +866,7 @@ function softWalletReset(){
   closeWalletMenu();
   renderConnectBtn();
   const pe = $("profileEdit"); if (pe) pe.style.display = "none";
-  if ($("campGrid")) loadCampaigns();
-  if ($("mineGrid")) loadMine();
-  if ($("statHumans")) loadPlatformStats();
-  if ($("creatorBox")) loadCreator();
-  if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
+  loadPageViews();
 }
 
 function disconnectWallet(){
@@ -889,6 +881,23 @@ function disconnectWallet(){
   try{ sessionStorage.setItem("hg_dc", "1"); }catch(e){}
   softWalletReset();
   toast(t("m_disconnected"));
+}
+
+let __viewsLoaded = false;
+function loadPageViews(){
+  // Refresh every wallet-dependent region of the current page from the
+  // CURRENT account state. This is the single canonical list: connect,
+  // disconnect, silent restore and first load all end here. Before this
+  // existed, each path re-ran its own partial list — the restore path
+  // never re-ran loadMine / loadCreator / loadPlatformStats, so after
+  // navigating, those pages sat on their first "connect your wallet"
+  // render forever even though the wallet was connected.
+  if ($("campGrid") || $("soonGrid") || $("statCampaigns")) loadCampaigns();
+  if ($("mineGrid")) loadMine();
+  if ($("statHumans")) loadPlatformStats();
+  if ($("creatorBox")) loadCreator();
+  if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
+  if ($("checkinBox")) loadCheckin();
 }
 
 function renderConnectBtn(){
@@ -3143,7 +3152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", e => { if(!ldd.contains(e.target)){ ldd.classList.remove("open"); lbtn.setAttribute("aria-expanded", "false"); } });
     document.addEventListener("keydown", e => { if(e.key === "Escape"){ ldd.classList.remove("open"); lbtn.setAttribute("aria-expanded", "false"); } });
   }
-  (async () => {
+  const __restoreP = (async () => {
     try{
       if(!window.ethereum) return;
       try{ if (sessionStorage.getItem("hg_dc")) return; }catch(e){}
@@ -3167,9 +3176,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }catch(e){}
       renderConnectBtn();
       readHuman(myAddr).then(h => { myHuman = h; renderConnectBtn(); }).catch(() => {});
-      if ($("campGrid") || $("soonGrid")) loadCampaigns();
-      if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
-      if ($("checkinBox")) loadCheckin();
+      if (__viewsLoaded) loadPageViews();
       if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
     }catch(e){}
   })();
@@ -3340,12 +3347,7 @@ window.demoReset = () => {
   if ($("mineGrid")) $("mineGrid").innerHTML = skeletonHTML(3);
   if ($("joinedGrid")) $("joinedGrid").innerHTML = skeletonHTML(3);
   if ($("detailBox")) $("detailBox").innerHTML = skeletonHTML(1);
-  if ($("campGrid") || $("statCampaigns")) loadCampaigns();
-  if ($("mineGrid")) loadMine();
-  if ($("statHumans")) loadPlatformStats();
-  if ($("creatorBox")) loadCreator();
-  if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
-  if ($("checkinBox")) loadCheckin();
+  Promise.race([__restoreP, new Promise(r => setTimeout(r, 3000))]).then(() => { __viewsLoaded = true; loadPageViews(); });
   const cib = $("ciBtn");
   if (cib) cib.addEventListener("click", () => window.doCheckIn());
   const scb = $("makeCardBtn");
