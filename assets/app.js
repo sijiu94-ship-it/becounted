@@ -869,15 +869,16 @@ function softWalletReset(){
   loadPageViews();
 }
 
-function disconnectWallet(){
-  // Explicit user disconnect (wallet menu only). Local state plus the
-  // hg_dc session flag, which tells later pages in this tab not to
-  // silently restore until the user clicks connect again. Deliberately
-  // NO wallet_revokePermissions: revoking burns the site's permission
-  // inside the wallet itself, so eth_accounts comes back empty on every
-  // later page and the wallet looks permanently disconnected until a
-  // full manual reconnect — that call turned a local sign-out into a
-  // site-wide one.
+async function disconnectWallet(){
+  // Explicit user disconnect (wallet menu only): revoke the site's
+  // permission inside the wallet as well, so reconnecting asks for
+  // approval again — with a purely local sign-out the wallet still
+  // trusted the site and the next connect went through with no prompt
+  // at all. The hg_dc session flag additionally tells later pages in
+  // this tab not to silently restore. Nothing automatic calls this
+  // function (transient wallet events use softWalletReset), so a page
+  // load can never trigger a revoke.
+  if (window.ethereum && window.ethereum.request){ try{ await window.ethereum.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] }); }catch(e){} }
   try{ sessionStorage.setItem("hg_dc", "1"); }catch(e){}
   softWalletReset();
   toast(t("m_disconnected"));
@@ -3154,9 +3155,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   const __restoreP = (async () => {
     try{
-      if(!window.ethereum) return;
       try{ if (sessionStorage.getItem("hg_dc")) return; }catch(e){}
-      const accs = await window.ethereum.request({ method: "eth_accounts" });
+      for (let i = 0; i < 12 && !window.ethereum; i++) await new Promise(r => setTimeout(r, 250));
+      if(!window.ethereum) return;
+      let accs = [];
+      for (let i = 0; i < 12 && !(accs && accs[0]); i++){
+        try{ accs = await window.ethereum.request({ method: "eth_accounts" }); }catch(e){ accs = []; }
+        if (!(accs && accs[0])) await new Promise(r => setTimeout(r, 400));
+      }
       if(!accs || !accs[0]) return;
       myAddr = accs[0];
       // Restore the signer too, not just the address: without it the UI
