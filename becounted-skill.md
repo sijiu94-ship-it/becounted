@@ -21,7 +21,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 
 | 角色 | 地址 | 说明 |
 |---|---|---|
-| OneIDCampaigns(活动合约) | `0xA62C7b17B9110A1223De95E1CCdD654aa138d2e1` | 所有参加调用的目标合约 |
+| OneIDCampaigns(活动合约) | `0xb8E544739B9C79C3180A287d865A7B8a2317311f` | 所有参加调用的目标合约 |
 | BeCounted(真人门禁) | `0xda585a4ae5b73ee2728aada3e877a3a1f84027cd` | 活动合约内部用它验真人;**你不需要直接调用它** |
 | IdentityBindingsV4(绑定登记) | `0x5FC906B394BA23Dd1B546aea8F217101DEc07F85` | X 绑定登记合约;只有第 8 节的自助登记调它,**不要**拿它参加活动 |
 | CheckIn(每日签到) | `0x74b413451a5244bc0630c176badaddab981366e8` | 每日签到合约;只有第 9 节的签到动作调它,**不要**拿它参加活动 |
@@ -104,7 +104,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 用 `cast`(如有 Foundry):
 
 ```bash
-cast call 0xa62c7b17b9110a1223de95e1ccd654aa138d2e1 \
+cast call 0xb8e544739b9c79c3180a287d865a7b8a2317311f \
   "getCampaign(uint256)(address,uint8,string,uint64,uint64,uint32,uint64,bool,bool,uint8,uint256,address,uint256,uint256,uint256,uint32,bool,uint256,bool,string)" \
   <CAMPAIGN_ID> --rpc-url https://bsc-dataseed.binance.org
 ```
@@ -114,7 +114,7 @@ cast call 0xa62c7b17b9110a1223de95e1ccd654aa138d2e1 \
 
 ```bash
 curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0xa62c7b17b9110a1223de95e1ccd654aa138d2e1","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0xb8e544739b9c79c3180a287d865a7b8a2317311f","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
 ```
 
 `getCampaign` 关键字段(序号 = 返回元组中的位置,从 0 数;`cast` 的
@@ -274,7 +274,7 @@ cast calldata "claimPrize(uint256)" 3
 
 - 前置:活动 `kind = 0`、在时间窗内、`hasEntered` 为 `false`。
 - 确认展示示例:「参加抽奖『<标题>』(id=<id>),奖金 <prizePerWinner 换算>
-  × <winnerCount> 人,目标合约 0xa62c7b17b9110a1223de95e1ccd654aa138d2e1」。
+  × <winnerCount> 人,目标合约 0xb8e544739b9c79c3180a287d865a7b8a2317311f」。
 
 ### 6.2 投票 castVote — 选项序号从 0 开始
 
@@ -301,6 +301,16 @@ cast calldata "claimPrize(uint256)" 3
   `ClaimExpired` 拒绝(见 7.1),过期奖金转入创建者可回收的余款。
 - 奖金由合约托管直接发到用户地址;金额以 preview 解析与链上结果为准。
 
+### 6.5 中奖后填信息(链下奖品)
+
+- 若奖品是链下奖品(`prizeLabel` 非空),中奖后可能还要一步:只读调用
+  活动合约 `winnerInfoUrl(id)` 与 `winnerInfoNote(id)`。返回的链接是
+  发起人自己的信息收集表单,中奖人要在浏览器里打开、按说明填写
+  领奖信息(例如 API 账号邮箱),发起人按链上中奖名单核对后发放。
+- 你的动作到「把链接和说明原样交给用户」为止:不要替用户打开表单、
+  不要代填、更不要向用户索取或经手任何个人信息。链接为空则没有
+  这一步,不必提。
+
 
 ## 7. 执行与结果 / Preview, execute, report
 
@@ -310,7 +320,7 @@ cast calldata "claimPrize(uint256)" 3
 baw contract-call preview \
   --binanceChainId 56 \
   --from <用户的 Agentic Wallet 地址> \
-  --to 0xa62c7b17b9110a1223de95e1ccd654aa138d2e1 \
+  --to 0xb8e544739b9c79c3180a287d865a7b8a2317311f \
   --value 0 \
   --inputData 0x1959f37d<活动id的32字节补齐><偏移量0x60的32字节补齐><偏移量0x80的32字节补齐><长度0的32字节补齐><长度0的32字节补齐> \
   --json

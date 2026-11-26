@@ -1,6 +1,6 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0xA62C7b17B9110A1223De95E1CCdD654aa138d2e1"; // OneIDCampaignsV12 = V11 code wired to IdentityBindingsV4 (mainnet)
+const APPS_TESTNET     = "0xb8E544739B9C79C3180A287d865A7B8a2317311f"; // OneIDCampaignsV13 = V11 code + winner info link, wired to IdentityBindingsV4 (mainnet)
 const BINDINGS_TESTNET = "0x5FC906B394BA23Dd1B546aea8F217101DEc07F85"; // IdentityBindingsV4 (self-registration + cooldown)
 const PROFILE_TESTNET  = "0x42c9f4bfa02e0b4365d9701f962b4dcd4bf39a07"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
@@ -80,6 +80,7 @@ const APPS_ABI = [
   "function createClaim(string, uint64, uint64, uint32, address, uint256, bool, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot)) payable returns (uint256)",
   "function postUrl(uint256) view returns (string)","function series(uint256) view returns (string)","function setSeries(uint256,string)",
   "function setPostUrl(uint256, string)",
+  "function winnerInfoUrl(uint256) view returns (string)", "function winnerInfoNote(uint256) view returns (string)", "function setWinnerInfo(uint256,string,string)",
   "event PostUrlSet(uint256 indexed id, string url)",
   "event CampaignCreated(uint256 indexed id, address indexed creator, uint8 kind, string title, uint64 startAt, uint64 endAt)",
   "event Entered(uint256 indexed id, address indexed participant)",
@@ -98,7 +99,7 @@ const NETWORK = {
   appsRpcs: ["https://bsc-dataseed.binance.org","https://bsc-rpc.publicnode.com","https://rpc.ankr.com/bsc","https://bsc-dataseed1.bnbchain.org","https://bsc-dataseed2.bnbchain.org"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com", "https://rpc.ankr.com/bsc", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 135784191; // V12 deployment block: event scans start here
+const APPS_DEPLOY_BLOCK = 135789180; // V13 deployment block: event scans start here
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-25: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
@@ -207,7 +208,7 @@ en: {
   card_invalid:"Not a valid address",
   nav_create:"Create",
   nav_mine:"Mine",
-  share_btn:"Share", c_option:"Option", m_draw:"Draw now", m_drawn:"Drawn", tx_fail:"Transaction failed", post_btn:"Creator's post", post_set:"X post link", post_ph:"Paste the post URL (https://x.com/...)", post_save:"Save link", f_posturl:"Your X post link (optional — can add later)",
+  share_btn:"Share", c_option:"Option", m_draw:"Draw now", m_drawn:"Drawn", tx_fail:"Transaction failed", post_btn:"Creator's post", post_set:"X post link", post_ph:"Paste the post URL (https://x.com/...)", post_save:"Save link", f_posturl:"Your X post link (optional — can add later)", f_winfo_url:"Winner info link (optional — shown only to winners after the draw)", f_winfo_note:"Note for winners (optional)", winfo_ph:"Paste your form link (https://…)", winote_ph:"e.g. Fill in your API account email", winfo_set:"Winner info link", winfo_save:"Save", d_winfo_h:"You won — one more step", d_winfo_btn:"Fill in your info ↗", d_winfo_hint:"Delivery details are collected on the creator's own form — BeCounted never stores personal information.",
   nav_bind:"Bind X",
   flt_search_ph:"Search campaigns…", flt_all:"All", flt_live:"Live", flt_upcoming:"Upcoming", flt_ended:"Ended",
   d_details:"Details", d_participants:"Participants", exp_btn:"Export list (CSV)", d_winners:"Winners", d_back:"All campaigns",
@@ -479,7 +480,7 @@ zh: {
   card_invalid:"这不是有效的地址",
   nav_create:"发布活动",
   nav_mine:"我的活动",
-  share_btn:"分享", c_option:"选项", m_draw:"立即开奖", m_drawn:"已开奖", tx_fail:"交易失败", post_btn:"发行人的帖子", post_set:"X 帖子链接", post_ph:"粘贴帖子链接（https://x.com/…）", post_save:"保存链接", f_posturl:"你的 X 帖子链接（选填，可稍后补）",
+  share_btn:"分享", c_option:"选项", m_draw:"立即开奖", m_drawn:"已开奖", tx_fail:"交易失败", post_btn:"发行人的帖子", post_set:"X 帖子链接", post_ph:"粘贴帖子链接（https://x.com/…）", post_save:"保存链接", f_posturl:"你的 X 帖子链接（选填，可稍后补）", f_winfo_url:"中奖信息收集链接（选填——开奖后仅中奖人可见）", f_winfo_note:"给中奖人的说明（选填）", winfo_ph:"粘贴你的表单链接（https://…）", winote_ph:"如：在此填写你的 API 账号邮箱", winfo_set:"中奖信息链接", winfo_save:"保存", d_winfo_h:"你中奖了——还差一步", d_winfo_btn:"去填写信息 ↗", d_winfo_hint:"领奖信息在发起人自己的表单里填写——BeCounted 不存储任何个人信息。",
   nav_bind:"绑定 X",
   flt_search_ph:"搜索活动…", flt_all:"全部", flt_live:"进行中", flt_upcoming:"未开始", flt_ended:"已结束",
   d_details:"详情", d_participants:"参与者", exp_btn:"导出名单 CSV", d_winners:"中奖名单", d_back:"全部活动",
@@ -1455,6 +1456,7 @@ window.drawCampaign = id => withSigner(async (msg) => { const a = new ethers.Con
 window.lockDrawCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.lockDraw(id)); }, id);
 window.setPostUrlMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("posturl-" + id)?.value || "").trim(); await sendAndWait(msg, a.setPostUrl(id, v)); loadMine(); }, id);
 window.setSeriesMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("series-" + id)?.value || "").trim(); await sendAndWait(msg, a.setSeries(id, v)); loadMine(); }, id);
+window.setWinnerInfoMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const u = ($("winfo-" + id)?.value || "").trim(); const n = ($("winote-" + id)?.value || "").trim(); await sendAndWait(msg, a.setWinnerInfo(id, u, n)); loadMine(); }, id);
 window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.claim(id, pf.p4, pf.p5)); }, id, true);
 window.claimPrize = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claimPrize(id)); }, id);
 window.reclaimCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.reclaim(id)); }, id);
@@ -1762,6 +1764,16 @@ async function submitCreate(){
       try{
         await (await apps.setSeries(newId, seriesInput)).wait();
       }catch(e){ /* series can be set later in My Campaigns */ }
+    }
+    // Optional: attach the winner info-collection link right away (the
+    // creator's own off-chain form; shown only to winners after the
+    // draw). Same failure policy as the post link: never fail creation.
+    const infoUrlInput = ($("fInfoUrl")?.value || "").trim();
+    const infoNoteInput = ($("fInfoNote")?.value || "").trim();
+    if (infoUrlInput && newId !== null){
+      try{
+        await (await apps.setWinnerInfo(newId, infoUrlInput, infoNoteInput)).wait();
+      }catch(e){ /* link can be set later in My Campaigns */ }
     }
     if (window.__newList){
       try{
@@ -2280,6 +2292,22 @@ async function loadDetail(){
       const pu = await appsRead.postUrl(id);
       if (pu && pu.startsWith("https://")) postBtn = `<a class="btn sm ghost" href="${pu.replace(/"/g, "%22")}" target="_blank" rel="noopener">${t("post_btn")} ↗</a>`;
     }catch(e){}
+    // Winner info-collection block: only a recorded winner sees the
+    // creator's form link, and only after the draw. The link itself is
+    // public contract state; this display gate keeps it out of casual
+    // reach, and the creator verifies submissions against the on-chain
+    // winner list. Personal details are filled on the creator's own
+    // form — never on-chain, never through this site.
+    let winfoBlock = "";
+    if (c.drawn && myState.winner){
+      try{
+        const wu = await appsRead.winnerInfoUrl(id);
+        if (wu && wu.startsWith("https://")){
+          const wn = await appsRead.winnerInfoNote(id).catch(() => "");
+          winfoBlock = `<div class="panel" style="border-color:var(--gold,#F0B90B);margin-bottom:10px"><b>${t("d_winfo_h")}</b>${wn ? `<div style="margin:6px 0">${String(wn).replace(/</g, "&lt;")}</div>` : ""}<div style="margin:8px 0"><a class="btn sm" href="${wu.replace(/"/g, "%22")}" target="_blank" rel="noopener">${t("d_winfo_btn")}</a></div><div class="count">${t("d_winfo_hint")}</div></div>`;
+        }
+      }catch(e){}
+    }
     const creatorHtmlD = await creatorLabel(c.creator);
     // Custom-token warning: escrowed token prize whose token is neither the
     // zero address (BNB) nor one of the TOKEN_PRESETS — value/transferability
@@ -2295,6 +2323,7 @@ async function loadDetail(){
       ${warnToken ? `<div class="warn-banner">⚠ ${t("warn_token")}</div>` : ""}
       <div style="margin:16px 0">${foot} <span class="camp-msg" role="status" id="msg-${id}"></span></div>
       ${postBtn ? `<div style="margin-bottom:6px">${postBtn}</div>` : ""}
+      ${winfoBlock}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert(${id})">${t("cert_btn")}</button>` : ""}</div>
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
       <div class="panel"><div id="partList">${entries.length ? entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}${entries.length ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportList(${id})">${t("exp_btn")}</button></div>` : ""}</div>
@@ -2941,6 +2970,8 @@ async function loadMine(){
       if ((kind === 2 && ended && !c.reclaimed) || (kind === 0 && c.drawn && !c.reclaimed && now > Number(c.endAt) + 2592000)) actions += `<button class="btn sm ghost" onclick="reclaimCampaign(${id})">${t("m_reclaim")}</button>`;
       const curPost = await appsRead.postUrl(id).catch(() => "");
       const curSeries = await appsRead.series(id).catch(() => "");
+      const curWinfo = await appsRead.winnerInfoUrl(id).catch(() => "");
+      const curWnote = await appsRead.winnerInfoNote(id).catch(() => "");
       cards.push(`<div class="camp">
         <div class="camp-top"><span class="chip ${kind === 0 ? "raffle" : ""}">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")}</span><span class="chip ${ended ? "ended" : "live"}">${ended ? t("c_ended") : t("c_live")}</span></div>
         <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
@@ -2955,6 +2986,12 @@ async function loadMine(){
           <span style="font-size:12.5px;color:var(--faint)">${t("f_series")}</span>
           <input id="series-${id}" type="text" value="${curSeries.replace(/"/g, "%22")}" placeholder="${t("series_ph")}" style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
           <button class="btn sm ghost" onclick="setSeriesMine(${id})">${t("series_set")}</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:12.5px;color:var(--faint)">${t("winfo_set")}</span>
+          <input id="winfo-${id}" type="text" value="${curWinfo.replace(/"/g, "%22")}" placeholder="${t("winfo_ph")}" style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
+          <input id="winote-${id}" type="text" value="${curWnote.replace(/"/g, "%22")}" placeholder="${t("winote_ph")}" style="flex:1;min-width:160px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
+          <button class="btn sm ghost" onclick="setWinnerInfoMine(${id})">${t("winfo_save")}</button>
         </div>
       </div>`);
     }
