@@ -337,7 +337,7 @@ footer .mono{font-family:var(--mono);font-size:12px}
 @media(max-width:960px){.brand{min-width:0}.brand b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nav-in>.connectBtn{padding-left:12px;padding-right:12px}}
 
 /* mobile header becomes two rows: brand+lang+connect on row 1, links full-width on row 2 */
-@media(max-width:960px){.nav-in{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:10px;row-gap:6px}.nav-links{order:3;flex:1 1 100%;margin-left:0}}
+@media(max-width:960px){.nav-in{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:10px;row-gap:6px}.nav-links{order:3;flex:1 1 100%;margin-left:0}.nav-in>.connectBtn{margin-left:auto}}
 
 /* --- audit fixes: design round (2026-11-23) --- */
 /* generic panel (card / mine / JS-rendered detail panels) */
