@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1122y">
+<link rel="stylesheet" href="assets/style.css?v=1122z">
 </head>
 <body>
 <nav>
@@ -65,17 +65,17 @@
         <span id="bindRegStatus" style="font-size:13px;color:var(--gold)"></span>
       </div>
     </div>
-    <div class="sec-head" style="margin-top:40px"><h2 style="font-size:22px" data-i18n="bind_attest_h"></h2></div>
-    <p style="color:var(--muted);max-width:640px;line-height:1.7" data-i18n="bind_attest_sub"></p>
+    <div class="sec-head" style="margin-top:40px"><h2 style="font-size:22px" data-i18n="bind_self_h"></h2></div>
+    <p style="color:var(--muted);max-width:640px;line-height:1.7" data-i18n="bind_self_sub"></p>
     <div class="form" style="margin-top:14px">
       <div class="f-row"><label for="aHandle" data-i18n="bind_f_x"></label><input type="text" id="aHandle" data-i18n-ph="bind_handle_ph" autocomplete="off"></div>
       <div class="f-row"><label for="aAgent" data-i18n="bind_f_agent"></label><input type="text" id="aAgent" data-i18n-ph="bind_agent_ph" autocomplete="off"></div>
       <div class="f-row"><label for="aAddr" data-i18n="bind_f_addr"></label><input type="text" id="aAddr" data-i18n-ph="bind_agentic_ph" autocomplete="off"></div>
-      <p style="color:var(--muted);font-size:13px;line-height:1.6" data-i18n="bind_attest_addr_note"></p>
-      <button class="btn" onclick="makeAttestation()" data-i18n="bind_attest_make"></button>
+      <p style="color:var(--muted);font-size:13px;line-height:1.6" data-i18n="bind_self_addr_note"></p>
+      <button class="btn" onclick="makeSelfBind()" data-i18n="bind_self_make"></button>
       <div id="attestOut" style="margin-top:16px"></div>
       <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button class="btn ghost" onclick="attestStatus()" data-i18n="bind_attest_check"></button>
+        <button class="btn ghost" onclick="selfBindStatus()" data-i18n="bind_self_check"></button>
         <span id="attestStatusOut" style="font-size:13px;color:var(--gold)"></span>
       </div>
     </div>
@@ -98,7 +98,7 @@
 </footer>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1122y"></script>
+<script src="assets/app.js?v=1122z"></script>
 <noscript><p style="text-align:center;padding:16px 20px;color:#9a9aa3;font-size:14px">BeCounted needs JavaScript enabled to run. · BeCounted 需要启用 JavaScript 才能使用。</p></noscript>
 </body>
 </html>

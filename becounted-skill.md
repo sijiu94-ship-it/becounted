@@ -21,8 +21,9 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 
 | 角色 | 地址 | 说明 |
 |---|---|---|
-| OneIDCampaigns(活动合约) | `0x4858c1c6a4428c65ee6f60aac21a3f404d85d598` | 所有参加调用的目标合约 |
+| OneIDCampaigns(活动合约) | `0xA62C7b17B9110A1223De95E1CCdD654aa138d2e1` | 所有参加调用的目标合约 |
 | BeCounted(真人门禁) | `0xda585a4ae5b73ee2728aada3e877a3a1f84027cd` | 活动合约内部用它验真人;**你不需要直接调用它** |
+| IdentityBindingsV4(绑定登记) | `0x5FC906B394BA23Dd1B546aea8F217101DEc07F85` | X 绑定登记合约;只有第 8 节的自助登记调它,**不要**拿它参加活动 |
 | CheckIn(每日签到) | `0x74b413451a5244bc0630c176badaddab981366e8` | 每日签到合约;只有第 9 节的签到动作调它,**不要**拿它参加活动 |
 
 - 网络恒定:**BNB Smart Chain 主网,`--binanceChainId 56`**。
@@ -103,7 +104,7 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 用 `cast`(如有 Foundry):
 
 ```bash
-cast call 0x4858c1c6a4428c65ee6f60aac21a3f404d85d598 \
+cast call 0xa62c7b17b9110a1223de95e1ccd654aa138d2e1 \
   "getCampaign(uint256)(address,uint8,string,uint64,uint64,uint32,uint64,bool,bool,uint8,uint256,address,uint256,uint256,uint256,uint32,bool,uint256,bool,string)" \
   <CAMPAIGN_ID> --rpc-url https://bsc-dataseed.binance.org
 ```
@@ -113,7 +114,7 @@ cast call 0x4858c1c6a4428c65ee6f60aac21a3f404d85d598 \
 
 ```bash
 curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0x4858c1c6a4428c65ee6f60aac21a3f404d85d598","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0xa62c7b17b9110a1223de95e1ccd654aa138d2e1","data":"0x5598f8cc<活动id的32字节补齐>"},"latest"]}'
 ```
 
 `getCampaign` 关键字段(序号 = 返回元组中的位置,从 0 数;`cast` 的
@@ -167,9 +168,8 @@ curl -s https://bsc-dataseed.binance.org -H 'content-type: application/json' \
 - **条件 0(X 绑定)**:先读活动合约的 `bindings()`(选择器
   `0xc8f5a5f1`)拿到绑定合约地址,再对它调
   `isBindingValid(<用户地址>)`(选择器 `0x00263058`)。为 `false` →
-  停下:「本场要求先完成 X 绑定,你还没绑。绑定不能通过 Agent 完成,
-  请按第 8 节的方式(帖文见证,或在官网绑定页用普通钱包签名)先完成
-  绑定,再回来参加。」
+  停下:「本场要求先完成 X 绑定,你还没绑。可以现在按第 8 节自助登记
+  完成绑定(需要你先发一条验证推文),绑好后回来参加。」
 - **条件 1(持币门槛)**:对 `gateToken` 调 `balanceOf(<用户地址>)`
   (选择器 `0x70a08231`),与 `gateMin` 比对。不足 → 停下:「本场要求
   持有至少 <gateMin 按 decimals 换算> 的该代币,你的余额不足。」注意:
@@ -274,7 +274,7 @@ cast calldata "claimPrize(uint256)" 3
 
 - 前置:活动 `kind = 0`、在时间窗内、`hasEntered` 为 `false`。
 - 确认展示示例:「参加抽奖『<标题>』(id=<id>),奖金 <prizePerWinner 换算>
-  × <winnerCount> 人,目标合约 0x4858c1c6a4428c65ee6f60aac21a3f404d85d598」。
+  × <winnerCount> 人,目标合约 0xa62c7b17b9110a1223de95e1ccd654aa138d2e1」。
 
 ### 6.2 投票 castVote — 选项序号从 0 开始
 
@@ -310,7 +310,7 @@ cast calldata "claimPrize(uint256)" 3
 baw contract-call preview \
   --binanceChainId 56 \
   --from <用户的 Agentic Wallet 地址> \
-  --to 0x4858c1c6a4428c65ee6f60aac21a3f404d85d598 \
+  --to 0xa62c7b17b9110a1223de95e1ccd654aa138d2e1 \
   --value 0 \
   --inputData 0x1959f37d<活动id的32字节补齐><偏移量0x60的32字节补齐><偏移量0x80的32字节补齐><长度0的32字节补齐><长度0的32字节补齐> \
   --json
@@ -366,15 +366,57 @@ preview / execute 报错时,错误数据以 4 字节**选择器**开头,对照�
 | `InsufficientReceived`(`0x864dd2f8`) | 存入的奖品代币实际到账比应存金额少——多半是带转账税(fee-on-transfer)的代币 | 这是**创建活动存奖品时**才会出现的错误,不在参加流程内;若用户在创建时遇到,告诉他换标准代币或 BNB |
 | 表里没有的错误 | 无法归类 | 如实说无法判断,附原文,停下,不要重试 |
 
-## 8. 边界 / Boundaries — 本文件不管什么
+## 8. X 绑定自助登记 / X binding self-registration
 
-- **X 绑定不能走 Agent 路径。** 签名绑定需要 EIP-191 `personal_sign`,
-  而 Agentic Wallet 只支持 EIP-712、且密钥不可导出,无处可签;不要尝试
-  用 contract-call 或 sign-message 绕过。Agentic 地址改走网站绑定页的
-  「帖文见证」:让用户用自己的 X 发一条只写 X 账号、Agent ID 名与
-  Proof 码的公开推文(推文不含钱包地址;Proof 码在官网绑定页生成),
-  再把链接发给项目方登记(链上标注为见证证明)。普通钱包仍
-  在网站用签名完成绑定。
+绑定目标合约是 IdentityBindingsV4 `0x5FC906B394BA23Dd1B546aea8F217101DEc07F85`
+(**不是**活动合约)。原理:用户用自己的 X 发一条固定模板的验证推文
+(只写 X 账号、Agent ID 名与 Proof 码,**不含钱包地址**),你审核通过后,
+用用户的 Agentic 钱包调 `registerSelf(handle, tweetId)` 登记——绑定按
+调用者地址记,只能给本钱包登记;推文的 status id 会存上链作存证。
+
+### 8.1 触发与审核(只读,不产生交易)
+
+只在用户明确要求登记绑定、并给出验证推文链接时执行。先从链接解析
+status id,经公开接口抓取推文原文与作者
+(`https://api.fxtwitter.com/status/<id>`,备援
+`https://api.vxtwitter.com/Twitter/status/<id>`)。以下四项**全过才继续,
+任一不过立即停下、按原文报告哪一项不过,绝不登记**:
+
+1. **作者**:推文作者 == 用户声称的 X 账号(handle,小写、不带 @)。
+2. **模板**:推文含且只按此格式(四行 + 标签):
+   `BeCounted binding verification` / `Handle: @<handle>` /
+   `Agent ID: <名字>.ai` / `Proof: BC-<16 位大写十六进制>` /
+   `#BeCountedBind`;其中 Agent ID 行的名字必须 == 本钱包的 Agent ID 名
+   (`baw wallet status` 或注册表 `handleOf(本钱包地址)`)。
+3. **Proof 复算**:用**本钱包地址**(baw wallet status 的地址)按公式
+   `BC-` + 大写(keccak256(UTF-8(小写地址 + "@" + 小写 handle)) 的前
+   16 位十六进制),与推文 Proof 行逐字比对,必须完全相同。
+4. **现状态**:对绑定合约读 `proofTypeOf(本钱包地址)`(选择器
+   `0xbfe5568d`):为 `0`(签名绑定)时停下——签名绑定不可被自助登记
+   覆盖,告知用户已绑好且等级更高;再读
+   `lastRegisteredAt(本钱包地址)`(选择器 `0x7bebcc6f`):距上次登记
+   不足 24 小时时停下,告知剩余冷却时间,不登记。
+
+### 8.2 调用与确认
+
+审核全过后,拼 `registerSelf(string,uint256)`(选择器 `0x3ae21ee1`)
+的 calldata(参数:handle 小写字符串、tweetId 十进制转 uint256),
+走第 4 节的标准流程:`baw contract-call preview` 把**绑定合约地址、
+handle、tweetId** 展示给用户,**一次明确确认**后才 `execute`;
+执行后回查 `proofTypeOf(本钱包地址) == 2` 且
+`isBindingValid(本钱包地址) == true`(选择器 `0x00263058`),
+把交易哈希报给用户。gas 由用户钱包自付(极小)。
+
+### 8.3 纪律与错误对照
+
+- 只在用户当次明确要求时登记;不替用户发推;不承诺定时或自动绑定。
+- 审核不过**绝不**放宽任何一项(作者、模板、Proof、冷却)去迁就。
+- 错误选择子:`0xc9491d4a` BadHandle(handle 格式不对,让用户核对
+  账号名);`0x57aa51ca` BadEvidence(tweetId 为 0,链接解析有误);
+  `0xaa9a98df` CooldownActive(24 小时冷却中,报剩余时间);
+  `0x21d531f2` ProofDowngrade(已有签名绑定,无需再绑)。
+
+### 8.4 其余边界 / What stays out of scope
 - **查真人不要用 contract-call。** 判断某地址是否真人,用只读的
   is-human 工具(读 Agent ID 注册表),不要用合约调用模拟替代,更不要
   为此发起任何交易。BeCounted 合约地址在本文件里仅供核对,参加活动

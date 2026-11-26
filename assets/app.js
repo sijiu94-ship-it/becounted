@@ -1,7 +1,7 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0x4858c1c6a4428c65ee6f60aac21a3f404d85d598"; // OneIDCampaignsV11 trial stack (own gate + MockRegistryV2 with handleOf; bindings = IdentityBindingsV3)
-const BINDINGS_TESTNET = "0xe90F1Aeadc08d832dc34eC1EdE3E7e934A31E165"; // IdentityBindingsV3
+const APPS_TESTNET     = "0xA62C7b17B9110A1223De95E1CCdD654aa138d2e1"; // OneIDCampaignsV12 = V11 code wired to IdentityBindingsV4 (mainnet)
+const BINDINGS_TESTNET = "0x5FC906B394BA23Dd1B546aea8F217101DEc07F85"; // IdentityBindingsV4 (self-registration + cooldown)
 const PROFILE_TESTNET  = "0x42c9f4bfa02e0b4365d9701f962b4dcd4bf39a07"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
   "function setProfile(string bio, tuple(string title, string url)[] links)",
@@ -44,10 +44,12 @@ const CHECKIN_ABI = [
   "error AlreadyCheckedIn(address account, uint256 dayIndex)"
 ];
 const BINDINGS_ABI = [
-  "function registerBinding(string,bytes)", "function proofTypeOf(address) view returns (uint8)", "function registerByAttestation(address,string)",
+  "function registerBinding(string,bytes)", "function proofTypeOf(address) view returns (uint8)", "function registerSelf(string,uint256)",
   "function removeBinding()",
   "function bindingOf(address) view returns (string,bytes,uint64)",
-  "function isBindingValid(address) view returns (bool)"
+  "function isBindingValid(address) view returns (bool)",
+  "function proofRefOf(address) view returns (uint256)",
+  "function lastRegisteredAt(address) view returns (uint64)"
 ];
 const SAMPLE_HOLDER    = "0x119B2Bf71856155b234f818476ae0610634A2aB9"; // 9nosing.ai
 const ERC721_ABI = ["function balanceOf(address) view returns (uint256)"];
@@ -96,7 +98,7 @@ const NETWORK = {
   appsRpcs: ["https://bsc-dataseed.binance.org","https://bsc-rpc.publicnode.com","https://rpc.ankr.com/bsc","https://bsc-dataseed1.bnbchain.org","https://bsc-dataseed2.bnbchain.org"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com", "https://rpc.ankr.com/bsc", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 135587980; // V11 deployment block: event scans start here
+const APPS_DEPLOY_BLOCK = 135784191; // V12 deployment block: event scans start here
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-25: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
@@ -222,7 +224,7 @@ en: {
   m_err_insufficient:"The prize token arrived short — tokens with a transfer tax (fee-on-transfer) cannot be used as prizes. Use a standard token or BNB.",
   m_err_seed_notlocked:"No draw seed is locked yet — lock the seed first.", m_err_seed_expired:"The locked seed has expired — lock it again, then draw.", m_err_seed_locked:"A draw seed is already locked and still valid.",
   bind_kick:"Social binding", bind_h:"Bind your X account",
-  bind_sub:"A public, verifiable statement — not a trust score. It proves this X account and this wallet are the same person, nothing more. The tweet itself is the record; there is no database. A binding publicly links your X account to this address — that is its purpose. Your Agent ID is never used to look your wallet up for anyone: only at your own request does the registrar resolve it internally, once, to register this binding - the result is never displayed or stored.",
+  bind_sub:"A public, verifiable statement — not a trust score. It proves this X account and this wallet are the same person, nothing more. The tweet itself is the record; there is no database. A binding publicly links your X account to this address — that is its purpose. Your Agent ID is never used to look your wallet up for anyone: the only resolution ever made is by your own agent, at your own request, to recompute your proof code and register — the project never resolves, displays or stores it.",
   bind_handle_ph:"Your X handle (without @)", bind_make:"Sign the binding statement",
   bind_stmt:"Statement", bind_sig:"Signature", bind_tweet:"Post this on X", bind_post:"Post on X",
   bind_verify_h:"Verify a binding", bind_verify_btn:"Verify",
@@ -267,7 +269,7 @@ en: {
     bind_registered: "Binding registered \u2014 your @handle now shows on your campaigns.",
     bind_need_sig: "Generate the signature first (step 2).",
     bind_onchain: "Binding also registered on-chain",
-  bind_attest_h:"Bind an Agentic Wallet address (post attestation)", bind_attest_sub:"An Agentic Wallet cannot sign messages, so it cannot use the signature flow above. Post one public tweet from your X account naming your X handle and your Agent ID name; the project verifies it and registers the binding on-chain, labelled as attested. The tweet itself never shows your address - only your X handle, your Agent ID name and a proof code computed from your address. Weaker than a signature — and labelled as such, permanently. Read this before you bind: registration makes the pairing of your X account and this address public on-chain, permanently — anyone can look it up from the address, and deleting the tweet does not remove it. Only bind an address you are willing to have publicly linked to your X account.", bind_attest_make:"Generate my verification tweet", bind_attest_post:"Post it on X", bind_attest_note:"After posting, you are done: registration is automatic. The registrar watches for verification posts, verifies them and registers the binding on-chain — usually within about 30 minutes — and you make no contract call. Check the status here. If it is still unregistered after an hour, send the tweet link to the project (X DM or the community thread).", bind_attest_check:"Check registration status", bind_attest_none:"No binding registered for this address yet.", bind_attest_sig:"Registered — signature proof.", bind_attest_proof:"Registered — public-post attestation.", bind_attested_tag:"attested", bind_agentic_ph:"0x… (Agentic Wallet address)", bind_f_agent:"Agent ID", bind_agent_ph:"e.g. name.ai", bind_attest_addr_note:"Used only on this page, locally, to compute your proof code. It is not posted and not sent anywhere.",
+  bind_self_h:"Bind an Agentic Wallet address (self-registration)", bind_self_sub:"An Agentic Wallet cannot sign messages, so it cannot use the signature flow above. Instead: post one public tweet from your X account naming your X handle and your Agent ID name — never your address — then hand the tweet link to your own agent. It verifies the post and registers the binding from your wallet, usually within a minute or two. The tweet's status id is stored on-chain as evidence, so the claim stays publicly checkable forever — and you may delete the tweet afterwards; the record stands. Two honest limits: the account side is your claim anchored to that post — weaker than a signature, and labelled as such — and registrations are limited to one per address per 24 hours. Read this before you bind: registration makes the pairing of your X account and this address public on-chain, permanently — anyone can look it up from the address. Only bind an address you are willing to have publicly linked to your X account.", bind_self_make:"Generate my verification tweet", bind_self_post:"Post it on X", bind_self_note:"After posting, copy the instruction below, add your tweet link at the end, and give it to your agent (the one that operates your Agentic Wallet). It verifies the post — author, exact wording, and the proof code recomputed from your wallet address — then registers the binding on-chain from your wallet. No registrar, no queue. Afterwards, check the status here.", bind_self_cmd:"Register my BeCounted X binding. Follow the self-registration section of the BeCounted Skill (https://becounted.9nosing.com/becounted-skill.md). My verification tweet: ", bind_self_copy:"Copy instruction", bind_self_check:"Check registration status", bind_self_none:"No binding registered for this address yet.", bind_self_sig:"Registered — signature proof.", bind_self_proof:"Registered — self-registration (post-anchored).", bind_self_tag:"self-registered", bind_agentic_ph:"0x… (Agentic Wallet address)", bind_f_agent:"Agent ID", bind_agent_ph:"e.g. name.ai", bind_self_addr_note:"Used only on this page, locally, to compute your proof code. It is not posted and not sent anywhere.",
     card_copy_link: "Copy card link",
     series_set: "Set series",
     series_ph: "Series label, e.g. Season 2",
@@ -494,7 +496,7 @@ zh: {
   m_err_insufficient:"奖品代币实际到账金额不符——带转账税的代币不能用作奖品，请换标准代币或 BNB。",
   m_err_seed_notlocked:"开奖种子还没锁定——先锁定种子再开奖。", m_err_seed_expired:"锁定的种子已过期——重新锁定后即可开奖。", m_err_seed_locked:"开奖种子已经锁定且仍在有效期内。",
   bind_kick:"社交绑定", bind_h:"绑定你的 X 账号",
-  bind_sub:"一份公开可验的声明——不是信誉分。它只证明这个 X 账号和这个钱包是同一个人，仅此而已。推文本身就是记录；没有数据库。绑定公开的是你的 X 账号与这个地址的对应关系，这正是它的用途；你的 Agent ID 也不会被拿去给任何人查钱包：只有你本人申请登记时，登记员才会在内部解析一次完成登记，结果不展示、不保存。",
+  bind_sub:"一份公开可验的声明——不是信誉分。它只证明这个 X 账号和这个钱包是同一个人，仅此而已。推文本身就是记录；没有数据库。绑定公开的是你的 X 账号与这个地址的对应关系，这正是它的用途；你的 Agent ID 也不会被拿去给任何人查钱包：只有你本人要求登记时，你自己的 Agent 才会在内部解析一次、复算验证码并完成登记——项目方不解析、不展示、不保存。",
   bind_handle_ph:"你的 X 账号（不带 @）", bind_make:"签名生成绑定声明",
   bind_stmt:"声明原文", bind_sig:"签名", bind_tweet:"把这段发到 X 上", bind_post:"发到 X",
   bind_verify_h:"验证一份绑定", bind_verify_btn:"验证",
@@ -539,7 +541,7 @@ zh: {
     bind_registered: "\u767b\u8bb0\u6210\u529f\u2014\u2014\u4f60\u7684\u6d3b\u52a8\u5361\u7247\u4e0a\u4f1a\u663e\u793a @\u8d26\u53f7\u4e86\u3002",
     bind_need_sig: "\u5148\u5728\u7b2c\u4e8c\u6b65\u751f\u6210\u7b7e\u540d\u3002",
     bind_onchain: "\u8be5\u7ed1\u5b9a\u5df2\u5728\u94fe\u4e0a\u767b\u8bb0",
-  bind_attest_h:"绑定 Agentic Wallet 地址（帖文见证）", bind_attest_sub:"Agentic Wallet 不能签消息，走不了上面的签名流程。改用公开证明：用你的 X 账号发一条写明你的 X 账号和 Agent ID 名的推文，项目方核对后上链登记，并永久标注为见证。推文本身不写你的地址——只有 X 账号、Agent ID 名和一段由地址算出的验证码。它比签名弱——这一点如实标明。绑定前先读这一句：登记会把你的 X 账号与这个地址的对应关系永久公开在链上，任何人都能按地址查到，删推也不会撤回；只绑你愿意公开关联到 X 账号的地址。", bind_attest_make:"生成我的验证推文", bind_attest_post:"去 X 发推", bind_attest_note:"发完就不用管了：登记是自动的——登记员会监测验证推文、核对后上链登记，通常 30 分钟内完成，你不需要调合约；之后在这里查状态。若超过 1 小时还没登记上，再把推文链接发给项目方（X 私信或社群帖）。", bind_attest_check:"查登记状态", bind_attest_none:"这个地址还没有登记绑定。", bind_attest_sig:"已登记——签名证明。", bind_attest_proof:"已登记——公开帖文见证。", bind_attested_tag:"见证", bind_agentic_ph:"0x…（Agentic Wallet 地址）", bind_f_agent:"Agent ID 名", bind_agent_ph:"如 name.ai", bind_attest_addr_note:"只在本页本地计算验证码用，不会出现在推文里，也不会上传到任何地方。",
+  bind_self_h:"绑定 Agentic Wallet 地址（自助登记）", bind_self_sub:"Agentic Wallet 不能签消息，走不了上面的签名流程。改走自助登记：用你的 X 账号发一条写明 X 账号和 Agent ID 名的推文（不写地址），再把推文链接交给你自己的 Agent——它审核后用你的钱包直接上链登记，通常一两分钟绑好。推文的 ID 会存上链作存证，这条声明从此永久公开可查；登记完成后，推文删不删都不影响记录。两条如实的边界：账号侧是你以推文存证的声明，比签名弱、也会如实标注；每个地址 24 小时只能登记一次。绑定前先读这一句：登记会把你的 X 账号与这个地址的对应关系永久公开在链上，任何人都能按地址查到；只绑你愿意公开关联到 X 账号的地址。", bind_self_make:"生成我的验证推文", bind_self_post:"去 X 发推", bind_self_note:"发完推后，复制下面这段话、在末尾补上你的推文链接，交给你的 Agent（操作你 Agentic Wallet 的那个）。它会审核这条推文——作者、原文、以及用你钱包地址复算的验证码——然后用你的钱包上链登记。没有登记员，不用排队。登记后在这里查状态。", bind_self_cmd:"帮我登记 BeCounted 的 X 绑定。按 BeCounted Skill 的自助登记章节执行（https://becounted.9nosing.com/becounted-skill.md）。我的验证推文：", bind_self_copy:"复制这段话", bind_self_check:"查登记状态", bind_self_none:"这个地址还没有登记绑定。", bind_self_sig:"已登记——签名证明。", bind_self_proof:"已登记——自助登记（推文存证）。", bind_self_tag:"自助登记", bind_agentic_ph:"0x…（Agentic Wallet 地址）", bind_f_agent:"Agent ID 名", bind_agent_ph:"如 name.ai", bind_self_addr_note:"只在本页本地计算验证码用，不会出现在推文里，也不会上传到任何地方。",
     card_copy_link: "\u590d\u5236\u540d\u7247\u94fe\u63a5",
     series_set: "\u8bbe\u7f6e\u7cfb\u5217",
     series_ph: "\u7cfb\u5217\u6807\u7b7e\uff0c\u5982\uff1a\u7b2c\u4e8c\u671f",
@@ -2502,7 +2504,7 @@ function shownHandle(h){ h = String(h); return /^[a-z0-9_.]+$/.test(h) ? h : esc
 async function creatorLabel(addr){
   const cb = await creatorBinding(addr);
   if(!cb) return `<a href="creator.html?a=${addr}" style="color:inherit;text-decoration:none">${short(addr)}</a>`;
-  const mark = cb.pt === 1 ? ` \u00b7 ${t("bind_attested_tag")}` : " \u2713";
+  const mark = cb.pt === 2 ? ` \u00b7 ${t("bind_self_tag")}` : " \u2713";
   const shown = shownHandle(cb.h);
   return `<a href="creator.html?a=${addr}" style="color:var(--gold);text-decoration:none">@${shown}${mark}</a>`;
 }
@@ -2529,7 +2531,7 @@ Sig: ${sig}
     const bpb = $("bindPostBtn"); if (bpb) bpb.addEventListener("click", () => window.open(tweetUrl, "_blank"));
   }catch(e){ if(out) out.innerHTML = `<span style="color:#ff7a7a">${t("tx_fail")}</span>`; }
 };
-window.makeAttestation = async () => {
+window.makeSelfBind = async () => {
   const out = $("attestOut"); if(out) out.innerHTML = "…";
   try{
     const handle = ($("aHandle").value || "").trim().replace(/^@/, "").toLowerCase();
@@ -2538,31 +2540,42 @@ window.makeAttestation = async () => {
     const address = ethers.getAddress(($("aAddr").value || "").trim());
     if(!handle) throw new Error("handle");
     if(!agent) throw new Error("agent");
-    // Proof code v2: 16 hex chars of keccak(address + "@" + handle). The
+    // Proof code: 16 hex chars of keccak(address + "@" + handle). The
     // tweet carries the two public names and this code only - never the
-    // address. The registrar resolves the Agent ID name internally, once,
-    // at the holder's own request, recomputes the code and registers;
-    // the resolved address is never displayed or stored.
+    // address. The holder's own agent later recomputes the code from the
+    // wallet address it operates and requires an exact match before it
+    // registers the binding from that wallet (registerSelf).
     const code = "BC-" + ethers.keccak256(ethers.toUtf8Bytes(address.toLowerCase() + "@" + handle)).slice(2, 18).toUpperCase();
     const tweet = `BeCounted binding verification\nHandle: @${handle}\nAgent ID: ${agent}\nProof: ${code}\n#BeCountedBind`;
     const tweetUrl = "https://x.com/intent/tweet?text=" + encodeURIComponent(tweet);
+    const cmd = t("bind_self_cmd");
     out.innerHTML = `<div class="rows"><div class="row"><span>X</span><b>@${handle}</b></div>
       <div class="row"><span>Agent ID</span><b>${agent}</b></div>
       <div class="row"><span>Proof</span><b>${code}</b></div></div>
-      <p style="margin-top:14px;color:var(--muted)">${t("bind_attest_note")}</p>
-      <button class="btn sm" id="attestPostBtn">${t("bind_attest_post")}</button>`;
+      <p style="margin-top:14px;color:var(--muted)">${t("bind_self_note")}</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn sm" id="attestPostBtn">${t("bind_self_post")}</button>
+        <button class="btn sm ghost" id="selfCmdBtn">${t("bind_self_copy")}</button>
+      </div>
+      <p id="selfCmdText" style="margin-top:12px;color:var(--muted);font-size:13px;line-height:1.6;word-break:break-all">${cmd}</p>`;
     const apb = $("attestPostBtn"); if (apb) apb.addEventListener("click", () => window.open(tweetUrl, "_blank"));
+    const scb = $("selfCmdBtn"); if (scb) scb.addEventListener("click", async () => { try{ await navigator.clipboard.writeText(cmd); scb.textContent = "✓"; setTimeout(() => { scb.textContent = t("bind_self_copy"); }, 1600); }catch(e){} });
   }catch(e){ if(out) out.innerHTML = `<span style="color:#ff7a7a">${t("tx_fail")}</span>`; }
 };
-window.attestStatus = async () => {
+window.selfBindStatus = async () => {
   const out = $("attestStatusOut"); if(out) out.textContent = "…";
   try{
     const address = ethers.getAddress(($("aAddr").value || "").trim());
     chain();
     const b = await bindingsRead.bindingOf(address);
-    if(!b[0]){ out.textContent = t("bind_attest_none"); return; }
+    if(!b[0]){ out.textContent = t("bind_self_none"); return; }
     const pt = Number(await bindingsRead.proofTypeOf(address));
-    out.textContent = "@" + b[0] + " — " + (pt === 1 ? t("bind_attest_proof") : t("bind_attest_sig"));
+    if(pt === 2){
+      let ref = 0n; try{ ref = await bindingsRead.proofRefOf(address); }catch(e){}
+      out.innerHTML = "@" + escHtml(b[0]) + " — " + t("bind_self_proof") + (ref ? ` <a href="https://x.com/i/status/${ref.toString()}" target="_blank" rel="noopener" style="color:var(--gold)">tweet</a>` : "");
+    } else {
+      out.textContent = "@" + b[0] + " — " + t("bind_self_sig");
+    }
   }catch(e){ if(out) out.textContent = t("tx_fail"); }
 };
 window.verifyBinding = async () => {
