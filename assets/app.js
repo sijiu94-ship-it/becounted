@@ -211,7 +211,7 @@ en: {
   share_btn:"Share", c_option:"Option", m_draw:"Draw now", m_drawn:"Drawn", tx_fail:"Transaction failed", post_btn:"Creator's post", post_set:"X post link", post_ph:"Paste the post URL (https://x.com/...)", post_save:"Save link", f_posturl:"Your X post link (optional — can add later)", f_winfo_url:"Winner info link (optional — shown only to winners after the draw)", f_winfo_note:"Note for winners (optional)", winfo_ph:"Paste your form link (https://…)", winote_ph:"e.g. Fill in your API account email", winfo_set:"Winner info link", winfo_save:"Save", d_winfo_h:"You won — one more step", d_winfo_btn:"Fill in your info ↗", d_winfo_hint:"Delivery details are collected on the creator's own form — BeCounted never stores personal information.",
   nav_bind:"Bind X",
   flt_search_ph:"Search campaigns…", flt_all:"All", flt_live:"Live", flt_upcoming:"Upcoming", flt_ended:"Ended",
-  d_details:"Details", d_participants:"Participants", exp_btn:"Export list (CSV)", d_winners:"Winners", d_back:"All campaigns",
+  d_details:"Details", d_participants:"Participants", exp_btn:"Export list (CSV)", exp_ids_btn:"Export winner Agent IDs", exp_ids_empty:"No winner Agent ID found", d_winners:"Winners", d_back:"All campaigns",
   d_proof_h:"Draw proof — verify it yourself", d_proof_seedblock:"Seed block",
   d_proof_fallback:"Fallback seed used (original seed block aged out)", d_proof_verify:"Recompute winners",
   d_proof_ok:"Recomputed winners match the on-chain winners exactly.", d_proof_bad:"Mismatch — do not trust this draw.",
@@ -483,7 +483,7 @@ zh: {
   share_btn:"分享", c_option:"选项", m_draw:"立即开奖", m_drawn:"已开奖", tx_fail:"交易失败", post_btn:"发行人的帖子", post_set:"X 帖子链接", post_ph:"粘贴帖子链接（https://x.com/…）", post_save:"保存链接", f_posturl:"你的 X 帖子链接（选填，可稍后补）", f_winfo_url:"中奖信息收集链接（选填——开奖后仅中奖人可见）", f_winfo_note:"给中奖人的说明（选填）", winfo_ph:"粘贴你的表单链接（https://…）", winote_ph:"如：在此填写你的 API 账号邮箱", winfo_set:"中奖信息链接", winfo_save:"保存", d_winfo_h:"你中奖了——还差一步", d_winfo_btn:"去填写信息 ↗", d_winfo_hint:"领奖信息在发起人自己的表单里填写——BeCounted 不存储任何个人信息。",
   nav_bind:"绑定 X",
   flt_search_ph:"搜索活动…", flt_all:"全部", flt_live:"进行中", flt_upcoming:"未开始", flt_ended:"已结束",
-  d_details:"详情", d_participants:"参与者", exp_btn:"导出名单 CSV", d_winners:"中奖名单", d_back:"全部活动",
+  d_details:"详情", d_participants:"参与者", exp_btn:"导出名单 CSV", exp_ids_btn:"导出中奖者 Agent ID", exp_ids_empty:"没有读到中奖者 Agent ID", d_winners:"中奖名单", d_back:"全部活动",
   d_proof_h:"开奖证明 — 自己验一遍", d_proof_seedblock:"种子区块",
   d_proof_fallback:"用了备用种子（原种子区块已过期）", d_proof_verify:"复算中奖名单",
   d_proof_ok:"复算结果与链上中奖名单完全一致。", d_proof_bad:"对不上——这次开奖不可信。",
@@ -2284,7 +2284,8 @@ async function loadDetail(){
         </div>
         <div style="margin-top:14px"><button class="btn sm" onclick="verifyDraw(${id})">${t("d_proof_verify")}</button> <span class="camp-msg" role="status" id="proofMsg"></span></div>
         <div class="rows" style="margin-top:14px"><div class="row"><span>${t("d_winners")}</span><b>${winners.length}</b></div></div>
-        <div style="margin-top:8px">${winners.map(w => `<div class="feed-item"><span class="addr">${w}</span></div>`).join("")}</div></div>`;
+        <div style="margin-top:8px">${winners.map(w => `<div class="feed-item"><span class="addr">${w}</span></div>`).join("")}</div>
+        ${winners.length ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportWinnerAgentIds(${id})">${t("exp_ids_btn")}</button> <span class="camp-msg" role="status" id="winnerIdsMsg"></span></div>` : ""}</div>`;
       }
     }
     let postBtn = "";
@@ -2471,6 +2472,35 @@ window.exportList = async id => {
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "becounted-campaign-" + id + ".csv"; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     if (msg) msg.textContent = "";
+  }catch(e){ if (msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0, 110); }
+};
+/* Winner Agent ID list — names ONLY, never paired with an address.
+   The winners' Agent IDs are read from the registry in the allowed
+   direction (address -> handleOf), then de-duplicated and SORTED before
+   download, so the file is a standalone set of names: its order does not
+   mirror the on-chain winner order and cannot be lined up against the
+   address list shown on the page. One Agent ID per line, .ai suffix
+   included. */
+window.exportWinnerAgentIds = async id => {
+  const msg = $("winnerIdsMsg");
+  try{
+    if (msg) msg.textContent = "…";
+    chain();
+    const winners = await appsRead.getWinners(id);
+    const names = new Set();
+    for (const w of winners){
+      const h = await handleOfAddr(w);
+      if (h){
+        const bare = String(h).trim().toLowerCase().replace(/\.ai$/, "");
+        if (bare) names.add(bare + ".ai");
+      }
+    }
+    const list = [...names].sort((a, b) => a.localeCompare(b));
+    if (!list.length){ if (msg) msg.textContent = t("exp_ids_empty"); return; }
+    const blob = new Blob([list.join("\r\n") + "\r\n"], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "becounted-winner-agent-ids-" + id + ".txt"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    if (msg) msg.textContent = "✓ " + list.length;
   }catch(e){ if (msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0, 110); }
 };
 window.verifyDraw = async id => {
