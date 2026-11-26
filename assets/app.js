@@ -1234,6 +1234,38 @@ async function handleOfAddr(addr){
     return String(h || "").trim();
   }catch(e){ return ""; }
 }
+function maskIdLabel(label){
+  // Public masking for an Agent ID label: 9nosing -> "9n\u2026ai". Very
+  // short labels show only their first character, or the mask would
+  // nearly be the name itself.
+  const s = String(label || "");
+  if (!s) return "";
+  return (s.length <= 3 ? s.slice(0, 1) : s.slice(0, 2)) + "\u2026ai";
+}
+async function identityItems(addrs, fullForAll){
+  // Participant and winner lists display the Agent ID, never the raw
+  // address: identity is the person, the address is transport. Resolution
+  // is address -> handleOf only (the allowed direction), the same read
+  // the winner-ID export uses. Public viewers see the masked form; the
+  // campaign creator (fullForAll) and each entry's own owner see the full
+  // handle. An address with no handle in the registry falls back to the
+  // truncated address.
+  const me = myAddr ? String(myAddr).toLowerCase() : "";
+  let rc = null;
+  try{
+    chain();
+    const reg = await appsRead.idRegistry();
+    if (reg && reg !== ethers.ZeroAddress) rc = new ethers.Contract(reg, HANDLE_ABI, providerTest);
+  }catch(e){}
+  const labels = await Promise.all(addrs.map(async a => {
+    let h = "";
+    if (rc){ try{ h = String(await rc.handleOf(a) || "").trim(); }catch(e){} }
+    if (!h) return short(a);
+    const full = fullForAll || (me && String(a).toLowerCase() === me);
+    return full ? h + ".ai" : maskIdLabel(h);
+  }));
+  return labels.map(x => `<div class="feed-item"><span class="addr">${shownHandle(x)}</span></div>`).join("");
+}
 function parseAddrList(text){
   const raw = String(text || "").split(/[\s,;]+/).map(x => x.trim()).filter(Boolean);
   const out = []; const seen = new Set();
@@ -2300,6 +2332,7 @@ async function loadDetail(){
       if (live && Number(c.entryCount) < Number(c.maxClaims)) foot = myState.claimed ? `<button class="btn" disabled style="opacity:.5;cursor:default">${t("j_claimed")} \u2713</button>` : `<button class="btn" onclick="claimShare(${id})">${t("c_claim_btn")}${c.claimRandom ? "" : " " + fmtAmt(c.claimAmount, c.prizeToken) + " " + tokenLabel(c.prizeToken)}</button>`;
       else foot = `<span class="count"><b>${c.entryCount}/${c.maxClaims}</b> ${t("c_claimed_n")}</span>`;
     }
+    const isCreatorView = !!(myAddr && c.creator && String(myAddr).toLowerCase() === String(c.creator).toLowerCase());
     let proof = "";
     if (kind === 0 || (kind === 1 && c.pool > 0n)){
       if (!c.drawn) proof = `<div class="sec-head" style="margin-top:34px"><h2 style="font-size:20px">${t("d_proof_h")}</h2></div><div class="empty">${t("d_notdrawn")}</div>`;
@@ -2312,8 +2345,8 @@ async function loadDetail(){
         </div>
         <div style="margin-top:14px"><button class="btn sm" onclick="verifyDraw(${id})">${t("d_proof_verify")}</button> <span class="camp-msg" role="status" id="proofMsg"></span></div>
         <div class="rows" style="margin-top:14px"><div class="row"><span>${t("d_winners")}</span><b>${winners.length}</b></div></div>
-        <div style="margin-top:8px">${winners.map(w => `<div class="feed-item"><span class="addr">${w}</span></div>`).join("")}</div>
-        ${winners.length ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportWinnerAgentIds(${id})">${t("exp_ids_btn")}</button> <span class="camp-msg" role="status" id="winnerIdsMsg"></span></div>` : ""}</div>`;
+        <div style="margin-top:8px">${await identityItems(winners, isCreatorView)}</div>
+        ${winners.length && isCreatorView ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportWinnerAgentIds(${id})">${t("exp_ids_btn")}</button> <span class="camp-msg" role="status" id="winnerIdsMsg"></span></div>` : ""}</div>`;
       }
     }
     let postBtn = "";
@@ -2340,6 +2373,8 @@ async function loadDetail(){
       }catch(e){}
     }
     const creatorHtmlD = await creatorLabel(c.creator);
+    const partHtml = entries.length ? await identityItems(entries.slice(0, 50), isCreatorView) : `<div class="empty">${t("rec_none")}</div>`;
+    window.__partFullForAll = isCreatorView;
     // Custom-token warning: escrowed token prize whose token is neither the
     // zero address (BNB) nor one of the TOKEN_PRESETS — value/transferability
     // unverified (honeypot risk). prizeLabel campaigns escrow no token and
@@ -2357,7 +2392,7 @@ async function loadDetail(){
       ${winfoBlock}
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert(${id})">${t("cert_btn")}</button>` : ""}</div>
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
-      <div class="panel"><div id="partList">${entries.length ? entries.slice(0, 50).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("") : `<div class="empty">${t("rec_none")}</div>`}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}${entries.length ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportList(${id})">${t("exp_btn")}</button></div>` : ""}</div>
+      <div class="panel"><div id="partList">${partHtml}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}${entries.length && isCreatorView ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportList(${id})">${t("exp_btn")}</button></div>` : ""}</div>
       ${proof}
       ${condChipsHtml(cond)}${listPanelHtml(id, cond)}
       <div class="trust-row">${t("d_contract")} <a href="https://bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 BeCounted <a href="https://bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : (c.prizeLabel ? t("d_custom_note") : t("d_escrow_no"))}</div>`;
@@ -2428,10 +2463,10 @@ window.makeCert = async id => {
     if (msg) msg.textContent = t("cert_done");
   }catch(e){ if (msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0, 110); }
 };
-window.showAllParticipants = () => {
+window.showAllParticipants = async () => {
   const box = $("partList"); if (!box) return;
-  box.innerHTML = (window.__partEntries || []).map(a => `<div class="feed-item"><span class="addr">${a}</span></div>`).join("");
   const more = $("partMore"); if (more) more.style.display = "none";
+  box.innerHTML = await identityItems(window.__partEntries || [], !!window.__partFullForAll);
 };
 /* One-click CSV export of the participant list. Every read mirrors the
    detail page itself: entries/winners/prizeClaimed/conditionsOf on the
