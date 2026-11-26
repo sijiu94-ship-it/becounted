@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0a0b">
-<link rel="stylesheet" href="assets/style.css?v=1122w">
+<link rel="stylesheet" href="assets/style.css?v=1122x">
 </head>
 <body>
 <nav>
@@ -84,8 +84,8 @@
   <div class="wrap">
     <div class="sec-head"><span class="sec-no">03</span><h2 id="wp-s3" data-i18n="wp3_h"></h2></div>
     <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px" data-i18n="wp3_p"></p>
-    <p class="lang-en" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">The first boundary shapes even the allowlist. Entry condition 5 (OneIDCampaignsV11) lets a creator restrict a campaign to a list of Agent ID names: the Merkle leaves are hashes of the names themselves, and at entry the contract reads the entrant's own handle from the registry — address → handle, the permitted direction — and verifies the proof against the committed root. No name → address resolution happens anywhere in the flow. <b>The allowlist holds identities, never wallets: it stores hashes of names, and not even the creator needs anyone's wallet address.</b> Because the check reads the handle live, the list binds the identity, not an address snapshot — rename away from a listed name and you are off the list.</p>
-    <p class="lang-zh" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">第一条边界连白名单的形状都决定了。参加条件 5（OneIDCampaignsV11）允许发起人把活动限定给一份 Agent ID 名字名单：默克尔叶是名字本身的哈希，参加时合约从注册表实时读取参加者本人的名字——「地址 → 名字」，是允许的方向——再验其证明与链上根是否对得上；全流程不发生任何「名字 → 地址」解析。<b>白名单里只有身份、没有地址——名单存的是名字的哈希，连发起人也不需要任何人的钱包地址</b>。又因为校验是实时读名字，名单绑的是身份而不是地址快照：改名离开名单上的名字，就等于离开名单。</p>
+    <p class="lang-en" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">The first boundary shapes even the allowlist. Entry condition 5 (OneIDCampaignsV11) lets a creator restrict a campaign to a list of Agent ID names: the Merkle leaves are hashes of the names themselves, and at entry the contract reads the entrant's own handle from the registry — address → handle, the permitted direction — and verifies the proof against the committed root. The allowlist itself never resolves a name to an address. <b>The allowlist holds identities, never wallets: it stores hashes of names, and not even the creator needs anyone's wallet address.</b> Because the check reads the handle live, the list binds the identity, not an address snapshot — rename away from a listed name and you are off the list.</p>
+    <p class="lang-zh" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">第一条边界连白名单的形状都决定了。参加条件 5（OneIDCampaignsV11）允许发起人把活动限定给一份 Agent ID 名字名单：默克尔叶是名字本身的哈希，参加时合约从注册表实时读取参加者本人的名字——「地址 → 名字」，是允许的方向——再验其证明与链上根是否对得上；白名单机制本身不做任何「名字 → 地址」解析。<b>白名单里只有身份、没有地址——名单存的是名字的哈希，连发起人也不需要任何人的钱包地址</b>。又因为校验是实时读名字，名单绑的是身份而不是地址快照：改名离开名单上的名字，就等于离开名单。</p>
 
   </div>
 </section>
@@ -113,8 +113,8 @@
     <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px" data-i18n="wp6_1"></p>
     <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px" data-i18n="wp6_2"></p>
     <p style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px" data-i18n="wp6_3"></p>
-    <p class="lang-en" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">Agent-native by design: Binance's Agentic Wallet never connects to third-party websites — that is Binance's own design — so holders take part through their own AI agent. The participation Skill, the is-human CLI and the MCP server are the product's front door; this website is the creator console and the public transparency layer, and any ordinary wallet can connect to it. X binding comes in two honestly labelled tiers: a wallet signature (strong proof), and — for Agentic Wallet addresses, which cannot sign arbitrary messages — a public-post attestation: the holder posts their address from their own X account, a registrar verifies the post and records the binding on-chain, marked "attested" (weak proof, revocable, never able to overwrite a signature binding). The registrar is a named trust point, disclosed here rather than hidden.</p>
-    <p class="lang-zh" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">Agent 原生是这个产品的设计前提：币安 Agentic Wallet 按其自身设计不直连任何第三方网站，持有人只能通过自己的 AI Agent 参与——参与 Skill、is-human CLI 与 MCP server 才是产品正门；本网站是发起人的控制台与公开透明层，普通钱包可以连接它。X 绑定分两级、如实标注：钱包签名是强证明；Agentic Wallet 地址无法任意签名，走帖文见证——本人用自己的 X 账号公开发帖写明地址，登记员核对后上链登记，标注为「见证」（弱证明、可撤销、不得覆盖签名绑定）。登记员是一个具名的信任点，我们写在这里，而不是藏起来。</p>
+    <p class="lang-en" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">Agent-native by design: Binance's Agentic Wallet never connects to third-party websites — that is Binance's own design — so holders take part through their own AI agent. The participation Skill, the is-human CLI and the MCP server are the product's front door; this website is the creator console and the public transparency layer, and any ordinary wallet can connect to it. X binding comes in two honestly labelled tiers: a wallet signature (strong proof), and — for Agentic Wallet addresses, which cannot sign arbitrary messages — a public-post attestation: the holder posts their X handle, their Agent ID name and a proof code from their own X account — the post never contains a wallet address — and a registrar verifies the post and records the binding on-chain, marked "attested" (weak proof, revocable, never able to overwrite a signature binding). The registrar is a named trust point, disclosed here rather than hidden.</p>
+    <p class="lang-zh" style="color:var(--muted);font-size:16.5px;line-height:1.75;max-width:800px;margin-bottom:14px">Agent 原生是这个产品的设计前提：币安 Agentic Wallet 按其自身设计不直连任何第三方网站，持有人只能通过自己的 AI Agent 参与——参与 Skill、is-human CLI 与 MCP server 才是产品正门；本网站是发起人的控制台与公开透明层，普通钱包可以连接它。X 绑定分两级、如实标注：钱包签名是强证明；Agentic Wallet 地址无法任意签名，走帖文见证——本人用自己的 X 账号公开发帖，写明账号、Agent ID 名与 Proof 码（不含钱包地址），登记员核对后上链登记，标注为「见证」（弱证明、可撤销、不得覆盖签名绑定）。登记员是一个具名的信任点，我们写在这里，而不是藏起来。</p>
 
   </div>
 </section>
@@ -154,7 +154,7 @@
 </footer>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="assets/app.js?v=1122w"></script>
+<script src="assets/app.js?v=1122x"></script>
 <noscript><p style="text-align:center;padding:16px 20px;color:#9a9aa3;font-size:14px">BeCounted needs JavaScript enabled to run. · BeCounted 需要启用 JavaScript 才能使用。</p></noscript>
 </body>
 </html>
