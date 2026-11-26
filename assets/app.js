@@ -862,19 +862,33 @@ async function ensureWalletChain(){
   }catch(e){ return false; }
 }
 
-async function disconnectWallet(){
-  if (window.ethereum && window.ethereum.request){ try{ await window.ethereum.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] }); }catch(e){} }
+function softWalletReset(){
+  // Local-only reset: forget the account on THIS page and re-render.
+  // No session flag, no wallet-side change — used for transient wallet
+  // events that are not a user choosing to disconnect.
   signer = null; myAddr = null; myHuman = null;
-  try{ sessionStorage.setItem("hg_dc", "1"); }catch(e){}
   closeWalletMenu();
   renderConnectBtn();
-  toast(t("m_disconnected"));
   const pe = $("profileEdit"); if (pe) pe.style.display = "none";
   if ($("campGrid")) loadCampaigns();
   if ($("mineGrid")) loadMine();
   if ($("statHumans")) loadPlatformStats();
   if ($("creatorBox")) loadCreator();
   if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
+}
+
+function disconnectWallet(){
+  // Explicit user disconnect (wallet menu only). Local state plus the
+  // hg_dc session flag, which tells later pages in this tab not to
+  // silently restore until the user clicks connect again. Deliberately
+  // NO wallet_revokePermissions: revoking burns the site's permission
+  // inside the wallet itself, so eth_accounts comes back empty on every
+  // later page and the wallet looks permanently disconnected until a
+  // full manual reconnect — that call turned a local sign-out into a
+  // site-wide one.
+  try{ sessionStorage.setItem("hg_dc", "1"); }catch(e){}
+  softWalletReset();
+  toast(t("m_disconnected"));
 }
 
 function renderConnectBtn(){
@@ -3159,7 +3173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
     }catch(e){}
   })();
-  if (window.ethereum && window.ethereum.on) window.ethereum.on("accountsChanged", accs => { if (!accs || !accs[0]){ if (myAddr) disconnectWallet(); return; } if (myAddr && accs[0].toLowerCase() !== myAddr.toLowerCase()){ try{ sessionStorage.removeItem("hg_dc"); }catch(e){} myAddr = accs[0]; location.reload(); } });
+  if (window.ethereum && window.ethereum.on) window.ethereum.on("accountsChanged", accs => { if (!accs || !accs[0]){ if (myAddr) softWalletReset(); return; } if (myAddr && accs[0].toLowerCase() !== myAddr.toLowerCase()){ try{ sessionStorage.removeItem("hg_dc"); }catch(e){} myAddr = accs[0]; location.reload(); } });
   if (window.ethereum && window.ethereum.on) window.ethereum.on("chainChanged", () => location.reload());
   let sampleArmed = false;
   const cb = $("checkBtn");
