@@ -172,7 +172,7 @@ en: {
   q2_p:"Keyed by <code>Agent ID</code>. Answered by each campaign's own bookkeeping — the state lives with the caller, not in the primitive. Because an Agent ID is non-transferable and lives in exactly one wallet, per-campaign dedup by the holding address is dedup by the ID itself.",
   q2_who:"Answered by →", q2_who_b:"each campaign contract (the caller)",
   bounds_h:"Three lines we won't cross",
-  b1_x:"NEVER — 01", b1_h:"No reverse lookup", b1_p:"We answer address → human?, never name → wallet. A gate is not a surveillance tool, and we won't build one.",
+  b1_x:"NEVER — 01", b1_h:"No reverse lookup", b1_p:"We answer address → human?, and we provide no name → wallet lookup to anyone. A gate is not a surveillance tool, and we won't build one. The only internal use is at a holder's own request, to register their own binding - never displayed, never stored.",
   b2_x:"NEVER — 02", b2_h:"No character judgement", b2_p:"An Agent ID proves “same unique person”, never “trustworthy person”. Accountable is not the same as trusted.",
   b3_x:"NEVER — 03", b3_h:"No sybil hunting", b3_p:"We don't cluster, score or expose anyone's other addresses. Extra addresses simply don't pass the gate. That's enough.",
   why_h:"Why a primitive, not a platform",
@@ -187,7 +187,7 @@ en: {
   nav_white:"Whitepaper", kick_wp:"WHITEPAPER", h_wp:"The BeCounted Whitepaper", wp_sub:"What this is, how it works, what it refuses to do, and where its limits are - in one page.",
   wp1_h:"Thesis: addresses are transport, identity is the person", wp1_p:"Sybil attacks are not a verification problem, they are a structure problem: minting addresses is free, so any defense priced per address eventually loses. Agent ID changes the unit - one KYC, one ID, non-transferable. BeCounted turns that fact into a single question any contract can ask: isHuman(address).",
   wp2_h:"The two-key principle", wp2_p:"Key one - 'is this a unique human?' - is asked by address, on every call, and answered by the primitive. Key two - 'has this human been counted in this activity?' - is keyed by the holder, and its state lives with the caller. The primitive itself stores nothing: no lists, no scores, no history. That is deliberate - a gate that remembers nothing has nothing to leak, sell, or misuse.",
-  wp3_h:"Three boundaries", wp3_p:"Three refusals, by design: no reverse lookup (a name never resolves to a wallet), no character judgment (the gate proves sameness, never trustworthiness), and no small-account hunting (no clustering, no labeling). Each refusal gives up a business we could have had - and keeps the one question we answer clean.",
+  wp3_h:"Three boundaries", wp3_p:"Three refusals, by design: no reverse lookup (we provide no name-to-wallet lookup and show no one its result; the sole internal use is registering a holder's own binding at their own request, never displayed or stored), no character judgment (the gate proves sameness, never trustworthiness), and no small-account hunting (no clustering, no labeling). Each refusal gives up a business we could have had - and keeps the one question we answer clean.",
   wp4_h:"Security model", wp4_1:"The gate is read-only: a view function with no owner, no upgrade path, and no pause switch. Nobody can change its answer, including us.", wp4_2:"Prizes are escrowed by the campaign contract the moment a campaign is created. Winners claim for themselves; a prize unclaimed after 30 days returns to the creator.", wp4_3:"Draws are reproducible: after a campaign ends, anyone can lock the seed on-chain — the hash of the second block after locking, unknowable in advance because entries are already closed — and anyone can recompute the winner list from public data - the campaign page does it in one click.", wp4_4:"Honest randomness: the lucky-claim mode uses blockhash pseudo-randomness, labelled in the contract and the UI as entertainment-grade, for small pools only.", wp4_5:"The site never asks for unlimited approvals: token escrow approves the exact amount, once.",
   wp5_h:"Built to the contest's security red lines", wp5_p:"No third-party Agentic Wallet login (participation happens through the user's own agent with per-call confirmation \u2014 the Agentic Wallet never connects to this or any third-party site). No silent or bundled transfers. No unlimited approvals. Contracts are open source, with owner powers disclosed - there are none. No name impersonates Binance or BNB. And no mnemonics, private keys, or pairing codes are ever collected. Our own agent tooling is read-only by design.",
   wp6_h:"Known limitations", wp6_1:"The gate is not narrow in supply: Agent ID holders already number over 263,000 (registry count, November 2026) and issuance keeps growing. The real limit is reach - most holders have never heard of any given campaign, so every gated campaign still starts from a zero audience. The contract does not change; the discovery does.", wp6_2:"Uniqueness is capped by KYC, not by mathematics: one person holding several verified identities could hold several IDs. We claim 'one identity, one entry' - not 'one soul, one entry'.", wp6_3:"If Binance rebuilds or replaces the Agentic Wallet, how an ID carries over is Binance's call, not ours. Our claim is narrower, and honest: the first working interface for a proven pattern - not 'the standard'.",
@@ -222,7 +222,7 @@ en: {
   m_err_insufficient:"The prize token arrived short — tokens with a transfer tax (fee-on-transfer) cannot be used as prizes. Use a standard token or BNB.",
   m_err_seed_notlocked:"No draw seed is locked yet — lock the seed first.", m_err_seed_expired:"The locked seed has expired — lock it again, then draw.", m_err_seed_locked:"A draw seed is already locked and still valid.",
   bind_kick:"Social binding", bind_h:"Bind your X account",
-  bind_sub:"A public, verifiable statement — not a trust score. It proves this X account and this wallet are the same person, nothing more. The tweet itself is the record; there is no database and no way to look anyone up by name.",
+  bind_sub:"A public, verifiable statement — not a trust score. It proves this X account and this wallet are the same person, nothing more. The tweet itself is the record; there is no database. A binding publicly links your X account to this address — that is its purpose. Your Agent ID is never used to look your wallet up for anyone: only at your own request does the registrar resolve it internally, once, to register this binding - the result is never displayed or stored.",
   bind_handle_ph:"Your X handle (without @)", bind_make:"Sign the binding statement",
   bind_stmt:"Statement", bind_sig:"Signature", bind_tweet:"Post this on X", bind_post:"Post on X",
   bind_verify_h:"Verify a binding", bind_verify_btn:"Verify",
@@ -267,7 +267,7 @@ en: {
     bind_registered: "Binding registered \u2014 your @handle now shows on your campaigns.",
     bind_need_sig: "Generate the signature first (step 2).",
     bind_onchain: "Binding also registered on-chain",
-  bind_attest_h:"Bind an Agentic Wallet address (post attestation)", bind_attest_sub:"An Agentic Wallet cannot sign messages, so it cannot use the signature flow above. Post one public tweet from your X account naming your Agentic address; the project verifies it and registers the binding on-chain, labelled as attested. Weaker than a signature — and labelled as such, permanently.", bind_attest_make:"Generate my verification tweet", bind_attest_post:"Post it on X", bind_attest_note:"After posting, send the tweet link to the project (X DM or the community thread). The registrar completes the registration — you make no contract call. Then check the status here.", bind_attest_check:"Check registration status", bind_attest_none:"No binding registered for this address yet.", bind_attest_sig:"Registered — signature proof.", bind_attest_proof:"Registered — public-post attestation.", bind_attested_tag:"attested", bind_agentic_ph:"0x… (Agentic Wallet address)",
+  bind_attest_h:"Bind an Agentic Wallet address (post attestation)", bind_attest_sub:"An Agentic Wallet cannot sign messages, so it cannot use the signature flow above. Post one public tweet from your X account naming your X handle and your Agent ID name; the project verifies it and registers the binding on-chain, labelled as attested. The tweet itself never shows your address - only your X handle, your Agent ID name and a proof code computed from your address. Weaker than a signature — and labelled as such, permanently. Read this before you bind: registration makes the pairing of your X account and this address public on-chain, permanently — anyone can look it up from the address, and deleting the tweet does not remove it. Only bind an address you are willing to have publicly linked to your X account.", bind_attest_make:"Generate my verification tweet", bind_attest_post:"Post it on X", bind_attest_note:"After posting, send the tweet link to the project (X DM or the community thread). The registrar completes the registration — you make no contract call. Then check the status here.", bind_attest_check:"Check registration status", bind_attest_none:"No binding registered for this address yet.", bind_attest_sig:"Registered — signature proof.", bind_attest_proof:"Registered — public-post attestation.", bind_attested_tag:"attested", bind_agentic_ph:"0x… (Agentic Wallet address)", bind_f_agent:"Agent ID", bind_agent_ph:"e.g. name.ai", bind_attest_addr_note:"Used only on this page, locally, to compute your proof code. It is not posted and not sent anywhere.",
     card_copy_link: "Copy card link",
     series_set: "Set series",
     series_ph: "Series label, e.g. Season 2",
@@ -446,7 +446,7 @@ zh: {
   q2_p:"用 <code>Agent ID</code> 作钥匙。由每个活动自己的账本回答——状态归调用方，不进原语。因为 Agent ID 不可转让、只存在于一个钱包里，按持有地址去重，就等于按 ID 本人去重。",
   q2_who:"回答者 →", q2_who_b:"每个活动合约（调用方）",
   bounds_h:"三条线，我们不越",
-  b1_x:"绝不 — 01", b1_h:"不做反查", b1_p:"我们回答「地址 → 是不是真人」，绝不回答「名字 → 钱包」。门是用来把关的，不是用来监视的。",
+  b1_x:"绝不 — 01", b1_h:"不做反查", b1_p:"我们回答「地址 → 是不是真人」，但不向任何人提供「名字 → 钱包」的查询。门是用来把关的，不是用来监视的。唯一内部使用，是持有人本人申请绑定登记时用一次——不展示、不保存。",
   b2_x:"绝不 — 02", b2_h:"不判人品", b2_p:"Agent ID 证明的是「同一个人、且只有一个」，不是「这个人可信」。可问责，不等于可信。",
   b3_x:"绝不 — 03", b3_h:"不查小号", b3_p:"我们不聚类、不打分、不曝光任何人的其他地址。多余的地址过不了门——这就够了。",
   why_h:"为什么是原语，不是平台",
@@ -460,7 +460,7 @@ zh: {
   nav_white:"白皮书", kick_wp:"白皮书", h_wp:"BeCounted 白皮书", wp_sub:"它是什么、怎么工作、拒绝做什么、局限在哪里——一页说清。",
   wp1_h:"论点：地址是运输工具，身份才是人", wp1_p:"女巫攻击不是验证问题，是结构问题：造地址免费，任何按地址收费的防御最终都会输。Agent ID 换了计量单位——一次 KYC、一个 ID、不可转让。BeCounted 把这个事实变成任何合约都能问的一句话：isHuman（地址）。",
   wp2_h:"两键原则", wp2_p:"第一把钥匙——「这是不是唯一的真人」——按地址问、每次都问、由原语回答。第二把钥匙——「这个人这次活动算过没有」——按持有者记、状态存在调用方那里。原语本身什么都不存：没有名单、没有分数、没有历史。这是刻意的——一道什么都不记的门，没有可泄露、可出售、可滥用的东西。",
-  wp3_h:"三条边界", wp3_p:"三条拒绝，写进设计：不反查（名字永远解不出钱包）、不判人品（门只证明「同一个人」，从不证明「可信」）、不查小号（不聚类、不贴标签）。每条拒绝都放弃了一门本可做的生意——换来的是我们回答的那个问题始终干净。",
+  wp3_h:"三条边界", wp3_p:"三条拒绝，写进设计：不反查（不提供名字→钱包的查询、不向任何人展示解析结果；唯一内部使用是持有人本人申请绑定登记时用一次，不展示、不保存）、不判人品（门只证明「同一个人」，从不证明「可信」）、不查小号（不聚类、不贴标签）。每条拒绝都放弃了一门本可做的生意——换来的是我们回答的那个问题始终干净。",
   wp4_h:"安全模型", wp4_1:"门禁只读：一个 view 函数，无 owner、不可升级、没有暂停开关。没人能改它的答案，包括我们自己。", wp4_2:"奖品在活动创建时就托管进活动合约。中奖者自助领取；30 天无人领的奖金才退回创作者。", wp4_3:"开奖可复算：活动结束后，任何人都能在链上锁定种子——锁定后第 2 个区块的哈希，报名已关闭、无人能提前知道——任何人都能用公开数据重算中奖名单，活动页一键就能验。", wp4_4:"诚实的随机：拼手气用的是区块哈希伪随机，合约与页面都明示为娱乐级，只适合小额奖池。", wp4_5:"网站从不要无限授权：代币托管只批准确切金额、只批一次。",
   wp5_h:"按比赛安全红线建造", wp5_p:"不在第三方站点做 Agentic Wallet 登录（参与由用户自己的 Agent 逐笔确认完成——Agentic Wallet 不连接本站或任何第三方网站）；没有静默或捆绑转账；没有无限授权；合约开源且 owner 权限如实披露——答案是：没有；任何名称不冒充币安或 BNB；永不收集助记词、私钥或配对码。我们自己的 Agent 工具按设计就是只读的。",
   wp6_h:"已知局限", wp6_1:"门的供给并不窄：Agent ID 持有人已超 26.3 万（2026 年 11 月注册表数据），且仍在增长。真正的局限是触达——绝大多数持有人没听说过任何一场具体的门禁活动，每场活动仍要从零开始找人。合约不用改，要变的是被看见的程度。", wp6_2:"唯一性的上限是 KYC，不是数学：一个人有多个实名身份，就可能有多个 ID。我们声称的是「一个身份一份」，不是「一个灵魂一份」。", wp6_3:"若币安重构或更换 Agentic Wallet，ID 如何迁移由币安决定，不由我们。我们的定位更窄、也更诚实：一个已被验证的模式的第一个可用接口——不是「标准」。",
@@ -494,7 +494,7 @@ zh: {
   m_err_insufficient:"奖品代币实际到账金额不符——带转账税的代币不能用作奖品，请换标准代币或 BNB。",
   m_err_seed_notlocked:"开奖种子还没锁定——先锁定种子再开奖。", m_err_seed_expired:"锁定的种子已过期——重新锁定后即可开奖。", m_err_seed_locked:"开奖种子已经锁定且仍在有效期内。",
   bind_kick:"社交绑定", bind_h:"绑定你的 X 账号",
-  bind_sub:"一份公开可验的声明——不是信誉分。它只证明这个 X 账号和这个钱包是同一个人，仅此而已。推文本身就是记录；没有数据库，也不能拿名字反查任何人。",
+  bind_sub:"一份公开可验的声明——不是信誉分。它只证明这个 X 账号和这个钱包是同一个人，仅此而已。推文本身就是记录；没有数据库。绑定公开的是你的 X 账号与这个地址的对应关系，这正是它的用途；你的 Agent ID 也不会被拿去给任何人查钱包：只有你本人申请登记时，登记员才会在内部解析一次完成登记，结果不展示、不保存。",
   bind_handle_ph:"你的 X 账号（不带 @）", bind_make:"签名生成绑定声明",
   bind_stmt:"声明原文", bind_sig:"签名", bind_tweet:"把这段发到 X 上", bind_post:"发到 X",
   bind_verify_h:"验证一份绑定", bind_verify_btn:"验证",
@@ -539,7 +539,7 @@ zh: {
     bind_registered: "\u767b\u8bb0\u6210\u529f\u2014\u2014\u4f60\u7684\u6d3b\u52a8\u5361\u7247\u4e0a\u4f1a\u663e\u793a @\u8d26\u53f7\u4e86\u3002",
     bind_need_sig: "\u5148\u5728\u7b2c\u4e8c\u6b65\u751f\u6210\u7b7e\u540d\u3002",
     bind_onchain: "\u8be5\u7ed1\u5b9a\u5df2\u5728\u94fe\u4e0a\u767b\u8bb0",
-  bind_attest_h:"绑定 Agentic Wallet 地址（帖文见证）", bind_attest_sub:"Agentic Wallet 不能签消息，走不了上面的签名流程。改用公开证明：用你的 X 账号发一条写明 Agentic 地址的推文，项目方核对后上链登记，并永久标注为见证。它比签名弱——这一点如实标明。", bind_attest_make:"生成我的验证推文", bind_attest_post:"去 X 发推", bind_attest_note:"发完把推文链接发给项目方（X 私信或社群帖）。登记由登记员完成，你不需要调合约；之后在这里查状态。", bind_attest_check:"查登记状态", bind_attest_none:"这个地址还没有登记绑定。", bind_attest_sig:"已登记——签名证明。", bind_attest_proof:"已登记——公开帖文见证。", bind_attested_tag:"见证", bind_agentic_ph:"0x…（Agentic Wallet 地址）",
+  bind_attest_h:"绑定 Agentic Wallet 地址（帖文见证）", bind_attest_sub:"Agentic Wallet 不能签消息，走不了上面的签名流程。改用公开证明：用你的 X 账号发一条写明你的 X 账号和 Agent ID 名的推文，项目方核对后上链登记，并永久标注为见证。推文本身不写你的地址——只有 X 账号、Agent ID 名和一段由地址算出的验证码。它比签名弱——这一点如实标明。绑定前先读这一句：登记会把你的 X 账号与这个地址的对应关系永久公开在链上，任何人都能按地址查到，删推也不会撤回；只绑你愿意公开关联到 X 账号的地址。", bind_attest_make:"生成我的验证推文", bind_attest_post:"去 X 发推", bind_attest_note:"发完把推文链接发给项目方（X 私信或社群帖）。登记由登记员完成，你不需要调合约；之后在这里查状态。", bind_attest_check:"查登记状态", bind_attest_none:"这个地址还没有登记绑定。", bind_attest_sig:"已登记——签名证明。", bind_attest_proof:"已登记——公开帖文见证。", bind_attested_tag:"见证", bind_agentic_ph:"0x…（Agentic Wallet 地址）", bind_f_agent:"Agent ID 名", bind_agent_ph:"如 name.ai", bind_attest_addr_note:"只在本页本地计算验证码用，不会出现在推文里，也不会上传到任何地方。",
     card_copy_link: "\u590d\u5236\u540d\u7247\u94fe\u63a5",
     series_set: "\u8bbe\u7f6e\u7cfb\u5217",
     series_ph: "\u7cfb\u5217\u6807\u7b7e\uff0c\u5982\uff1a\u7b2c\u4e8c\u671f",
@@ -2533,14 +2533,22 @@ window.makeAttestation = async () => {
   const out = $("attestOut"); if(out) out.innerHTML = "…";
   try{
     const handle = ($("aHandle").value || "").trim().replace(/^@/, "").toLowerCase();
+    let agent = ($("aAgent").value || "").trim().replace(/^@/, "").toLowerCase();
+    if(agent && !agent.includes(".")) agent += ".ai";
     const address = ethers.getAddress(($("aAddr").value || "").trim());
     if(!handle) throw new Error("handle");
-    const code = "BC-" + ethers.keccak256(ethers.toUtf8Bytes(address.toLowerCase() + "@" + handle)).slice(2, 8).toUpperCase();
-    const tweet = `BeCounted binding verification\nHandle: @${handle}\nAddress: ${address}\nCode: ${code}\n#BeCountedBind`;
+    if(!agent) throw new Error("agent");
+    // Proof code v2: 16 hex chars of keccak(address + "@" + handle). The
+    // tweet carries the two public names and this code only - never the
+    // address. The registrar resolves the Agent ID name internally, once,
+    // at the holder's own request, recomputes the code and registers;
+    // the resolved address is never displayed or stored.
+    const code = "BC-" + ethers.keccak256(ethers.toUtf8Bytes(address.toLowerCase() + "@" + handle)).slice(2, 18).toUpperCase();
+    const tweet = `BeCounted binding verification\nHandle: @${handle}\nAgent ID: ${agent}\nProof: ${code}\n#BeCountedBind`;
     const tweetUrl = "https://x.com/intent/tweet?text=" + encodeURIComponent(tweet);
     out.innerHTML = `<div class="rows"><div class="row"><span>X</span><b>@${handle}</b></div>
-      <div class="row"><span>Address</span><b style="word-break:break-all;text-align:right;max-width:60%">${address}</b></div>
-      <div class="row"><span>Code</span><b>${code}</b></div></div>
+      <div class="row"><span>Agent ID</span><b>${agent}</b></div>
+      <div class="row"><span>Proof</span><b>${code}</b></div></div>
       <p style="margin-top:14px;color:var(--muted)">${t("bind_attest_note")}</p>
       <button class="btn sm" id="attestPostBtn">${t("bind_attest_post")}</button>`;
     const apb = $("attestPostBtn"); if (apb) apb.addEventListener("click", () => window.open(tweetUrl, "_blank"));
