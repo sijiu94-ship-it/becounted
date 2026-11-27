@@ -1074,7 +1074,7 @@ async function loadCampaigns(){
       fetched.forEach((c, pos) => { const i = order[pos]; const ref = makeRef(src.key, i); items.push({ ref, id: i, src, rd, c }); all.push([ref, c]); window.__campTitles[ref] = String(c.title); window.__campKinds[ref] = Number(c.kind); window.__campTokens = window.__campTokens || {}; window.__campTokens[ref] = c.prizeToken; totalEntries += Number(c.entryCount); });
     }
     if (seq !== __campSeq) return;
-    if(totalCamps === 0){ if(grid) grid.innerHTML = `<div class="empty">${t("no_camp")}<br><a class="btn" style="text-decoration:none" href="create.html">${t("no_camp_cta")}</a></div>`; }
+    if(totalCamps === 0){ if(grid) grid.innerHTML = `<div class="empty">${t("no_camp")}<br><a class="btn" style="text-decoration:none" href="create">${t("no_camp_cta")}</a></div>`; }
     else{
       if (grid){
         let curBlock = 0; try{ curBlock = await providerTest.getBlockNumber(); }catch(e){}
@@ -1193,7 +1193,7 @@ async function loadCampaigns(){
               ${extra}
               ${primary}
               <span class="camp-msg" role="status" id="msg-${ref}"></span>
-              <div class="subrow"><button class="btn sm ghost" onclick="shareCampaign('${ref}')">${t("share_btn")}</button>${postBtn}<a class="btn sm ghost" href="campaign.html?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
+              <div class="subrow"><button class="btn sm ghost" onclick="shareCampaign('${ref}')">${t("share_btn")}</button>${postBtn}<a class="btn sm ghost" href="campaign?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
             </div>
           </div>`;
         }));
@@ -1222,7 +1222,7 @@ function renderHot(all){
   const kindName = k => k === 0 ? t("c_raffle") : k === 2 ? t("c_claim") : t("c_vote");
   box.innerHTML = `<div class="hot-grid">
     <div class="hot-col"><h3>${t("hot_camps")}</h3>${byEntries.map(([i,c],r)=>`<div class="hot-row"><span class="rank">${r+1}</span><span class="hot-title">${String(c.title).replace(/</g,"&lt;")}</span><span class="hot-n">${c.entryCount} ${t("hot_entries")}</span></div>`).join("") || `<div class="hot-row">${t("no_camp")}</div>`}</div>
-    <div class="hot-col"><h3>${t("hot_creators")}</h3>${topCreators.map(([addr,n],r)=>`<div class="hot-row"><span class="rank">${r+1}</span><span class="hot-title"><a href="creator.html?a=${addr}" style="color:inherit">${short(addr)}</a></span><span class="hot-n">${n} ${t("hot_entries")}</span></div>`).join("") || `<div class="hot-row">${t("no_camp")}</div>`}</div>
+    <div class="hot-col"><h3>${t("hot_creators")}</h3>${topCreators.map(([addr,n],r)=>`<div class="hot-row"><span class="rank">${r+1}</span><span class="hot-title"><a href="creator?a=${addr}" style="color:inherit">${short(addr)}</a></span><span class="hot-n">${n} ${t("hot_entries")}</span></div>`).join("") || `<div class="hot-row">${t("no_camp")}</div>`}</div>
   </div>`;
 }
 function renderSoon(all){
@@ -1233,7 +1233,7 @@ function renderSoon(all){
       <div class="camp-top"><span class="chip ${Number(c.kind)===0 ? "raffle" : ""}">${Number(c.kind)===0 ? t("c_raffle") : Number(c.kind)===2 ? t("c_claim") : t("c_vote")}</span><span class="chip live">${t("c_live")}</span></div>
       <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
       <div class="meta"><span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span> · <b>${c.entryCount}</b> ${t("c_entries")}</div>
-      <div class="foot"><a class="btn sm" href="campaign.html?ref=${i}" style="text-decoration:none">${t("d_details")}</a></div>
+      <div class="foot"><a class="btn sm" href="campaign?ref=${i}" style="text-decoration:none">${t("d_details")}</a></div>
     </div>`).join("") : `<div class="empty">${t("no_camp")}</div>`;
   tickCountdowns();
 }
@@ -2375,12 +2375,12 @@ async function loadQuest(){
     let action = "";
     if (ph === 0) action = `<span class="count">${t("q_notstarted")} \u00b7 ${fmtTime(startAt)}</span>`;
     else if (ph === 1){
-      if (!myAddr) action = `<span class="count">${t("q_connect_hint")}</span><span class="count" style="display:block;width:100%;margin-top:8px">${t("q_skill_hint")} <a href="skill.html">${t("q_skill_link")}</a></span>`;
+      if (!myAddr) action = `<span class="count">${t("q_connect_hint")}</span><span class="count" style="display:block;width:100%;margin-top:8px">${t("q_skill_hint")} <a href="skill">${t("q_skill_link")}</a></span>`;
       else if ((my.bm >> Number(day)) & 1) action = `<button class="btn" disabled style="opacity:.5;cursor:default">${t("q_today_done")} \u2713</button>`;
       else if (dayLeft >= Number(slots)) action = `<button class="btn" disabled style="opacity:.5;cursor:default">${t("q_today_full")}</button>`;
       else action = `<button class="btn" onclick="questClaimStamp()">${t("q_today_claim")}</button>`;
     } else if (ph === 2){
-      if (!myAddr) action = `<span class="count">${t("q_connect_hint")}</span><span class="count" style="display:block;width:100%;margin-top:8px">${t("q_skill_hint")} <a href="skill.html">${t("q_skill_link")}</a></span>`;
+      if (!myAddr) action = `<span class="count">${t("q_connect_hint")}</span><span class="count" style="display:block;width:100%;margin-top:8px">${t("q_skill_hint")} <a href="skill">${t("q_skill_link")}</a></span>`;
       else if (my.entered) action = `<button class="btn" disabled style="opacity:.5;cursor:default">${t("q_entered")} \u2713</button>`;
       else if (my.elig) action = `<button class="btn" onclick="questEnterFinale()">${t("q_enter")}</button>`;
       else action = `<span class="count">${t("q_need_more")} ${Number(minStamps) - (my ? my.cnt : 0)}</span>`;
@@ -2455,7 +2455,7 @@ async function loadDetail(){
       if (hits.length === 1){ ref = makeRef(hits[0].key, want); }
       else if (hits.length > 1){
         let rows = "";
-        for (const s of hits){ let title = ""; try{ title = String((await readFor(s).getCampaign(want)).title).replace(/</g, "&lt;"); }catch(e){} rows += `<a class="cta-btn outline" style="display:block;margin:8px 0;text-align:left" href="campaign.html?ref=${makeRef(s.key, want)}">#${want} \u00b7 ${s.key.toUpperCase()} \u2014 ${title}</a>`; }
+        for (const s of hits){ let title = ""; try{ title = String((await readFor(s).getCampaign(want)).title).replace(/</g, "&lt;"); }catch(e){} rows += `<a class="cta-btn outline" style="display:block;margin:8px 0;text-align:left" href="campaign?ref=${makeRef(s.key, want)}">#${want} \u00b7 ${s.key.toUpperCase()} \u2014 ${title}</a>`; }
         box.innerHTML = `<div class="empty">${t("d_pick_source")}</div>` + rows;
         return;
       }
@@ -2850,10 +2850,10 @@ async function creatorBinding(addr){
 function shownHandle(h){ h = String(h); return /^[a-z0-9_.]+$/.test(h) ? h : escHtml(h); }
 async function creatorLabel(addr){
   const cb = await creatorBinding(addr);
-  if(!cb) return `<a href="creator.html?a=${addr}" style="color:inherit;text-decoration:none">${short(addr)}</a>`;
+  if(!cb) return `<a href="creator?a=${addr}" style="color:inherit;text-decoration:none">${short(addr)}</a>`;
   const mark = cb.pt === 2 ? ` \u00b7 ${t("bind_self_tag")}` : " \u2713";
   const shown = shownHandle(cb.h);
-  return `<a href="creator.html?a=${addr}" style="color:var(--gold);text-decoration:none">@${shown}${mark}</a>`;
+  return `<a href="creator?a=${addr}" style="color:var(--gold);text-decoration:none">@${shown}${mark}</a>`;
 }
 let lastBind = null;
 window.makeBinding = async () => {
@@ -3150,7 +3150,7 @@ async function loadCreator(){
         <div class="camp-top"><span class="chip ${kind === 0 ? "raffle" : ""}">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")}</span></div>
         <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
         <div class="meta"><b>${t("c_window")}</b> ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}<br><b>${c.entryCount}</b> ${t("c_entries")}${kind === 0 && c.prizePerWinner > 0n ? `<br><b>${t("c_prize")}</b> ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : ""}${kind === 2 ? (c.prizeLabel ? `<br><b>${t("c_prize")}</b> ${String(c.prizeLabel).replace(/</g, "&lt;")} \u00b7 ${t("c_custom_tag")}` : `<br><b>${t("c_pool")}</b> ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}`) : ""}</div>
-        <div class="foot"><a class="btn sm" href="campaign.html?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
+        <div class="foot"><a class="btn sm" href="campaign?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
       </div>`);
     }
     box.innerHTML = `<div style="display:flex;gap:34px;flex-wrap:wrap;margin-bottom:18px">
@@ -3207,7 +3207,7 @@ async function renderMineSummary(createdCount){
   const box = $("mineSummary"); if(!box || !myAddr) return;
   box.style.display = "flex";
   drawIdenticon(myAddr, "mineAvatar");
-  const pb = $("mineProfileBtn"); if (pb) pb.href = "card.html?a=" + myAddr;
+  const pb = $("mineProfileBtn"); if (pb) pb.href = "card?a=" + myAddr;
   const meta = $("mineMeta"); if (meta) meta.textContent = myAddr;
   const nm = $("mineName"); if (nm) nm.textContent = short(myAddr);
   creatorBinding(myAddr).then(h => { if (h && nm) nm.textContent = "@" + h.h; }).catch(() => {});
@@ -3260,7 +3260,7 @@ async function loadJoined(){
         }
       }
     }
-    if (!mineMap.size){ grid.innerHTML = `<div class="empty">${t("j_none")}<br><a class="btn" style="text-decoration:none" href="campaigns.html">${t("j_none_cta")}</a></div>`; return; }
+    if (!mineMap.size){ grid.innerHTML = `<div class="empty">${t("j_none")}<br><a class="btn" style="text-decoration:none" href="campaigns">${t("j_none_cta")}</a></div>`; return; }
     const ids = [...mineMap.keys()].sort().reverse();
     const cards = [];
     for (const ref of ids){
@@ -3288,7 +3288,7 @@ async function loadJoined(){
         <div class="camp-top"><span class="chip ${kind === 0 ? "raffle" : ""}">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")}</span><span class="count">${live ? t("c_live") : ended ? t("c_ended") : t("c_upcoming")}</span></div>
         <h3>${String(c.title).replace(/</g, "&lt;")}</h3>
         <div class="meta"><b>${t("j_mystatus")}</b> ${status}<br><b>${t("c_window")}</b> ${fmtTime(c.startAt)} \u2192 ${fmtTime(c.endAt)}</div>
-        <div class="foot"><a class="btn sm" href="campaign.html?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
+        <div class="foot"><a class="btn sm" href="campaign?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
       </div>`);
     }
     grid.innerHTML = cards.length ? cards.join("") : `<div class="empty">${t("j_none")}</div>`;
