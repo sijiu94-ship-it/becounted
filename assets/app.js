@@ -71,7 +71,6 @@ const APPS_ABI = [
   "function getCampaign(uint256) view returns (tuple(address creator, uint8 kind, string title, uint64 startAt, uint64 endAt, uint32 winnerCount, uint64 seedBlock, bool drawn, bool usedFallbackSeed, uint8 optionCount, uint256 entryCount, address prizeToken, uint256 prizePerWinner, uint256 pool, uint256 claimAmount, uint32 maxClaims, bool claimRandom, uint256 paidOut, bool reclaimed, string prizeLabel))",
   "function hasEntered(uint256, address) view returns (bool)","function voteOf(uint256,address) view returns (uint8)",
   "function tally(uint256, uint8) view returns (uint256)",
-  "function getWinners(uint256) view returns (address[])",
   "function isWinner(uint256, address) view returns (bool)",
   "function prizeClaimed(uint256, address) view returns (bool)",
   "function enterRaffle(uint256, bytes32[], bytes32[])",
@@ -108,6 +107,7 @@ const APPS_ABI_V16 = APPS_ABI.map(x => {
   if (x.startsWith("function createRaffle")) return x.replace("string) payable", "string, bool) payable");
   return x;
 });
+APPS_ABI_V16.push("event DrawWeighted(uint256 indexed id, uint256 totalWeight)");
 const SITE_URL = "https://becounted.9nosing.com/";
 /* Network config — mainnet launch changes ONLY this block plus the APPS
    address above, TOKEN_PRESETS and SITE_URL. */
@@ -123,9 +123,9 @@ const APPS_SOURCES = [
   { key: "v15", addr: APPS_V15_ADDR, block: APPS_V15_BLOCK, abi: APPS_ABI },
   { key: "v14", addr: APPS_V14_ADDR, block: APPS_V14_BLOCK, abi: APPS_ABI }
 ];
-function srcByKey(k){ return APPS_SOURCES.find(x => x.key === k) || APPS_SOURCES[0]; }
+function srcByKey(k){ return APPS_SOURCES.find(x => x.key === String(k || "").toLowerCase()) || null; }
 function parseRef(ref){
-  if (typeof ref === "string" && ref.indexOf(":") >= 0){ const p = ref.split(":"); return { src: srcByKey(p[0]), id: Number(p[1]), ref }; }
+  if (typeof ref === "string" && ref.indexOf(":") >= 0){ const p = ref.split(":"); const s = srcByKey(p[0]); return { src: s, id: s ? Number(p[1]) : NaN, ref }; }
   const id = Number(ref);
   return { src: APPS_SOURCES[0], id, ref: APPS_SOURCES[0].key + ":" + id };
 }
@@ -221,7 +221,7 @@ en: {
   kick_build:"Integration", h_build:"For builders",
   build_sub:"One read call is the whole integration. If your contract can call a view function, you have sybil resistance.",
   code_note:"Gate any function with one line. The primitive is stateless — your contract keeps its own per-campaign dedup, keyed by the human.",
-  a_gate:"BeCounted — BSC mainnet", a_apps:"OneIDCampaigns — BSC mainnet", a_bind:"IdentityBindingsV3", a_quest:"QuestPass — BSC mainnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
+  a_gate:"BeCounted — BSC mainnet", a_apps:"OneIDCampaignsV16 — BSC mainnet (current)", a_apps_hist:"OneIDCampaigns V15 / V14 — legacy campaigns", a_checkin:"CheckInV2 — check-in & weight", a_bind:"IdentityBindingsV4", a_quest:"QuestPass — BSC mainnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
   a_skill_v:"is-human — a zero-dependency checker any AI agent can run before it acts. Source in the project repo.",
   a_profile:"IdentityProfile (bio + links)", embed_h:"Embed the check on your site", embed_p:"Two lines of code put a live Agent ID check on any web page. It reads the registry directly - no API key, no backend, read-only. For on-chain gating, use the contract interface or the template instead.",
   nav_white:"Whitepaper", kick_wp:"WHITEPAPER", h_wp:"The BeCounted Whitepaper", wp_sub:"What this is, how it works, what it refuses to do, and where its limits are - in one page.",
@@ -254,7 +254,7 @@ en: {
   d_proof_ok:"Recomputed winners match the on-chain winners exactly.", d_proof_bad:"Mismatch — do not trust this draw.",
   d_proof_how:"Winners are picked by a partial Fisher–Yates shuffle: for each slot i, j = i + keccak256(seed, i) mod (n − i) over the entry list, in entry order. Anyone can redo this math.",
   d_notdrawn:"Not drawn yet — after the end time, anyone can lock the draw seed and then trigger the draw.",
-  d_notfound:"This campaign doesn't exist (yet) — it may be a testnet link or a mistyped id.",
+  d_pick_source:"This campaign number exists on more than one contract version — pick the one you meant:", d_notfound:"This campaign doesn't exist (yet) — it may be a testnet link or a mistyped id.",
   d_lock_seed:"Lock the draw seed", d_lock_hint:"Seed = the hash of the 2nd block after locking. Entries are closed, so nobody can predict it — anyone may lock.",
   d_seed_wait:"Seed locked — waiting for the seed block", d_seed_block:"seed block", d_cur_block:"current block",
   d_relock_seed:"Seed expired — lock again", d_seed_expired:"The locked seed block aged out (over 256 blocks). Lock a fresh one to draw.",
@@ -357,7 +357,7 @@ en: {
   soon_h:"Ending soon", soon_sub:"Live now, closing first — do not miss the window.",
   hot_h:"Trending", hot_camps:"Hot campaigns", hot_creators:"Top creators", hot_entries:"entries",
   f_tok_usdt:"USDT \u00b7 {chain} (preset)", f_tok_usdc:"USDC \u00b7 {chain} (preset)", f_tok_custom:"Custom prize (off-chain)", f_chain_main:"BSC mainnet", f_chain_test:"BSC testnet",
-  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.", f_claim_custom_note:"Off-chain prize: nothing is escrowed and no pool is needed. Claiming only records the claimant on-chain \u2014 first come, first served, one slot per human. You deliver the prize yourself using the on-chain claimant list.", d_reg_note:"Off-chain prize: claiming records your slot on-chain (first come, first served, one per human). The contract pays nothing \u2014 the creator delivers the prize off-chain using the claimant list.", d_legacy_tag:"Legacy \u00b7", f_weighted:"Draw by check-in weight", f_weighted_hint:"Winners are drawn on-chain by activity weight \u2014 weight = 1 + check-in days in the last 14 days, read at draw time. More check-in days means a proportionally higher chance. Leave off for an equal-odds draw.", c_weighted_tag:"weighted draw", d_weighted_note:"This raffle draws by check-in weight: at draw time the contract reads each entrant's weight on-chain (1 + check-in days in the last 14 days). More check-in days = a proportionally higher chance. The seed and the weights are public and recomputable.", d_verify_weighted:"Weighted draw \u2014 winners were picked by check-in weight read on-chain at draw time, so the equal-odds recomputation does not apply. The DrawWeighted event records the total weight used; recompute from the entrants' weights at the draw block.",
+  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.", f_claim_custom_note:"Off-chain prize: nothing is escrowed and no pool is needed. Claiming only records the claimant on-chain \u2014 first come, first served, one slot per human. You deliver the prize yourself using the on-chain claimant list.", d_reg_note:"Off-chain prize: claiming records your slot on-chain (first come, first served, one per human). The contract pays nothing \u2014 the creator delivers the prize off-chain using the claimant list.", d_legacy_tag:"Legacy \u00b7", f_weighted:"Draw by check-in weight", f_weighted_hint:"Winners are drawn on-chain by activity weight \u2014 weight = 1 + check-in days in the last 14 days, read at draw time. More check-in days means a proportionally higher chance. Leave off for an equal-odds draw.", c_weighted_tag:"weighted draw", d_weighted_note:"This raffle draws by check-in weight: at draw time the contract reads each entrant's weight on-chain (1 + check-in days in the last 14 days). More check-in days = a proportionally higher chance. The seed and the weights are public and recomputable.", d_weighted_total:"total weight", d_verify_weighted:"Weighted draw \u2014 winners were picked by check-in weight read on-chain at draw time, so the equal-odds recomputation does not apply. The DrawWeighted event records the total weight used; recompute from the entrants' weights at the draw block.",
 
   c_claim:"Claim drop", c_pool:"Pool", c_each:"Each gets", c_claimed_n:"claimed", c_claim_btn:"Claim",
   c_prize:"Prize", c_claim_prize:"Claim prize", c_prize_claimed:"Prize claimed",
@@ -495,7 +495,7 @@ zh: {
   kick_build:"接入", h_build:"开发者",
   build_sub:"一次只读调用，就是全部接入工作。你的合约只要能调 view 函数，就拥有了抗女巫能力。",
   code_note:"一行代码给任何函数加门。原语无状态——去重状态由你的合约按「人」自己记。",
-  a_gate:"BeCounted — BSC 主网", a_apps:"OneIDCampaigns — BSC 主网", a_bind:"绑定登记合约", a_quest:"QuestPass — BSC 主网", a_reg:"Agent ID 注册表 — BSC 主网", a_skill:"Agent 技能",
+  a_gate:"BeCounted — BSC 主网", a_apps:"OneIDCampaignsV16 — BSC 主网（现行）", a_apps_hist:"OneIDCampaigns V15 / V14 — 历史活动", a_checkin:"CheckInV2 — 签到与权重", a_bind:"绑定登记合约", a_quest:"QuestPass — BSC 主网", a_reg:"Agent ID 注册表 — BSC 主网", a_skill:"Agent 技能",
   a_skill_v:"is-human——零依赖的小工具，任何 AI Agent 在动手之前都能先跑一遍。源码在项目仓库里。",
   a_profile:"个人主页资料（简介 + 链接）", embed_h:"把查真人嵌入你的网站", embed_p:"两行代码就能把实时查真人放到任何网页上：直读注册表、无需密钥、无需后端、纯只读。链上门禁请用上方的合约接口或模板。",
   nav_white:"白皮书", kick_wp:"白皮书", h_wp:"BeCounted 白皮书", wp_sub:"它是什么、怎么工作、拒绝做什么、局限在哪里——一页说清。",
@@ -527,7 +527,7 @@ zh: {
   d_proof_ok:"复算结果与链上中奖名单完全一致。", d_proof_bad:"对不上——这次开奖不可信。",
   d_proof_how:"中奖者由部分 Fisher–Yates 洗牌决定：第 i 个名额 j = i + keccak256(种子, i) 对 (n − i) 取模，按报名顺序在名单上换位。任何人都能重算这笔账。",
   d_notdrawn:"尚未开奖——结束时间过后，任何人都能先锁定开奖种子、再触发开奖。",
-  d_notfound:"这个活动还不存在——可能是测试网链接，或编号输错了。",
+  d_pick_source:"这个编号在多个合约版本上都有活动——请选择你要打开的那个：", d_notfound:"这个活动还不存在——可能是测试网链接，或编号输错了。",
   d_lock_seed:"锁定开奖种子", d_lock_hint:"种子 = 锁定后第 2 个区块的哈希。报名已关闭，无人能预测——任何人都可以锁定。",
   d_seed_wait:"种子已锁定——等待种子块出块", d_seed_block:"种子块", d_cur_block:"当前块",
   d_relock_seed:"种子已过期，重新锁定", d_seed_expired:"锁定的种子块已超过 256 块有效期，重新锁定一个即可开奖。",
@@ -630,7 +630,7 @@ zh: {
   soon_h:"即将结束", soon_sub:"正在进行、先到截止时间的排前面——别错过窗口。",
   hot_h:"热度榜", hot_camps:"热门活动", hot_creators:"创作者榜", hot_entries:"人参与",
   f_tok_usdt:"USDT \u00b7 {chain}（预设）", f_tok_usdc:"USDC \u00b7 {chain}（预设）", f_tok_custom:"自定义奖品（链下发放）", f_chain_main:"BSC 主网", f_chain_test:"BSC 测试网",
-  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。", f_claim_custom_note:"链下奖品：不托管代币、不用填奖池。领取只在链上记名占位——一人一份、先到先得。活动结束后你按链上领取名单自行发放。", d_reg_note:"链下奖品：领取即在链上记名占位（一人一份、先到先得），合约不付款——发起人按链上领取名单线下发放。", d_legacy_tag:"历史活动 ·", f_weighted:"按签到权重开奖", f_weighted_hint:"按参与者的活跃权重在链上开奖——权重 = 1 + 近 14 天签到天数，开奖时读取。签到天数越多，中奖概率按比例越高。不勾选则为等概率抽奖。", c_weighted_tag:"加权开奖", d_weighted_note:"本活动按签到权重开奖：开奖时合约在链上读取每位参与者的权重（1 + 近 14 天签到天数）。签到天数越多，中奖概率按比例越高；种子与权重全部公开、可复算。", d_verify_weighted:"加权开奖——中奖者按开奖时链上读取的签到权重抽取，等概率复算不适用。DrawWeighted 事件记录了本次开奖使用的总权重；可用开奖区块时各参与者的权重独立复算。",
+  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。", f_claim_custom_note:"链下奖品：不托管代币、不用填奖池。领取只在链上记名占位——一人一份、先到先得。活动结束后你按链上领取名单自行发放。", d_reg_note:"链下奖品：领取即在链上记名占位（一人一份、先到先得），合约不付款——发起人按链上领取名单线下发放。", d_legacy_tag:"历史活动 ·", f_weighted:"按签到权重开奖", f_weighted_hint:"按参与者的活跃权重在链上开奖——权重 = 1 + 近 14 天签到天数，开奖时读取。签到天数越多，中奖概率按比例越高。不勾选则为等概率抽奖。", c_weighted_tag:"加权开奖", d_weighted_note:"本活动按签到权重开奖：开奖时合约在链上读取每位参与者的权重（1 + 近 14 天签到天数）。签到天数越多，中奖概率按比例越高；种子与权重全部公开、可复算。", d_weighted_total:"总权重", d_verify_weighted:"加权开奖——中奖者按开奖时链上读取的签到权重抽取，等概率复算不适用。DrawWeighted 事件记录了本次开奖使用的总权重；可用开奖区块时各参与者的权重独立复算。",
 
   c_claim:"领取", c_pool:"奖池", c_each:"每份", c_claimed_n:"已领", c_claim_btn:"领取",
   c_prize:"奖品", c_claim_prize:"领取奖品", c_prize_claimed:"奖品已领取",
@@ -1095,7 +1095,13 @@ async function loadCampaigns(){
             if(c.weighted) keyline += ` \u00b7 <b>${t("c_weighted_tag")}</b>`;
             if(c.drawn){
               let w = []; try{ w = await RD.getWinners(i); }catch(e){}
-              extra = `<span class="count">${t("c_winner")} <b>${w.length ? short(w[0]) : "\u2014"}</b>${w.length > 1 ? ` +${w.length - 1}` : ""}</span>`;
+              let wShown = "\u2014";
+              if (w.length){
+                const wh = await handleOfAddr(w[0]);
+                if (wh){ const wFull = myAddr && (String(myAddr).toLowerCase() === String(c.creator).toLowerCase() || String(myAddr).toLowerCase() === String(w[0]).toLowerCase()); wShown = wFull ? wh + ".ai" : maskIdLabel(wh); }
+                else wShown = short(w[0]);
+              }
+              extra = `<span class="count">${t("c_winner")} <b>${wShown}</b>${w.length > 1 ? ` +${w.length - 1}` : ""}</span>`;
               let iw = false, ipc = false;
               if(hasPrize && myAddr){ try{ iw = await RD.isWinner(i, myAddr); ipc = await RD.prizeClaimed(i, myAddr); }catch(e){} }
               if(hasPrize && myAddr && iw && !ipc){
@@ -1611,18 +1617,21 @@ async function loadFeed(){
       for (const l of ls) merged.push({ s: src, l });
     }
     merged.sort((a, b) => (a.l.blockNumber - b.l.blockNumber) || ((a.l.index || 0) - (b.l.index || 0)));
-    const iface = new ethers.Interface(APPS_ABI);
+    const __ifaces = {};
+    const ifaceFor = s => __ifaces[s.key] || (__ifaces[s.key] = new ethers.Interface(s.abi || APPS_ABI));
     const items = [];
     for (const entry of merged.slice(-40).reverse()){
       const log = entry.l;
-      let p; try{ p = iface.parseLog(log); }catch(e){ continue; }
+      let p; try{ p = ifaceFor(entry.s).parseLog(log); }catch(e){ continue; }
       if(!p) continue;
-      if (p.name === "CampaignCreated") items.push(`<li><span class="ev">${t("ev_created")}</span> — <b>${String(p.args.title).replace(/</g,"&lt;")}</b></li>`);
-      else if (p.name === "Entered") items.push(`<li><span class="ev">${t("ev_entered")}</span> — <b>${short(p.args.participant)}</b></li>`);
-      else if (p.name === "Voted") items.push(`<li><span class="ev">${t("ev_voted")}</span> — <b>${short(p.args.participant)}</b> → ${t("c_opt")} ${Number(p.args.option)+1}</li>`);
-      else if (p.name === "Drawn") items.push(`<li><span class="ev">${t("ev_drawn")}</span> — <b>#${p.args.id}</b></li>`);
-      else if (p.name === "Claimed") items.push(`<li><span class="ev">${t("ev_claimed")}</span> — <b>${short(p.args.participant)}</b> · ${fmtAmt(p.args.amount, (window.__campTokens || {})[entry.s.key + ":" + Number(p.args[0])])}</li>`);
-      else if (p.name === "PrizeClaimed") items.push(`<li><span class="ev">${t("ev_prize")}</span> — <b>${short(p.args.winner)}</b> · ${fmtAmt(p.args.amount, (window.__campTokens || {})[entry.s.key + ":" + Number(p.args[0])])}</li>`);
+      const who = async a => { const h = await handleOfAddr(a); return h ? maskIdLabel(h) : short(a); };
+      if (p.name === "CampaignCreated") items.push(`<li><span class="ev">${t("ev_created")}</span> \u2014 <b>${String(p.args.title).replace(/</g,"&lt;")}</b></li>`);
+      else if (p.name === "Entered") items.push(`<li><span class="ev">${t("ev_entered")}</span> \u2014 <b>${await who(p.args.participant)}</b></li>`);
+      else if (p.name === "Voted") items.push(`<li><span class="ev">${t("ev_voted")}</span> \u2014 <b>${await who(p.args.participant)}</b> \u2192 ${t("c_opt")} ${Number(p.args.option)+1}</li>`);
+      else if (p.name === "Drawn") items.push(`<li><span class="ev">${t("ev_drawn")}</span> \u2014 <b>#${p.args.id}</b></li>`);
+      else if (p.name === "DrawWeighted") items.push(`<li><span class="ev">${t("ev_drawn")}</span> \u2014 <b>#${p.args.id}</b> \u00b7 ${t("c_weighted_tag")}</li>`);
+      else if (p.name === "Claimed") items.push(`<li><span class="ev">${t("ev_claimed")}</span> \u2014 <b>${await who(p.args.participant)}</b> \u00b7 ${fmtAmt(p.args.amount, (window.__campTokens || {})[entry.s.key + ":" + Number(p.args[0])])}</li>`);
+      else if (p.name === "PrizeClaimed") items.push(`<li><span class="ev">${t("ev_prize")}</span> \u2014 <b>${await who(p.args.winner)}</b> \u00b7 ${fmtAmt(p.args.amount, (window.__campTokens || {})[entry.s.key + ":" + Number(p.args[0])])}</li>`);
       if (items.length >= 6) break;
     }
     ul.innerHTML = items.length ? items.join("") : `<li>${t("feed_empty")}</li>`;
@@ -2025,7 +2034,7 @@ async function getLogsCached(base, from, to){
 /* ---------- daily check-in + activity weight ----------
    The CheckIn contract keeps one record per human per day (Beijing-time
    day boundary) and derives an activity weight = 1 + check-in days in
-   the trailing 30-day window. This page is a thin window on that public
+   the trailing 14-day window. This page is a thin window on that public
    record: my status comes from the contract's views, the leaderboard is
    aggregated from the CheckedIn event log (anyone can recompute it the
    same way). The board shows truncated addresses only — never a name
@@ -2033,6 +2042,7 @@ async function getLogsCached(base, from, to){
    chain (pre-deployment), the page degrades to a "coming soon" panel
    instead of throwing errors. */
 let ciLive = null;   // null = not probed yet; true/false once a probe answered
+let ciProbeFailed = false; // last probe died on an RPC error (not the same as "no code on-chain")
 let ciTimer = null;
 let ciDayKey = null; // Beijing calendar day currently shown, for rollover refresh
 async function ciContractLive(){
@@ -2042,8 +2052,9 @@ async function ciContractLive(){
   try{
     const code = await providerTest.getCode(CHECKIN_TESTNET);
     ciLive = !!code && code !== "0x";
+    ciProbeFailed = false;
     return ciLive;
-  }catch(e){ return false; } // probe failed: show "soon" this time, re-probe next load
+  }catch(e){ ciProbeFailed = true; return false; } // probe failed: loadCheckin shows a retry note, NOT the "coming soon" panel; re-probe next load
 }
 function ciNextMidnightMs(){
   // Next 00:00 Beijing time (UTC+8), as a UTC epoch ms.
@@ -2073,6 +2084,12 @@ async function loadCheckin(){
   const live = await ciContractLive();
   const soon = $("ciSoon"), main = $("ciMain");
   if (!live){
+    if (ciProbeFailed){
+      if (soon) soon.style.display = "none";
+      if (main) main.style.display = "none";
+      if ($("ciBoard")) $("ciBoard").innerHTML = `<div class="ci-empty">${t("ci_board_fail")}</div>`;
+      return;
+    }
     if (soon) soon.style.display = "";
     if (main) main.style.display = "none";
     if ($("ciBoard")) $("ciBoard").innerHTML = `<div class="ci-empty">${t("ci_soon")}</div>`;
@@ -2132,6 +2149,7 @@ window.doCheckIn = async () => {
       await connectWallet();
       if (!signer){ if (msg) msg.textContent = t("m_wrongnet"); refreshCiMine(); return; }
     }
+    if (!(await ensureWalletChain())){ if (msg) msg.textContent = t("m_wrongnet"); return; }
     const human = await readGateHuman(myAddr);
     if (human === false){ if (msg) msg.textContent = t("ci_not_holder"); refreshCiMine(); return; }
     btn.disabled = true;
@@ -2371,14 +2389,27 @@ async function loadDetail(){
   chain();
   try{
     if (!ref && qs.get("id") !== null){
-      // Legacy bare-id link: prefer the current contract, else legacy.
+      // Legacy bare-id link: an id is only unique WITHIN one contract
+      // version. If several versions have a campaign with this id, do
+      // not guess — the same bare link would silently change which
+      // campaign it opens the day a newer contract gets its own #0.
       const want = Number(qs.get("id"));
-      for (const s of APPS_SOURCES){ try{ if (Number.isInteger(want) && want >= 0 && want < Number(await readFor(s).campaignCount())){ ref = makeRef(s.key, want); break; } }catch(e){} }
+      const hits = [];
+      if (Number.isInteger(want) && want >= 0){
+        for (const s of APPS_SOURCES){ try{ if (want < Number(await readFor(s).campaignCount())) hits.push(s); }catch(e){} }
+      }
+      if (hits.length === 1){ ref = makeRef(hits[0].key, want); }
+      else if (hits.length > 1){
+        let rows = "";
+        for (const s of hits){ let title = ""; try{ title = String((await readFor(s).getCampaign(want)).title).replace(/</g, "&lt;"); }catch(e){} rows += `<a class="cta-btn outline" style="display:block;margin:8px 0;text-align:left" href="campaign.html?ref=${makeRef(s.key, want)}">#${want} \u00b7 ${s.key.toUpperCase()} \u2014 ${title}</a>`; }
+        box.innerHTML = `<div class="empty">${t("d_pick_source")}</div>` + rows;
+        return;
+      }
       if (!ref){ box.innerHTML = `<div class="empty">${t("d_notfound")}</div>`; return; }
     }
     const _pr = parseRef(ref || "");
     const src = _pr.src, id = _pr.id;
-    if (!ref || !Number.isInteger(id) || id < 0){ box.innerHTML = `<div class="empty">${t("load_fail")}</div>`; return; }
+    if (!ref || !src || !Number.isInteger(id) || id < 0){ box.innerHTML = `<div class="empty">${t("d_notfound")}</div>`; return; }
     const RD = readFor(src);
     const totalCampaigns = Number(await RD.campaignCount());
     if (id >= totalCampaigns){ box.innerHTML = `<div class="empty">${t("d_notfound")}</div>`; return; }
@@ -2565,9 +2596,15 @@ window.makeCert = async ref => {
     ctx.font = "500 20px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#9a9aa3";
     ctx.fillText(`${t("d_proof_seedblock")}: ${c.seedBlock}${c.usedFallbackSeed ? " (fallback)" : ""}  \u00b7  ${t("cert_recompute")}`, 72, keyY + 44);
     ctx.font = "500 22px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#ececec";
-    winners.slice(0, 10).forEach((w, i) => {
+    const wLabels = await Promise.all(winners.slice(0, 10).map(async w => {
+      const h = await handleOfAddr(w);
+      if (!h) return w.slice(0, 10) + "\u2026" + w.slice(-8);
+      const full = myAddr && (String(myAddr).toLowerCase() === String(c.creator).toLowerCase() || String(myAddr).toLowerCase() === String(w).toLowerCase());
+      return full ? h + ".ai" : maskIdLabel(h);
+    }));
+    wLabels.forEach((label, i) => {
       const col = i < 5 ? 0 : 1, row = i % 5;
-      ctx.fillText(`${i + 1}. ${w.slice(0, 10)}\u2026${w.slice(-8)}`, 72 + col * 740, keyY + 116 + row * 46);
+      ctx.fillText(`${i + 1}. ${label}`, 72 + col * 740, keyY + 116 + row * 46);
     });
     if (winners.length > 10){ ctx.fillStyle = "#9a9aa3"; ctx.fillText(`+${winners.length - 10} \u2026`, 72, keyY + 116 + 5 * 46); }
     ctx.font = "500 18px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#6d6d75";
@@ -2692,7 +2729,16 @@ window.verifyDraw = async ref => {
   try{
     const c = await RD.getCampaign(id);
     if (c.weighted){
-      if(msg){ msg.textContent = t("d_verify_weighted"); msg.style.color = "var(--muted)"; }
+      let wExtra = "";
+      try{
+        const wLatest = await providerTest.getBlockNumber();
+        const wLogs = await getLogsCached({ address: src.addr, topics: [ethers.id("DrawWeighted(uint256,uint256)"), ethers.zeroPadValue(ethers.toBeHex(id), 32)] }, src.block, wLatest);
+        if (wLogs.length){
+          const wev = new ethers.Interface(["event DrawWeighted(uint256 indexed id, uint256 totalWeight)"]).parseLog(wLogs[wLogs.length - 1]);
+          wExtra = " (" + t("d_weighted_total") + ": " + wev.args.totalWeight.toString() + ")";
+        }
+      }catch(e){}
+      if(msg){ msg.textContent = t("d_verify_weighted") + wExtra; msg.style.color = "var(--muted)"; }
       return;
     }
     const entries = await RD.getEntries(id);
@@ -2915,7 +2961,7 @@ window.makePoster = async ref => {
     const y0 = 306 + shown.length * 102 + 44;
     x.fillStyle = "#f0b90b"; x.font = "700 62px sans-serif";
     let big = "";
-    if (kind === 0) big = `${t("c_prize")} ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)} \u00d7 ${c.winnerCount}`;
+    if (kind === 0) big = c.prizePerWinner > 0n ? `${t("c_prize")} ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)} \u00d7 ${c.winnerCount}` : c.prizeLabel ? `${String(c.prizeLabel)} \u00b7 ${t("c_custom_tag")} \u00d7 ${c.winnerCount}` : `${c.winnerCount} ${t("c_winners")}`;
     else if (kind === 2) big = c.prizeLabel ? `${String(c.prizeLabel)} \u00b7 ${c.entryCount}/${c.maxClaims}` : `${t("c_pool")} ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}`;
     else big = `${c.entryCount} ${t("c_entries")}`;
     x.fillText(big, 80, y0);
@@ -3315,7 +3361,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if ($("cardBtn") && !new URLSearchParams(location.search).get("a")) { $("cardInput").value = myAddr; $("cardBtn").click(); }
     }catch(e){}
   })();
-  if (window.ethereum && window.ethereum.on) window.ethereum.on("accountsChanged", accs => { if (!accs || !accs[0]){ if (myAddr) softWalletReset(); return; } if (myAddr && accs[0].toLowerCase() !== myAddr.toLowerCase()){ try{ sessionStorage.removeItem("hg_dc"); }catch(e){} myAddr = accs[0]; location.reload(); } });
+  if (window.ethereum && window.ethereum.on) window.ethereum.on("accountsChanged", accs => { if (!accs || !accs[0]){ if (myAddr) softWalletReset(); return; } if (myAddr && accs[0].toLowerCase() !== myAddr.toLowerCase()){ try{ sessionStorage.removeItem("hg_dc"); }catch(e){} myAddr = accs[0]; location.reload(); } else if (!myAddr){ let dc = null; try{ dc = sessionStorage.getItem("hg_dc"); }catch(e){} if (!dc) location.reload(); } });
   if (window.ethereum && window.ethereum.on) window.ethereum.on("chainChanged", () => location.reload());
   let sampleArmed = false;
   const cb = $("checkBtn");
