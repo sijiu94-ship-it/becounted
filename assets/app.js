@@ -255,6 +255,11 @@ en: {
   d_proof_how:"Winners are picked by a partial Fisher–Yates shuffle: for each slot i, j = i + keccak256(seed, i) mod (n − i) over the entry list, in entry order. Anyone can redo this math.",
   d_notdrawn:"Not drawn yet — after the end time, anyone can lock the draw seed and then trigger the draw.",
   d_pick_source:"This campaign number exists on more than one contract version — pick the one you meant:", d_notfound:"This campaign doesn't exist (yet) — it may be a testnet link or a mistyped id.",
+    no_camp_cta: "Create the first campaign",
+    j_none_cta: "Browse campaigns",
+    d_part_empty_sub: "No entries yet \u2014 the join button above is open.",
+    ci_dots_h: "Your last 14 days",
+    ci_col_14d: "Last 14 days",
   d_lock_seed:"Lock the draw seed", d_lock_hint:"Seed = the hash of the 2nd block after locking. Entries are closed, so nobody can predict it — anyone may lock.",
   d_seed_wait:"Seed locked — waiting for the seed block", d_seed_block:"seed block", d_cur_block:"current block",
   d_relock_seed:"Seed expired — lock again", d_seed_expired:"The locked seed block aged out (over 256 blocks). Lock a fresh one to draw.",
@@ -528,6 +533,11 @@ zh: {
   d_proof_how:"中奖者由部分 Fisher–Yates 洗牌决定：第 i 个名额 j = i + keccak256(种子, i) 对 (n − i) 取模，按报名顺序在名单上换位。任何人都能重算这笔账。",
   d_notdrawn:"尚未开奖——结束时间过后，任何人都能先锁定开奖种子、再触发开奖。",
   d_pick_source:"这个编号在多个合约版本上都有活动——请选择你要打开的那个：", d_notfound:"这个活动还不存在——可能是测试网链接，或编号输错了。",
+    no_camp_cta: "\u521b\u5efa\u7b2c\u4e00\u4e2a\u6d3b\u52a8",
+    j_none_cta: "\u53bb\u770b\u770b\u6d3b\u52a8",
+    d_part_empty_sub: "\u8fd8\u6ca1\u6709\u4eba\u53c2\u52a0\u2014\u2014\u4e0a\u9762\u7684\u53c2\u52a0\u6309\u94ae\u6b63\u5f00\u7740\u3002",
+    ci_dots_h: "\u4f60\u7684\u8fd1 14 \u5929",
+    ci_col_14d: "\u8fd1 14 \u5929",
   d_lock_seed:"锁定开奖种子", d_lock_hint:"种子 = 锁定后第 2 个区块的哈希。报名已关闭，无人能预测——任何人都可以锁定。",
   d_seed_wait:"种子已锁定——等待种子块出块", d_seed_block:"种子块", d_cur_block:"当前块",
   d_relock_seed:"种子已过期，重新锁定", d_seed_expired:"锁定的种子块已超过 256 块有效期，重新锁定一个即可开奖。",
@@ -1064,7 +1074,7 @@ async function loadCampaigns(){
       fetched.forEach((c, pos) => { const i = order[pos]; const ref = makeRef(src.key, i); items.push({ ref, id: i, src, rd, c }); all.push([ref, c]); window.__campTitles[ref] = String(c.title); window.__campKinds[ref] = Number(c.kind); window.__campTokens = window.__campTokens || {}; window.__campTokens[ref] = c.prizeToken; totalEntries += Number(c.entryCount); });
     }
     if (seq !== __campSeq) return;
-    if(totalCamps === 0){ if(grid) grid.innerHTML = `<div class="empty">${t("no_camp")}</div>`; }
+    if(totalCamps === 0){ if(grid) grid.innerHTML = `<div class="empty">${t("no_camp")}<br><a class="btn" style="text-decoration:none" href="create.html">${t("no_camp_cta")}</a></div>`; }
     else{
       if (grid){
         let curBlock = 0; try{ curBlock = await providerTest.getBlockNumber(); }catch(e){}
@@ -1169,6 +1179,7 @@ async function loadCampaigns(){
           let cond = null; try{ cond = await RD.conditionsOf(i); }catch(e){}
           if (cond) await decimalsOf(cond.gateToken);
           const creatorHtml = await creatorLabel(c.creator);
+          const prog = (!ended && Number(c.endAt) > Number(c.startAt)) ? `<div class="camp-prog"><i style="width:${Math.max(0, Math.min(100, Math.round((now - Number(c.startAt)) / (Number(c.endAt) - Number(c.startAt)) * 100)))}%"></i></div>` : "";
           return `<div class="camp${ended ? " is-ended" : ""}" data-kind="${Number(c.kind)}" data-status="${live ? "live" : ended ? "ended" : "upcoming"}" data-title="${String(c.title).replace(/"/g, "").toLowerCase()}" data-series="${seriesTag.replace(/"/g, "").toLowerCase()}" data-slabel="${seriesTag.replace(/"/g, "")}">
             <div class="camp-top">
               <span class="chip ${isRaffle ? "raffle" : ""}">${isRaffle ? t("c_raffle") : Number(c.kind) === 2 ? t("c_claim") : t("c_vote")}</span>
@@ -1177,6 +1188,7 @@ async function loadCampaigns(){
             <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
             <div class="keyline">${keyline}</div>${condChipsHtml(cond)}
             <div class="creator-line">${t("creator_by")} ${creatorHtml}${live || !ended ? ` \u00b7 <span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span>` : ` \u00b7 ${fmtTime(c.endAt)}`}</div>
+            ${prog}
             <div class="cta-zone">
               ${extra}
               ${primary}
@@ -1191,8 +1203,8 @@ async function loadCampaigns(){
       }
     }
     if (seq !== __campSeq) return;
-    if($("statCampaigns")) $("statCampaigns").textContent = totalCamps;
-    if($("statEntries")) $("statEntries").textContent = totalEntries;
+    if($("statCampaigns")) countUp($("statCampaigns"), totalCamps);
+    if($("statEntries")) countUp($("statEntries"), totalEntries);
     renderHot(all);
     renderSoon(all);
     tickCountdowns();
@@ -1977,22 +1989,38 @@ function logsProvider(url){
 async function getLogsChunked(base, from, to){
   const out = [];
   const urls = NETWORK.appsRpcs;
-  for (let s = from; s <= to; s += 45000){
-    const e = Math.min(to, s + 44999);
-    let logs = null, lastErr = null;
-    for (let attempt = 0; attempt < 6 && !logs; attempt++){
+  // Public endpoints cap eth_getLogs ranges (often -32005 above ~10k
+  // blocks) and rate-limit bursts. Scan in segments; when a segment keeps
+  // failing, halve the working chunk size and remember what worked so
+  // later segments go straight at a viable size.
+  let chunk = window.__logsChunk || 10000;
+  async function tryRange(s, e){
+    let lastErr = null;
+    for (let attempt = 0; attempt < 3; attempt++){
       const p = logsProvider(urls[attempt % urls.length]);
       let timer = null;
       try{
-        logs = await Promise.race([
+        const logs = await Promise.race([
           p.getLogs({ ...base, fromBlock: s, toBlock: e }),
           new Promise((_, rej) => { timer = setTimeout(() => rej(new Error("logs timeout")), 20000); })
         ]);
+        return logs;
       }catch(err){ lastErr = err; await new Promise(r => setTimeout(r, 800 * (attempt + 1))); }
       finally{ if (timer) clearTimeout(timer); }
     }
-    if (!logs) throw lastErr;
-    out.push(...logs);
+    throw lastErr;
+  }
+  let s = from;
+  while (s <= to){
+    const e = Math.min(to, s + chunk - 1);
+    try{
+      out.push(...await tryRange(s, e));
+      s = e + 1;
+    }catch(err){
+      if (chunk <= 500) throw err;
+      chunk = Math.max(500, Math.floor(chunk / 2));
+      window.__logsChunk = chunk;
+    }
   }
   return out;
 }
@@ -2169,6 +2197,17 @@ window.doCheckIn = async () => {
     refreshCiMine();
   }
 };
+function ciDotsHtml(daySet, todayIdx, big){
+  let s = "";
+  for (let d = todayIdx - 13; d <= todayIdx; d++){
+    const on = daySet.has(d);
+    s += big ? `<i class="${on ? "on" : ""}${d === todayIdx ? " today" : ""}"></i>` : `<i class="${on ? "on" : ""}"></i>`;
+  }
+  return s;
+}
+function ciDayLabel(dayIdx){
+  return new Date(dayIdx * 86400000).toLocaleDateString(LANG === "zh" ? "zh-CN" : "en-GB", { timeZone: "UTC", month: "short", day: "numeric" });
+}
 async function loadCiBoard(){
   const box = $("ciBoard"); if (!box) return;
   box.innerHTML = `<div class="ci-empty">${t("ci_board_loading")}</div>`;
@@ -2179,16 +2218,31 @@ async function loadCiBoard(){
     // Each event carries the user's cumulative total, so the last event
     // per user is their lifetime count — no per-user reads needed here.
     const totals = new Map();
+    const daySets = new Map();
     const dec = ethers.AbiCoder.defaultAbiCoder();
     for (const l of logs){
       const user = ("0x" + l.topics[1].slice(26)).toLowerCase();
-      totals.set(user, Number(dec.decode(["uint256", "uint256"], l.data)[1]));
+      const dv = dec.decode(["uint256", "uint256"], l.data);
+      totals.set(user, Number(dv[1]));
+      if (!daySets.has(user)) daySets.set(user, new Set());
+      daySets.get(user).add(Number(dv[0]));
+    }
+    const todayIdx = Math.floor((Date.now() / 1000 + 28800) / 86400);
+    // Personal 14-day dot strip: the weight window made visible.
+    const dotsWrap = $("ciDotsWrap"), dotsBox = $("ciDots");
+    if (dotsWrap && dotsBox){
+      if (myAddr){
+        dotsWrap.style.display = "";
+        dotsBox.innerHTML = ciDotsHtml(daySets.get(myAddr.toLowerCase()) || new Set(), todayIdx, true);
+        const rng = $("ciDotsRange");
+        if (rng) rng.textContent = ciDayLabel(todayIdx - 13) + " \u2192 " + ciDayLabel(todayIdx);
+      } else dotsWrap.style.display = "none";
     }
     const rows = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
-    if (!rows.length){ box.innerHTML = `<div class="ci-empty">${t("ci_board_empty")}</div>`; return; }
+    if (!rows.length){ box.innerHTML = `<div class="ci-empty">${t("ci_board_empty")}<br><button class="btn" style="margin-top:12px" onclick="doCheckIn()">${t("ci_btn")}</button></div>`; return; }
     const weights = await Promise.all(rows.map(([a]) => checkinRead.weightOf(a).then(Number).catch(() => null)));
     box.innerHTML = rows.map(([a, total], i) =>
-      `<div class="ci-row"><span class="ci-rank">${i + 1}</span><span class="ci-addr">${short(a)}</span><span class="ci-n">${total}</span><span class="ci-w">${weights[i] === null ? "—" : weights[i]}</span></div>`
+      `<div class="ci-row"><span class="ci-rank">${i + 1}</span><span class="ci-addr">${short(a)}</span><span class="ci-minidots">${ciDotsHtml(daySets.get(a) || new Set(), todayIdx, false)}</span><span class="ci-n">${total}</span><span class="ci-w">${weights[i] === null ? "\u2014" : weights[i]}</span></div>`
     ).join("");
   }catch(e){
     box.innerHTML = `<div class="ci-empty">${t("ci_board_fail")}</div>`;
@@ -2517,7 +2571,7 @@ async function loadDetail(){
       }catch(e){}
     }
     const creatorHtmlD = await creatorLabel(c.creator);
-    const partHtml = entries.length ? await identityItems(entries.slice(0, 50), isCreatorView) : `<div class="empty">${t("rec_none")}</div>`;
+    const partHtml = entries.length ? await identityItems(entries.slice(0, 50), isCreatorView) : `<div class="empty">${t("rec_none")}<div class="empty-sub">${t("d_part_empty_sub")}</div></div>`;
     window.__partFullForAll = isCreatorView;
     // Custom-token warning: escrowed token prize whose token is neither the
     // zero address (BNB) nor one of the TOKEN_PRESETS — value/transferability
@@ -2893,6 +2947,15 @@ window.verifyBinding = async () => {
 
 /* ---------- platform stats (unique humans, payouts) ---------- */
 let _statsLoading = false;
+function countUp(el, val){
+  if (!el) return;
+  const v = Number(val);
+  if (!Number.isFinite(v) || !Number.isInteger(v) || v < 0 || v > 9999){ el.textContent = val; return; }
+  if (String(el.textContent).trim() === String(v)) return;
+  const t0 = performance.now(), dur = 550;
+  const step = (tt) => { const p = Math.min(1, (tt - t0) / dur); el.textContent = Math.round(v * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
 async function loadPlatformStats(){
   if(!$("statHumans") || _statsLoading) return;
   _statsLoading = true;
@@ -2919,8 +2982,8 @@ async function loadPlatformStats(){
       }));
       for (const r of per){ for (const a of r.entries) humans.add(a); payouts += r.pay; }
     }
-    $("statHumans").textContent = humans.size;
-    if($("statPayouts")) $("statPayouts").textContent = payouts;
+    countUp($("statHumans"), humans.size);
+    if($("statPayouts")) countUp($("statPayouts"), payouts);
   }catch(e){
     // Never fail silently: a placeholder dash that never resolves reads
     // as "zero". Mark every stat cell still showing its placeholder as
@@ -3197,7 +3260,7 @@ async function loadJoined(){
         }
       }
     }
-    if (!mineMap.size){ grid.innerHTML = `<div class="empty">${t("j_none")}</div>`; return; }
+    if (!mineMap.size){ grid.innerHTML = `<div class="empty">${t("j_none")}<br><a class="btn" style="text-decoration:none" href="campaigns.html">${t("j_none_cta")}</a></div>`; return; }
     const ids = [...mineMap.keys()].sort().reverse();
     const cards = [];
     for (const ref of ids){
