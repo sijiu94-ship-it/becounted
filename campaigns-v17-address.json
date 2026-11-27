@@ -1,0 +1,13 @@
+{
+  "network": "bsc-testnet",
+  "chainId": 97,
+  "gate": "0x9D3a18e06d5Ec7174D733Be6014dae3B5b75C349",
+  "bindingsV4": "0xE9262F8508D704F98eB01abbB2B5D9113A6dE4d0",
+  "checkInV2": "0xb403cec68fE79c1F59316D45CCc791348576944A",
+  "campaignsV17": "0x117A1463EE8895a85d02FFbDE63d7711e73F4c1c",
+  "deployTx": "0x98c10232826c2713ebae324fb4984e09a1c3f158612cc82fb6dc9186d25e3934",
+  "checkInV2TrialInstance": "0xb403cec68fE79c1F59316D45CCc791348576944A",
+  "trial": "V17: deploy/wiring/constructor EOA checkIn_ rejected/weighted BadParams replay/snapshot proof: lockDraw at H=2,U=1 then U post-lock check-in (live 2) yet DrawWeighted total=3 and winner matches SNAPSHOT recomputation/https:// full-prefix replays on setPostUrl+setWinnerInfo/registration claim regression all PASS",
+  "trialWeightedWinner": "0x925943c5dcBc98bdDEB10da8f1089A8D7C90Cec6",
+  "deployedAt": "2026-11-27T08:41:36.177Z"
+}

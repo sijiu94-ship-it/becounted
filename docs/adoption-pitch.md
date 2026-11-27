@@ -77,7 +77,7 @@
 | 空投门模板 GatedClaim（源码） | 仓库 `contracts/templates/GatedClaim.sol` + 同目录 README | 单实例 = 一场活动；参数构造时写死（门禁、代币、奖池、份数、时间窗），全部 immutable |
 | 模板测试网演示实例 | `0xe216ddd066e2cae40cead9000307f411bf55dc28`（BSC 测试网） | 已部署并注资的活实例：0.003 tBNB 奖池、3 份、窗口 7 天；已真实领取 1 份，可当场演示完整流程 |
 | 门禁原语 BeCounted（主网） | `0xdA585A4aE5b73Ee2728AadA3e877A3A1F84027cd` | 主网现行版，构造参数为官方 Agent ID 注册表 `0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F`；BscScan 已验证 |
-| 活动合约 OneIDCampaignsV16（主网） | `0x59Ea103C1f9d1DBBd91F1Ec9FC22C4eBD58c3B5C` | 现行参考应用（抽奖/投票/领取 + 参加条件引擎 + 按签到权重开奖 + 登记型领取）；可直接在官网创建活动、零部署 |
+| 活动合约 OneIDCampaignsV17（主网） | `0xc1a396eFc40e1E943574CFDd162F5e6BE5CA1A5E` | 现行参考应用（抽奖/投票/领取 + 参加条件引擎 + 按签到权重开奖（锁定快照） + 登记型领取）；可直接在官网创建活动、零部署 |
 | 官网（含开发者页与在线查真人工具） | https://becounted.9nosing.com/ | 开发者页有地址表、接口说明、两键原则讲解 |
 
 ### 对方需要做的（四步）
