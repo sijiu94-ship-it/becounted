@@ -21,11 +21,11 @@ Agent ID 做真人门禁:一人一号、不可转让。参加动作以用户的 
 
 | 角色 | 地址 | 说明 |
 |---|---|---|
-| OneIDCampaigns(活动合约,现行 V15) | `0x6abA2aa96076DFB6eb4c038475D4495d3Ae97D2C` | 新活动都在这里;参加调用的目标合约(以活动页给出的合约为准) |
-| OneIDCampaigns V14(历史活动) | `0x119541Cafa25118cd54F5548Df2A7D1aeE99B0f8` | 早期活动(如 #0)仍在这个合约上;参加这类活动时把目标合约换成它,调用方法完全相同 |
+| OneIDCampaigns(活动合约,现行 V16) | `0x59Ea103C1f9d1DBBd91F1Ec9FC22C4eBD58c3B5C` | 新活动都在这里;参加调用的目标合约(以活动页给出的合约为准) |
+| OneIDCampaigns V15 / V14(历史活动) | `0x6abA2aa96076DFB6eb4c038475D4495d3Ae97D2C` / `0x119541Cafa25118cd54F5548Df2A7D1aeE99B0f8` | 早期活动(V14 上的 #0 等)仍在这些合约上;参加这类活动时把目标合约换成它,调用方法完全相同 |
 | BeCounted(真人门禁) | `0xda585a4ae5b73ee2728aada3e877a3a1f84027cd` | 活动合约内部用它验真人;**你不需要直接调用它** |
 | IdentityBindingsV4(绑定登记) | `0x5FC906B394BA23Dd1B546aea8F217101DEc07F85` | X 绑定登记合约;只有第 8 节的自助登记调它,**不要**拿它参加活动 |
-| CheckIn(每日签到) | `0x74b413451a5244bc0630c176badaddab981366e8` | 每日签到合约;只有第 9 节的签到动作调它,**不要**拿它参加活动 |
+| CheckInV2(每日签到,现行) | `0x577b0439F66c3ddd05eec47f3bF31FD7451ACe47` | 每日签到合约(权重窗口 14 天);只有第 9 节的签到动作调它,**不要**拿它参加活动。旧 CheckIn V1(`0x74b413451a5244bc0630c176badaddab981366e8`)已停用,不要再向它签到 |
 
 - 网络恒定:**BNB Smart Chain 主网,`--binanceChainId 56`**。
 - Agentic Wallet 没有测试网。不要尝试测试网链 ID,不要自行替换网络。
@@ -276,6 +276,11 @@ cast calldata "claimPrize(uint256)" 3
 - 前置:活动 `kind = 0`、在时间窗内、`hasEntered` 为 `false`。
 - 确认展示示例:「参加抽奖『<标题>』(id=<id>),奖金 <prizePerWinner 换算>
   × <winnerCount> 人,目标合约 0x119541cafa25118cd54f5548df2a7d1aee99b0f8」。
+- **加权抽奖(V16 新增)**:活动带 `weighted = true`(`getCampaign` 最后一
+  个字段)时,开奖不是等概率——开奖时合约在链上读取每位参加者的签到
+  权重(1 + 近 14 天签到天数),权重越高概率按比例越大。参加动作本身
+  完全不变;用户问起时如实解释,并可读他当前的 `weightOf`(第 9 节)
+  告诉他现在的权重。不要承诺中奖。
 
 ### 6.2 投票 castVote — 选项序号从 0 开始
 
@@ -447,11 +452,12 @@ handle、tweetId** 展示给用户,**一次明确确认**后才 `execute`;
 
 ## 9. 每日签到 / Daily check-in
 
-签到是独立于活动的日常动作,目标合约是 CheckIn 合约
-`0x74b413451a5244bc0630c176badaddab981366e8`(**不是**活动合约)。规则:只有 Agent ID 持有人
+签到是独立于活动的日常动作,目标合约是 CheckInV2 合约
+`0x577b0439F66c3ddd05eec47f3bF31FD7451ACe47`(**不是**活动合约)。规则:只有 Agent ID 持有人
 能签;每人每天一次,天界按北京时间(UTC+8)零点;签到天数计入
-「活跃权重」——权重 = 1 + 近 30 天签到天数(合约 `weightOf` 可查,
-`CheckedIn` 事件可复算)。
+「活跃权重」——权重 = 1 + 近 14 天签到天数(合约 `weightOf` 可查,
+`CheckedIn` 事件可复算)。旧 CheckIn V1 的签到记录不计入现行权重,
+不要再向 V1 签到。
 
 > 若本节地址仍写作 `{{CHECKIN_ADDRESS}}`(占位符未替换),说明签到合约主网地址
 > 尚未填入:不要执行任何签到调用,告诉用户「签到功能尚未就绪」并
@@ -476,10 +482,10 @@ calldata 恒为选择器 `0x183ff085`(`checkIn()` 无参数),`--value`
 读状态(9.1) → preview → 向用户展示解析结果并等明确确认 → execute → 复核 → 报告
 ```
 
-- preview 的 `--to` 是 CheckIn 合约地址,`--from` 是用户的
+- preview 的 `--to` 是 CheckInV2 合约地址,`--from` 是用户的
   Agentic Wallet 地址。
 - 确认展示示例:「每日签到:向 CheckIn 合约发送 checkIn(),为你的
-  Agentic Wallet 地址记今天的签到。目标合约 0x74b413451a5244bc0630c176badaddab981366e8」。
+  Agentic Wallet 地址记今天的签到。目标合约 0x577b0439F66c3ddd05eec47f3bF31FD7451ACe47」。
 - **一次确认只值这一笔签到**(护栏第 2 条同样适用),不得挪用到
   第二天或任何其他动作。
 

@@ -1,10 +1,13 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0x6abA2aa96076DFB6eb4c038475D4495d3Ae97D2C"; // OneIDCampaignsV15 = V14 code + claim prizeLabel (registration claims), wired to IdentityBindingsV4 (mainnet)
-/* Legacy apps contract: V14 still hosts the campaigns created on it
-   (starting with #0). The site reads BOTH contracts (dual-read) and
-   every campaign carries a source ref ("v15:<id>" / "v14:<id>") so
-   ids never collide across contracts. */
+const APPS_TESTNET     = "0x59Ea103C1f9d1DBBd91F1Ec9FC22C4eBD58c3B5C"; // OneIDCampaignsV16 = V15 + weighted raffle draws (check-in weight), wired to IdentityBindingsV4 + CheckInV2 (mainnet)
+/* Legacy apps contracts: V15 and V14 still host the campaigns created
+   on them (V14 hosts #0). The site reads ALL sources and every
+   campaign carries a source ref ("v16:<id>" / "v15:<id>" / "v14:<id>")
+   so ids never collide across contracts. getCampaign tuples differ:
+   V16 appends `weighted` — sources carry their own ABI (see below). */
+const APPS_V15_ADDR    = "0x6abA2aa96076DFB6eb4c038475D4495d3Ae97D2C"; // OneIDCampaignsV15 (legacy)
+const APPS_V15_BLOCK   = 135937722; // V15 deployment block
 const APPS_V14_ADDR    = "0x119541Cafa25118cd54F5548Df2A7D1aeE99B0f8"; // OneIDCampaignsV14 (legacy)
 const APPS_V14_BLOCK   = 135798706; // V14 deployment block
 const BINDINGS_TESTNET = "0x5FC906B394BA23Dd1B546aea8F217101DEc07F85"; // IdentityBindingsV4 (self-registration + cooldown)
@@ -30,13 +33,12 @@ const QUEST_ABI = [
   "function getFinaleEntries() view returns (address[])", "function getWinners() view returns (address[])"
 ];
 const GATE_ABI = ["function isHuman(address) view returns (bool)"];
-/* CheckIn — daily check-in feeding the activity weight. Address below is
-   the BSC TESTNET trial deployment (checkin-address.json, 2026-11-25);
-   swap it and CHECKIN_DEPLOY_BLOCK when the mainnet contract deploys.
-   Until then the check-in page probes for code at this address on the
-   apps chain and degrades to a "coming soon" state when there is none. */
-const CHECKIN_TESTNET  = "0x74b413451a5244bc0630c176badaddab981366e8"; // CheckIn (testnet trial)
-const CHECKIN_DEPLOY_BLOCK = 135653273; // CheckIn deployment block: CheckedIn scans start here
+/* CheckIn — daily check-in feeding the activity weight. Mainnet V2
+   (2026-11-27): the weight window is 14 days (V1 used 30). V1 stays
+   deployed and readable as history; this page and the weighted draws
+   use V2 only — V1 check-in records do not carry over. */
+const CHECKIN_TESTNET  = "0x577b0439F66c3ddd05eec47f3bF31FD7451ACe47"; // CheckInV2 (mainnet, 14-day window)
+const CHECKIN_DEPLOY_BLOCK = 135942235; // CheckInV2 deployment block: CheckedIn scans start here
 const CHECKIN_ABI = [
   "function checkIn()",
   "function todayIndex() view returns (uint256)",
@@ -97,6 +99,15 @@ const APPS_ABI = [
   "event PrizeClaimed(uint256 indexed id, address indexed winner, uint256 amount)",
   "event Reclaimed(uint256 indexed id, address indexed creator, uint256 amount)"
 ];
+/* V16 ABI: identical to the legacy ABI except getCampaign's tuple
+   gains the trailing `weighted` field and createRaffle gains the
+   trailing `weighted` argument. Derived by targeted replacement so
+   the two ABIs can never drift apart anywhere else. */
+const APPS_ABI_V16 = APPS_ABI.map(x => {
+  if (x.startsWith("function getCampaign")) return x.replace("string prizeLabel))", "string prizeLabel, bool weighted))");
+  if (x.startsWith("function createRaffle")) return x.replace("string) payable", "string, bool) payable");
+  return x;
+});
 const SITE_URL = "https://becounted.9nosing.com/";
 /* Network config — mainnet launch changes ONLY this block plus the APPS
    address above, TOKEN_PRESETS and SITE_URL. */
@@ -105,11 +116,12 @@ const NETWORK = {
   appsRpcs: ["https://bsc-dataseed.binance.org","https://bsc-rpc.publicnode.com","https://rpc.ankr.com/bsc","https://bsc-dataseed1.bnbchain.org","https://bsc-dataseed2.bnbchain.org"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com", "https://rpc.ankr.com/bsc", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 135937722; // V15 deployment block: event scans start here
-/* ---------- dual-contract campaign sources ---------- */
+const APPS_DEPLOY_BLOCK = 135942248; // V16 deployment block: event scans start here
+/* ---------- multi-contract campaign sources ---------- */
 const APPS_SOURCES = [
-  { key: "v15", addr: APPS_TESTNET, block: APPS_DEPLOY_BLOCK },
-  { key: "v14", addr: APPS_V14_ADDR, block: APPS_V14_BLOCK }
+  { key: "v16", addr: APPS_TESTNET, block: APPS_DEPLOY_BLOCK, abi: APPS_ABI_V16 },
+  { key: "v15", addr: APPS_V15_ADDR, block: APPS_V15_BLOCK, abi: APPS_ABI },
+  { key: "v14", addr: APPS_V14_ADDR, block: APPS_V14_BLOCK, abi: APPS_ABI }
 ];
 function srcByKey(k){ return APPS_SOURCES.find(x => x.key === k) || APPS_SOURCES[0]; }
 function parseRef(ref){
@@ -121,10 +133,10 @@ function makeRef(srcKey, id){ return srcKey + ":" + id; }
 const __readCache = {};
 function readFor(src){
   chain();
-  if (!__readCache[src.key]) __readCache[src.key] = new ethers.Contract(src.addr, APPS_ABI, providerTest);
+  if (!__readCache[src.key]) __readCache[src.key] = new ethers.Contract(src.addr, src.abi || APPS_ABI, providerTest);
   return __readCache[src.key];
 }
-function signerApps(src){ return new ethers.Contract(src.addr, APPS_ABI, signer); }
+function signerApps(src){ return new ethers.Contract(src.addr, src.abi || APPS_ABI, signer); }
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-25: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
@@ -287,7 +299,7 @@ en: {
     d_escrow: "Prize escrowed in the contract \u2014 winners claim it themselves",
     d_escrow_no: "No prize escrow in this campaign",
     warn_token: "Custom prize token — its value and transferability are not verified. Check the token contract before entering.",
-    note_weight_scope: "Check-in weight currently applies only to official BeCounted raffles and giveaways. Campaigns created by other users draw on-chain with equal odds and do not use check-in weight. If you want a weighted draw for your campaign, the platform can run it for you — the weight table and draw report are published and fully verifiable.",
+    note_weight_scope: "Raffles can now draw by check-in weight on-chain: tick 'Draw by check-in weight' when creating a raffle and the contract reads each entrant's weight at draw time (weight = 1 + check-in days in the last 14 days). Raffles created without it keep equal odds. Check-in records moved to a new contract (V2) on 2026-11-27 with the 14-day window — earlier V1 records stay readable on the old contract but no longer count.",
     d_contract: "Contract",
     hero_cta_join: "Join a campaign",
     hero_cta_create: "Create a campaign",
@@ -345,7 +357,7 @@ en: {
   soon_h:"Ending soon", soon_sub:"Live now, closing first — do not miss the window.",
   hot_h:"Trending", hot_camps:"Hot campaigns", hot_creators:"Top creators", hot_entries:"entries",
   f_tok_usdt:"USDT \u00b7 {chain} (preset)", f_tok_usdc:"USDC \u00b7 {chain} (preset)", f_tok_custom:"Custom prize (off-chain)", f_chain_main:"BSC mainnet", f_chain_test:"BSC testnet",
-  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.", f_claim_custom_note:"Off-chain prize: nothing is escrowed and no pool is needed. Claiming only records the claimant on-chain \u2014 first come, first served, one slot per human. You deliver the prize yourself using the on-chain claimant list.", d_reg_note:"Off-chain prize: claiming records your slot on-chain (first come, first served, one per human). The contract pays nothing \u2014 the creator delivers the prize off-chain using the claimant list.", d_legacy_tag:"Legacy \u00b7 V14",
+  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.", f_claim_custom_note:"Off-chain prize: nothing is escrowed and no pool is needed. Claiming only records the claimant on-chain \u2014 first come, first served, one slot per human. You deliver the prize yourself using the on-chain claimant list.", d_reg_note:"Off-chain prize: claiming records your slot on-chain (first come, first served, one per human). The contract pays nothing \u2014 the creator delivers the prize off-chain using the claimant list.", d_legacy_tag:"Legacy \u00b7", f_weighted:"Draw by check-in weight", f_weighted_hint:"Winners are drawn on-chain by activity weight \u2014 weight = 1 + check-in days in the last 14 days, read at draw time. More check-in days means a proportionally higher chance. Leave off for an equal-odds draw.", c_weighted_tag:"weighted draw", d_weighted_note:"This raffle draws by check-in weight: at draw time the contract reads each entrant's weight on-chain (1 + check-in days in the last 14 days). More check-in days = a proportionally higher chance. The seed and the weights are public and recomputable.", d_verify_weighted:"Weighted draw \u2014 winners were picked by check-in weight read on-chain at draw time, so the equal-odds recomputation does not apply. The DrawWeighted event records the total weight used; recompute from the entrants' weights at the draw block.",
 
   c_claim:"Claim drop", c_pool:"Pool", c_each:"Each gets", c_claimed_n:"claimed", c_claim_btn:"Claim",
   c_prize:"Prize", c_claim_prize:"Claim prize", c_prize_claimed:"Prize claimed",
@@ -396,13 +408,13 @@ en: {
   f_ok:"Campaign created — it's live on the Campaigns page now. Share it!",
   f_creating:"Creating on-chain…",
   kick_ci:"Daily check-in · activity weight", h_ci:"Daily check-in",
-  ci_sub:"One check-in per human per day — gated by Agent ID and recorded on-chain. Your check-in days inside the last 30 days set your activity weight: <b>weight = 1 + days</b>. Anyone can recompute it from the event log.",
+  ci_sub:"One check-in per human per day — gated by Agent ID and recorded on-chain. Your check-in days inside the last 14 days set your activity weight: <b>weight = 1 + days</b>. Anyone can recompute it from the event log.",
   ci_bj:"Beijing time",
   ci_status_connect:"Connect your wallet to see your check-in status.",
   ci_status_ready:"You have not checked in yet today.",
   ci_status_done:"Checked in today ✓ — see you tomorrow.",
-  ci_stat_total:"Total check-ins", ci_stat_window:"Days in last 30", ci_stat_weight:"My weight",
-  ci_weight_formula:"weight = 1 + check-in days in the last 30 days · days older than 30 slide out of the window",
+  ci_stat_total:"Total check-ins", ci_stat_window:"Days in last 14", ci_stat_weight:"My weight",
+  ci_weight_formula:"weight = 1 + check-in days in the last 14 days · days older than 14 slide out of the window",
   ci_stat_next:"Next check-in opens in", ci_btn:"Check in", ci_btn_done:"Checked in ✓",
   ci_not_holder:"This wallet holds no Agent ID, so it cannot check in. Check-in is for Agent ID holders only — one ID, one check-in per day.",
   ci_note_agent:"Your Agent ID lives in the Agentic Wallet? It can't connect to websites — ask your Agent to check in for you with the participation Skill:",
@@ -560,7 +572,7 @@ zh: {
     d_escrow: "\u5956\u91d1\u7531\u5408\u7ea6\u6258\u7ba1 \u00b7 \u4e2d\u5956\u8005\u81ea\u52a9\u9886\u53d6",
     d_escrow_no: "\u672c\u6d3b\u52a8\u65e0\u5956\u91d1\u6258\u7ba1",
     warn_token: "\u81ea\u5b9a\u4e49\u5956\u54c1\u4ee3\u5e01\u2014\u2014\u5176\u4ef7\u503c\u4e0e\u53ef\u8f6c\u8ba9\u6027\u672a\u7ecf\u9a8c\u8bc1\uff0c\u53c2\u52a0\u524d\u8bf7\u81ea\u884c\u6838\u67e5\u8be5\u4ee3\u5e01\u5408\u7ea6\u3002",
-    note_weight_scope: "签到权重目前仅用于 BeCounted 官方举办的抽奖与赠送活动。其他用户创建的活动为链上等概率开奖，不使用签到权重；如需为你的活动使用加权开奖，可联系平台代为执行，权重表与开奖报告将公开并可复算。",
+    note_weight_scope: "抽奖活动现在可以直接在链上按签到权重开奖：创建抽奖时勾选「按签到权重开奖」，开奖时合约读取每位参与者的权重（权重 = 1 + 近 14 天签到天数）。未勾选的活动仍为等概率开奖。签到记录已于 2026-11-27 迁至新合约（V2，窗口 14 天）——V1 的旧记录仍可在原合约查到，但不再计入权重。",
     d_contract: "\u5408\u7ea6",
     hero_cta_join: "\u53c2\u52a0\u6d3b\u52a8",
     hero_cta_create: "\u521b\u5efa\u6d3b\u52a8",
@@ -618,7 +630,7 @@ zh: {
   soon_h:"即将结束", soon_sub:"正在进行、先到截止时间的排前面——别错过窗口。",
   hot_h:"热度榜", hot_camps:"热门活动", hot_creators:"创作者榜", hot_entries:"人参与",
   f_tok_usdt:"USDT \u00b7 {chain}（预设）", f_tok_usdc:"USDC \u00b7 {chain}（预设）", f_tok_custom:"自定义奖品（链下发放）", f_chain_main:"BSC 主网", f_chain_test:"BSC 测试网",
-  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。", f_claim_custom_note:"链下奖品：不托管代币、不用填奖池。领取只在链上记名占位——一人一份、先到先得。活动结束后你按链上领取名单自行发放。", d_reg_note:"链下奖品：领取即在链上记名占位（一人一份、先到先得），合约不付款——发起人按链上领取名单线下发放。", d_legacy_tag:"历史活动 · V14",
+  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。", f_claim_custom_note:"链下奖品：不托管代币、不用填奖池。领取只在链上记名占位——一人一份、先到先得。活动结束后你按链上领取名单自行发放。", d_reg_note:"链下奖品：领取即在链上记名占位（一人一份、先到先得），合约不付款——发起人按链上领取名单线下发放。", d_legacy_tag:"历史活动 ·", f_weighted:"按签到权重开奖", f_weighted_hint:"按参与者的活跃权重在链上开奖——权重 = 1 + 近 14 天签到天数，开奖时读取。签到天数越多，中奖概率按比例越高。不勾选则为等概率抽奖。", c_weighted_tag:"加权开奖", d_weighted_note:"本活动按签到权重开奖：开奖时合约在链上读取每位参与者的权重（1 + 近 14 天签到天数）。签到天数越多，中奖概率按比例越高；种子与权重全部公开、可复算。", d_verify_weighted:"加权开奖——中奖者按开奖时链上读取的签到权重抽取，等概率复算不适用。DrawWeighted 事件记录了本次开奖使用的总权重；可用开奖区块时各参与者的权重独立复算。",
 
   c_claim:"领取", c_pool:"奖池", c_each:"每份", c_claimed_n:"已领", c_claim_btn:"领取",
   c_prize:"奖品", c_claim_prize:"领取奖品", c_prize_claimed:"奖品已领取",
@@ -669,13 +681,13 @@ zh: {
   f_ok:"活动创建成功——已经出现在活动页了。快分享出去！",
   f_creating:"正在上链创建…",
   kick_ci:"每日签到 · 活跃权重", h_ci:"每日签到",
-  ci_sub:"每位真人每天签到一次——由 Agent ID 门禁、链上记录。近 30 天内的签到天数决定你的活跃权重：<b>权重 = 1 + 天数</b>。任何人都能从事件日志独立复算。",
+  ci_sub:"每位真人每天签到一次——由 Agent ID 门禁、链上记录。近 14 天内的签到天数决定你的活跃权重：<b>权重 = 1 + 天数</b>。任何人都能从事件日志独立复算。",
   ci_bj:"北京时间",
   ci_status_connect:"连接钱包后查看你的签到状态。",
   ci_status_ready:"你今天还没有签到。",
   ci_status_done:"今日已签到 ✓——明天见。",
-  ci_stat_total:"累计签到", ci_stat_window:"近 30 天签到", ci_stat_weight:"我的权重",
-  ci_weight_formula:"权重 = 1 + 近 30 天签到天数 · 超过 30 天的签到滑出窗口",
+  ci_stat_total:"累计签到", ci_stat_window:"近 14 天签到", ci_stat_weight:"我的权重",
+  ci_weight_formula:"权重 = 1 + 近 14 天签到天数 · 超过 14 天的签到滑出窗口",
   ci_stat_next:"下次签到开启倒计时", ci_btn:"签到", ci_btn_done:"已签到 ✓",
   ci_not_holder:"这个钱包没有 Agent ID，不能签到。签到只对 Agent ID 持有人开放——一人一号、每天一次。",
   ci_note_agent:"你的 Agent ID 在 Agentic Wallet 里？它连不上网站——让你的 Agent 用参与 Skill 替你签到：",
@@ -721,7 +733,7 @@ function chain(){
     providerMain = fb(NETWORK.mainRpcs, 56);
     providerTest = fb(NETWORK.appsRpcs, NETWORK.appsChainId);
     registry = new ethers.Contract(REGISTRY_MAINNET, ERC721_ABI, providerMain);
-    appsRead = new ethers.Contract(APPS_TESTNET, APPS_ABI, providerTest);
+    appsRead = new ethers.Contract(APPS_TESTNET, APPS_ABI_V16, providerTest);
     bindingsRead = new ethers.Contract(BINDINGS_TESTNET, BINDINGS_ABI, providerTest);
     profileRead = new ethers.Contract(PROFILE_TESTNET, PROFILE_ABI, providerTest);
     questRead = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, providerTest);
@@ -1080,6 +1092,7 @@ async function loadCampaigns(){
               : hasCustom
               ? `<b>${String(c.prizeLabel).replace(/</g, "&lt;")}</b> \u00b7 ${t("c_custom_tag")} \u00b7 ${c.entryCount} ${t("c_entries")}`
               : `${c.winnerCount} ${t("c_winners")} \u00b7 ${c.entryCount} ${t("c_entries")}`;
+            if(c.weighted) keyline += ` \u00b7 <b>${t("c_weighted_tag")}</b>`;
             if(c.drawn){
               let w = []; try{ w = await RD.getWinners(i); }catch(e){}
               extra = `<span class="count">${t("c_winner")} <b>${w.length ? short(w[0]) : "\u2014"}</b>${w.length > 1 ? ` +${w.length - 1}` : ""}</span>`;
@@ -1638,6 +1651,7 @@ function switchCreateTab(k){
   const _tsel0 = $("fTokenSel"); if (_tsel0 && k === 1 && _tsel0.value === "custom") _tsel0.value = "none";
   document.querySelectorAll(".form > .tabs > button").forEach((b,i)=>{ const on = i===k; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
   $("fWinnersRow").style.display = k===0 ? "" : "none";
+  if ($("fWeightedRow")) $("fWeightedRow").style.display = k===0 ? "" : "none";
   $("fOptionsRow").style.display = k===1 ? "" : "none";
   $("fOptLabelsRow").style.display = k===1 ? "" : "none";
   if (k===1) renderOptLabels();
@@ -1737,6 +1751,7 @@ function renderPreview(){
       : sel !== "none" && parseFloat($("fPerWinner")?.value || "0") > 0
       ? `<b>${$("fPerWinner").value} ${sel === "bnb" ? "BNB" : sel.toUpperCase()}</b> \u00d7 ${w}`
       : `${w} ${t("c_winners")}`;
+    if ($("fWeighted")?.checked) keyline += ` \u00b7 ${t("c_weighted_tag")}`;
     cta = t("c_enter");
   } else if (createKind === 1){
     if ($("fVPrizeOn")?.checked && parseFloat($("fVTotal")?.value || "0") > 0){
@@ -1824,7 +1839,7 @@ async function submitCreate(){
   const cond = await buildCond(msg);
   if (!cond) return;
   try{
-    const apps = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer);
+    const apps = new ethers.Contract(APPS_TESTNET, APPS_ABI_V16, signer);
     let createRcpt = null;
     if(createKind === 0){
       const winners = parseInt($("fWinners").value, 10);
@@ -1843,7 +1858,7 @@ async function submitCreate(){
       chain();
       const value = (token === ethers.ZeroAddress) ? total : 0n;
       const prizeLabel = ($("fTokenSel").value === "custom") ? ($("fPrizeLabel").value || "").trim() : "";
-      createRcpt = await (await apps.createRaffle(title, startAt, endAt, winners, token, per, cond, prizeLabel, { value })).wait();
+      createRcpt = await (await apps.createRaffle(title, startAt, endAt, winners, token, per, cond, prizeLabel, ($("fWeighted") && $("fWeighted").checked) === true, { value })).wait();
     } else if(createKind === 1){
       const options = parseInt($("fOptions").value, 10);
       if ($("fVPrizeOn")?.checked){
@@ -2481,11 +2496,12 @@ async function loadDetail(){
       && !!c.prizeToken && c.prizeToken !== ethers.ZeroAddress
       && !PRESET_TOKEN_ADDRS.has(String(c.prizeToken).toLowerCase());
     box.innerHTML = `
-      <div class="kicker">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")} · #${id}${src.key !== APPS_SOURCES[0].key ? " · " + t("d_legacy_tag") : ""}</div>
+      <div class="kicker">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")} · #${id}${src.key !== APPS_SOURCES[0].key ? " · " + t("d_legacy_tag") + " " + src.key.toUpperCase() : ""}</div>
       <h1 style="font-size:clamp(26px,4.4vw,40px);margin:10px 0 6px">${String(c.title).replace(/</g,"&lt;")}</h1>
       <p style="color:var(--muted)">${t("creator_by")} ${creatorHtmlD} · ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}${live || !ended ? ` · <span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span>` : ""}</p>
       ${warnToken ? `<div class="warn-banner">⚠ ${t("warn_token")}</div>` : ""}
       ${kind === 2 && c.prizeLabel ? `<div class="panel" style="margin:12px 0"><b>${String(c.prizeLabel).replace(/</g, "&lt;")}</b> \u00b7 ${t("c_custom_tag")}<div class="count" style="margin-top:6px">${t("d_reg_note")}</div></div>` : ""}
+      ${kind === 0 && c.weighted ? `<div class="panel" style="margin:12px 0"><b>${t("c_weighted_tag")}</b><div class="count" style="margin-top:6px">${t("d_weighted_note")}</div></div>` : ""}
       <div style="margin:16px 0">${foot} <span class="camp-msg" role="status" id="msg-${ref}"></span></div>
       ${postBtn ? `<div style="margin-bottom:6px">${postBtn}</div>` : ""}
       ${winfoBlock}
@@ -2675,11 +2691,15 @@ window.verifyDraw = async ref => {
   const msg = $("proofMsg"); if(msg) msg.textContent = "…";
   try{
     const c = await RD.getCampaign(id);
+    if (c.weighted){
+      if(msg){ msg.textContent = t("d_verify_weighted"); msg.style.color = "var(--muted)"; }
+      return;
+    }
     const entries = await RD.getEntries(id);
     const onchain = (await RD.getWinners(id)).map(a => a.toLowerCase());
     const latest = await providerTest.getBlockNumber();
     const logs = await getLogsCached({ address: src.addr, topics: [ethers.id("Drawn(uint256,uint256,bool,uint256)"), ethers.zeroPadValue(ethers.toBeHex(id), 32)] }, src.block, latest);
-    const iface = new ethers.Interface(APPS_ABI);
+    const iface = new ethers.Interface(src.abi || APPS_ABI);
     const ev = iface.parseLog(logs[logs.length - 1]);
     const seed = ev.args.seed;
     const n = entries.length, k = Math.min(Number(c.winnerCount), n);
