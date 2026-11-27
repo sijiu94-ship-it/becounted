@@ -1,0 +1,9 @@
+{
+  "gatedClaimDemo": "0xe216ddd066e2cae40cead9000307f411bf55dc28",
+  "gate": "0x0cb41f96c84df7bed5db273e77b62414b1a80cbd",
+  "token": "0x0000000000000000000000000000000000000000",
+  "pool": "3000000000000000",
+  "maxClaims": 3,
+  "deployTx": "0x1c1343cf819cea454ffa7e3fd1ab0fc125e03dbaeed9df0c33b033f3f523f04e",
+  "fundTx": "0x2a9aab9e90c212fd7751068bf3d1c3f03a17283e0b2347957dd1cf7194b8856f"
+}

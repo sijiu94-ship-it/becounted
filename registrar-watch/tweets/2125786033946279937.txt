@@ -1,0 +1,6 @@
+author: 9Nosing
+BeCounted binding verification
+Handle: @9nosing
+Agent ID: 9nosing.ai
+Proof: BC-2F8AF34DAFD6C81E
+#BeCountedBind

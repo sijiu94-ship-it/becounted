@@ -1,0 +1,11 @@
+{
+  "network": "bsc-testnet",
+  "chainId": 97,
+  "mockRegistryV2": "0x13EE25E4474bd463F80A7Fa64869c6949B82A7C4",
+  "gate": "0x9D3a18e06d5Ec7174D733Be6014dae3B5b75C349",
+  "bindingsV4": "0xE9262F8508D704F98eB01abbB2B5D9113A6dE4d0",
+  "campaignsV11onV4": "0x66452711e5Bb1db30b023Dd4456abf3Da922D674",
+  "registrar": "0x09385E06bDFa5772B90f7542d1d9FDD1B1d0DF38",
+  "trial": "registerSelf/proofRef/condition0/cooldown/revoke/cooldown-after-revoke all PASS",
+  "deployedAt": "2026-11-26T04:38:39.551Z"
+}

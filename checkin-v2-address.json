@@ -1,0 +1,11 @@
+{
+  "network": "bsc-testnet",
+  "chainId": 97,
+  "gate": "0x9D3a18e06d5Ec7174D733Be6014dae3B5b75C349",
+  "checkInV2": "0xB8143e2c97205bAE88aF540d9ADcb6617CC67Ec7",
+  "deployTx": "0xf24a49733b28281d25afacdfc15d16164512909dd9019223c64e5b57488605d3",
+  "deployBlock": 145074584,
+  "windowDays": 14,
+  "trial": "deploy/gate wiring/WINDOW_DAYS=14/H check-in weight 2 vs U weight 1 all PASS",
+  "deployedAt": "2026-11-27T00:25:04.009Z"
+}

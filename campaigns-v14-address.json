@@ -1,0 +1,12 @@
+{
+  "network": "bsc-testnet",
+  "chainId": 97,
+  "gate": "0x9D3a18e06d5Ec7174D733Be6014dae3B5b75C349",
+  "bindingsV4": "0xE9262F8508D704F98eB01abbB2B5D9113A6dE4d0",
+  "campaignsV14": "0x2855796f3e5AFdC56c8101852EeF37C9dd39e56f",
+  "deployTx": "0xe1bcb286ba3be70e66689305e1f180e0815369ecf2475d529a448f7257b75411",
+  "trial": "deploy/wiring/set+readback/NotCreator/enter/lockDraw/draw/info-after-draw/post-draw-freeze all PASS",
+  "trialRaffleId": 0,
+  "trialWinner": "0x925943c5dcBc98bdDEB10da8f1089A8D7C90Cec6",
+  "deployedAt": "2026-11-26T06:27:56.072Z"
+}

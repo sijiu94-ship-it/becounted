@@ -1,0 +1,13 @@
+{
+  "2125786033946279937": {
+    "statusId": "2125786033946279937",
+    "attempts": 2,
+    "firstSeen": "2026-11-26T03:22:47.614Z",
+    "updatedAt": "2026-11-26T03:29:28.646Z",
+    "author": "9Nosing",
+    "fetchSource": "fxtwitter",
+    "handle": "9nosing",
+    "agentName": "9nosing.ai",
+    "status": "already_bound"
+  }
+}

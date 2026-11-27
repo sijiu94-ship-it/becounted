@@ -1,0 +1,9 @@
+{
+  "bindingsV2": "0x3b5a6cd4ae21cf100da21197a58be6d6d406f843",
+  "bindingsV2Tx": "0xcfd2d1d9010dc75db3711ab1d23745b48ccecbf0d2fc554ca68f95774552ae0e",
+  "bindingsV2Block": 144360355,
+  "appsV9b": "0x9dac1ccb350a3568a7858f3874b06a69a61aa426",
+  "appsV9bTx": "0x4af6fcb981fb59101df2a425b7fffe094e5730853900bcf02a4d9b885efdf68d",
+  "appsV9bBlock": 144360363,
+  "gate": "0x0cb41f96c84df7bed5db273e77b62414b1a80cbd"
+}

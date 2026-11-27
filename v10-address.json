@@ -1,0 +1,67 @@
+{
+  "network": "bsc-testnet",
+  "date": "2026-11-23T09:09:38.231Z",
+  "mockRegistryV2": "0xf6a1700D73C827b9923e9b9Df60fC5B4b5b592bA",
+  "mockRegistryV2Tx": "0x3c27e033c375e62cdd8a776be74bedc0cd9cc558075efcd31485a9ac1fcdc9d1",
+  "mockRegistryV2Block": 144378492,
+  "gateV10": "0x6033604af1E598e2158fDD59108765F696b7AD78",
+  "gateV10Tx": "0x524c0eb780f7323311a39a43094a4a7f61deb9eb35e4e667e1ca4ad75bbf968b",
+  "gateV10Block": 144378501,
+  "appsV10": "0x5c6bd30ead292b97e910d761209736A440f4bA3e",
+  "appsV10Tx": "0x07a4924583e16249484091347d973b40fda1916a8f17162b1d65cd38c1e218f5",
+  "appsV10Block": 144378510,
+  "bindings": "0x3b5a6cd4ae21cf100da21197a58be6d6d406f843",
+  "w1RegisterHandleTx": "0x205c6b0682a9ff1c70ca93573c1daf3da11e3259daffd9993e13cda557cba8a0",
+  "w2RegisterHandleTx": "0xf5041b603858f09fe841d655b50c22bedd4c976a6b8daaeb9aad47466c240bea",
+  "w3IssueTx": "0x917a89eaad57b9d93a9abf39aec9fdbae481054afebeca8e009e68c73df07d4a",
+  "w3FundTx": "0xe755e7667b0b3db78341fbf51dcd420cc7b0cd3253d539e68eab8bdf4facfbbc",
+  "idListHandles": [
+    "trialone",
+    "questfan"
+  ],
+  "idListRoot": "0x452d114bdb96921aa84cec8bc562def2657e3d1c6cc989191fdfe392df3ae9ed",
+  "w1IdProof": [
+    "0xe7bc7203b760e1e1550a4b337b833583ff3779c83d00135f96957c13fa4ed970"
+  ],
+  "createRaffleTx": "0x0fad526a23554c60aac0169291fba901809d8f31cb0347b6379a6d1ece02b372",
+  "createRaffleBlock": 144378551,
+  "campaignId": 0,
+  "w1EnterTx": "0x3f0ccb46bec5246962be223465747ebb5213e8aafc8c8636a671927babcdf0c9",
+  "w1EnterBlock": 144378560,
+  "w2EnterTx": "0x3bf44021a4aa45cec61061c2a20a0510c8729091eb10e110a0e21df6ddf2c479",
+  "w2EnterStatus": "0x0",
+  "w2RevertReason": "ConditionFailed(5)",
+  "w3EnterTx": "0xa65eee018aaf978e1c376dc4b62ee474f461f22389e9b7140c3f1ca735988297",
+  "w3EnterStatus": "0x0",
+  "w3RevertReason": "ConditionFailed(5)",
+  "trialResult": "w1 (listed handle 'trialone') entered; w2 (unlisted handle 'trialtwo') and w3 (no handle) rejected with ConditionFailed(5); entries not consumed",
+  "sourcify": [
+    {
+      "name": "OneIDCampaignsV10",
+      "address": "0x5c6bd30ead292b97e910d761209736A440f4bA3e",
+      "match": "exact_match",
+      "creationMatch": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verificationId": "264ca301-8a8e-4ab4-847c-f77520684134",
+      "compilerVersion": "0.8.24+commit.e11b9ed9"
+    },
+    {
+      "name": "MockRegistryV2",
+      "address": "0xf6a1700D73C827b9923e9b9Df60fC5B4b5b592bA",
+      "match": "exact_match",
+      "creationMatch": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verificationId": "7ce2d765-ed56-4a70-a0be-70d2bcc76b06",
+      "compilerVersion": "0.8.24+commit.e11b9ed9"
+    },
+    {
+      "name": "BeCounted",
+      "address": "0x6033604af1E598e2158fDD59108765F696b7AD78",
+      "match": "exact_match",
+      "creationMatch": "exact_match",
+      "runtimeMatch": "exact_match",
+      "verificationId": "1df069e6-620a-4169-bb3b-a40fef50dea7",
+      "compilerVersion": "0.8.24+commit.e11b9ed9"
+    }
+  ]
+}

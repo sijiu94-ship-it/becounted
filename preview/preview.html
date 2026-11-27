@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BeCounted — Preview</title>
+<style>:root{
+  --bg:#0a0a0b; --panel:#101012;
+  --line:#26262a; --line-soft:#1b1b1e;
+  --text:#ececec; --muted:#9a9aa3; --faint:#5c5c64;
+  --gold:#f0b90b; --gold-dim:rgba(240,185,11,.12);
+  --ok:#4ade80; --bad:#f87171;
+  --mono:ui-monospace,'SF Mono','Cascadia Code',Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;
+  background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+  background-size:72px 72px;background-position:center top}
+::selection{background:var(--gold);color:#000}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* nav */
+nav{border-bottom:1px solid var(--line);background:rgba(10,10,11,.88);backdrop-filter:blur(8px);position:sticky;top:0;z-index:50}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;flex-shrink:0}
+.brand b{font-size:17px;letter-spacing:.02em;font-weight:700}
+.brand span{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--line);padding:2px 7px;border-radius:99px}
+.nav-links{display:flex;gap:24px;align-items:center;font-size:13.5px;color:var(--muted)}
+.nav-links a{text-decoration:none;white-space:nowrap}
+.nav-links a:hover{color:var(--text)}
+.nav-links a.on{color:var(--gold)}
+@media(max-width:820px){.nav-links a{display:none}}
+.lang{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-shrink:0}
+.lang button{background:transparent;border:0;color:var(--faint);font-family:var(--mono);font-size:12px;padding:6px 10px;cursor:pointer}
+.lang button.on{background:var(--gold);color:#000;font-weight:700}
+.btn{font-family:var(--mono);font-size:13px;background:var(--gold);color:#000;border:0;padding:9px 16px;border-radius:8px;cursor:pointer;font-weight:700}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--faint)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:7px 12px;font-size:12px}
+
+/* hero / page head */
+header{padding:84px 0 64px;border-bottom:1px solid var(--line)}
+.pagehead{padding:56px 0 40px;border-bottom:1px solid var(--line)}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:26px;height:1px;background:var(--gold)}
+h1{font-size:clamp(50px,9vw,100px);line-height:1.02;font-weight:800;letter-spacing:-.015em;margin:22px 0 8px;text-transform:uppercase}
+h1 .hollow{color:transparent;-webkit-text-stroke:1.5px var(--text)}
+h1 .gold{color:var(--gold)}
+.pagehead h1{font-size:clamp(38px,6vw,58px);text-transform:none;letter-spacing:-.01em}
+.hero-sub{font-size:clamp(17px,2.4vw,21px);color:var(--muted);max-width:640px;line-height:1.55;margin-top:18px}
+.hero-sub b{color:var(--text);font-weight:600}
+.pagehead p{color:var(--muted);font-size:16.5px;max-width:620px;line-height:1.6;margin-top:14px}
+.hero-note{font-family:var(--mono);font-size:13px;color:var(--faint);margin-top:14px;letter-spacing:.04em}
+
+/* checker */
+.checker{margin-top:44px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:760px}
+.checker label{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:12px}
+.checker-row{display:flex;gap:10px}
+.checker input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:var(--mono);font-size:14px;padding:12px 14px;outline:none;min-width:0}
+.checker input:focus{border-color:var(--gold)}
+.verdict{margin-top:16px;font-family:var(--mono);font-size:14px;display:none;line-height:1.6}
+.verdict.show{display:block}
+.verdict .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700;margin-right:9px;vertical-align:1px}
+.verdict.yes .tag{background:rgba(74,222,128,.14);color:var(--ok);border:1px solid rgba(74,222,128,.4)}
+.verdict.no .tag{background:rgba(248,113,113,.12);color:var(--bad);border:1px solid rgba(248,113,113,.4)}
+.verdict small{color:var(--faint);display:block;margin-top:6px;font-size:12px}
+.checker .try{margin-top:12px;font-size:12.5px;color:var(--faint)}
+.checker .try a{color:var(--muted);text-decoration:underline dotted;cursor:pointer}
+
+/* stats strip */
+.strip{border-bottom:1px solid var(--line)}
+.strip-in{display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:22px 20px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0;padding-left:0}
+.stat b{font-size:26px;font-weight:800;display:block;font-family:var(--mono);letter-spacing:-.02em}
+.stat span{font-size:12.5px;color:var(--faint)}
+@media(max-width:760px){.strip-in{grid-template-columns:repeat(2,1fr)}.stat{padding-left:20px}.stat:first-child{padding-left:20px}}
+
+/* sections */
+section{padding:64px 0;border-bottom:1px solid var(--line)}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:32px}
+.sec-no{font-family:var(--mono);color:var(--gold);font-size:13px}
+h2{font-size:clamp(27px,4.2vw,38px);font-weight:800;letter-spacing:-.01em}
+.sec-head p{color:var(--muted);font-size:15px;margin-left:auto;max-width:380px;text-align:right;line-height:1.5}
+@media(max-width:760px){.sec-head{flex-wrap:wrap}.sec-head p{text-align:left;margin-left:0}}
+
+/* teasers on home */
+.teasers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:820px){.teasers{grid-template-columns:1fr}}
+.teaser{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px;text-decoration:none;display:block;transition:border-color .15s}
+.teaser:hover{border-color:var(--gold)}
+.teaser .no{font-family:var(--mono);color:var(--gold);font-size:12.5px}
+.teaser h3{font-size:20px;margin:12px 0 9px;font-weight:700}
+.teaser p{color:var(--muted);font-size:14.5px;line-height:1.6}
+.teaser .go{margin-top:16px;font-family:var(--mono);font-size:12.5px;color:var(--gold)}
+
+/* campaigns */
+.camp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.camp-grid{grid-template-columns:1fr}}
+.camp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.camp-top{display:flex;align-items:center;gap:10px}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);text-transform:uppercase}
+.chip.raffle{color:var(--gold);border-color:rgba(240,185,11,.45);background:var(--gold-dim)}
+.chip.live{color:var(--ok);border-color:rgba(74,222,128,.4)}
+.chip.ended{color:var(--faint)}
+.camp h3{font-size:20px;font-weight:700;line-height:1.3}
+.camp .meta{font-family:var(--mono);font-size:12.5px;color:var(--faint);line-height:1.9}
+.camp .meta b{color:var(--muted);font-weight:500}
+.camp .foot{margin-top:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.camp .count{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.camp .count b{color:var(--text);font-size:17px}
+.tally{display:flex;gap:8px;flex-wrap:wrap}
+.tally .opt{font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:7px 11px;color:var(--muted)}
+.tally .opt b{color:var(--text)}
+.camp-msg{font-family:var(--mono);font-size:12.5px;color:var(--gold);min-height:16px}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:38px;text-align:center;color:var(--faint);font-family:var(--mono);font-size:13.5px;grid-column:1/-1}
+
+/* two keys / boundaries */
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.keys{grid-template-columns:1fr}}
+.key{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+.key .q{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+.key h3{font-size:21px;margin:10px 0 10px;font-weight:700;line-height:1.35}
+.key p{color:var(--muted);font-size:14.5px;line-height:1.65}
+.key code{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:2px 7px;color:var(--gold)}
+.key .who{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft);font-family:var(--mono);font-size:12px;color:var(--faint)}
+.key .who b{color:var(--muted);font-weight:500}
+.bounds{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:760px){.bounds{grid-template-columns:1fr}}
+.bound{padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.bound .x{font-family:var(--mono);color:var(--bad);font-size:13px;letter-spacing:.08em}
+.bound h3{font-size:17.5px;margin:9px 0 8px}
+.bound p{color:var(--muted);font-size:14px;line-height:1.6}
+
+/* builders */
+.codebox{background:#0d0d0f;border:1px solid var(--line);border-radius:14px;padding:24px;font-family:var(--mono);font-size:13px;line-height:1.75;overflow-x:auto;color:#c9c9d1}
+.codebox .cm{color:#5c5c64}
+.codebox .kw{color:var(--gold)}
+.codebox .str{color:#a5d6a7}
+.addr-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13.5px}
+.addr-table td{padding:12px 4px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.addr-table td:first-child{color:var(--muted);width:230px}
+.addr-table td:last-child{font-family:var(--mono);font-size:12.5px;word-break:break-all}
+.addr-table a{color:var(--gold);text-decoration:none}
+.addr-table a:hover{text-decoration:underline}
+
+/* id card */
+.idcard{max-width:520px;background:linear-gradient(135deg,#151517,#0e0e10);border:1px solid var(--line);border-radius:18px;padding:28px;position:relative;overflow:hidden}
+.idcard::after{content:"";position:absolute;right:-40px;top:-40px;width:170px;height:170px;border:1px solid var(--line);border-radius:50%}
+.idcard .row1{display:flex;justify-content:space-between;align-items:center}
+.idcard .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--faint)}
+.idcard .status{font-family:var(--mono);font-size:12px;color:var(--ok);border:1px solid rgba(74,222,128,.4);padding:3px 10px;border-radius:99px}
+.idcard .status.none{color:var(--faint);border-color:var(--line)}
+.idcard .addr{font-family:var(--mono);font-size:15px;margin:22px 0 6px;word-break:break-all;line-height:1.5}
+.idcard .note{font-size:13px;color:var(--muted);line-height:1.6}
+.card-form{display:flex;gap:10px;margin-bottom:18px;max-width:520px}
+.card-form input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:var(--mono);font-size:13.5px;padding:11px 13px;outline:none;min-width:0}
+.card-form input:focus{border-color:var(--gold)}
+
+footer{padding:38px 0 46px;color:var(--faint);font-size:13px}
+footer .f-in{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer .mono{font-family:var(--mono);font-size:12px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#17171a;border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:13px;padding:11px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+
+.guide{margin-top:22px;max-width:760px;background:var(--gold-dim);border:1px solid rgba(240,185,11,.4);border-radius:14px;padding:20px 24px}
+.guide h3{font-size:16.5px;margin-bottom:10px}
+.guide ol{margin-left:18px;color:var(--muted);font-size:14.5px;line-height:1.9}
+.cd{font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:.04em}
+.hot-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.hot-grid{grid-template-columns:1fr}}
+.hot-col{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.hot-col h4{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.hot-row{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px dashed rgba(236,236,236,.07);font-size:14px}
+.hot-row:last-child{border-bottom:none}
+.hot-row .rank{font-family:var(--mono);color:var(--gold);width:18px}
+.hot-row .hot-title{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hot-row .hot-n{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.pv-note{font-family:var(--mono);font-size:12px;color:#000;background:var(--gold);text-align:center;padding:8px 12px;letter-spacing:.03em}
+</style>
+</head>
+<body>
+<div class="pv-note">PREVIEW · 静态预览（数据为测试网真实快照，查询/报名等动态功能在正式页面里可用）</div>
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" href="#">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="1" y="1" width="24" height="24" rx="6" stroke="#f0b90b" stroke-width="2"/><circle cx="13" cy="12" r="3.4" fill="#f0b90b"/><rect x="11.9" y="14" width="2.2" height="5" rx="1.1" fill="#f0b90b"/></svg>
+      <b>BeCounted</b><span>testnet</span>
+    </a>
+    <div class="nav-links">
+      <a href="#campaigns" data-i18n="nav_campaigns"></a>
+      <a href="#create" data-i18n="nav_create"></a>
+      <a href="#mine" data-i18n="nav_mine"></a>
+      <a href="#how" data-i18n="nav_how"></a>
+      <a href="#builders" data-i18n="nav_builders"></a>
+      <a href="#card" data-i18n="nav_card"></a>
+      <div class="lang"><button data-lang="en" onclick="setLang('en')">EN</button><button data-lang="zh" onclick="setLang('zh')">中文</button></div>
+      <button class="btn" data-i18n="connect"></button>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="kicker" data-i18n="kick_home"></div>
+    <h1><span data-i18n="h1a"></span><br><span class="hollow" data-i18n="h1b"></span> <span class="gold" data-i18n="h1c"></span></h1>
+    <p class="hero-sub" data-i18n="hero_sub"></p>
+    <p class="hero-note" data-i18n="hero_note"></p>
+    <div class="watermark">BeCounted</div>
+    <div class="checker">
+      <label data-i18n="check_label"></label>
+      <div class="checker-row">
+        <input value="0x119B2Bf71856155b234f818476ae0610634A2aB9" readonly>
+        <button class="btn" data-i18n="check_btn"></button>
+      </div>
+      <div class="verdict show yes"><span class="tag" data-i18n="v_yes_t"></span><span data-i18n="v_yes"></span><small data-i18n="v_yes_s"></small></div>
+      <div class="try"><span data-i18n="check_try"></span> <a data-i18n="check_try_link"></a> <span data-i18n="check_try2"></span></div>
+    </div>
+
+    <div class="guide">
+      <h3 data-i18n="guide_h"></h3>
+      <ol><li data-i18n="guide_1"></li><li data-i18n="guide_2"></li><li data-i18n="guide_3"></li><li data-i18n="guide_4"></li></ol>
+    </div>
+    <div class="feed">
+      <div class="feed-head"><span class="dot"></span><span data-i18n="feed_h"></span><span class="blk">block 143,9xx,xxx</span></div>
+      <ul>
+        <li><span class="ev" data-i18n="ev_drawn"></span> — <b>#0</b></li>
+        <li><span class="ev" data-i18n="ev_voted"></span> — <b>0x0938…DF38</b></li>
+        <li><span class="ev" data-i18n="ev_created"></span> — <b>Trial vote: ship it?</b></li>
+        <li><span class="ev" data-i18n="ev_entered"></span> — <b>0x0938…DF38</b></li>
+        <li><span class="ev" data-i18n="ev_created"></span> — <b>Testnet Trial Draw 20U</b></li>
+      </ul>
+    </div>
+  </div>
+</header>
+<div class="marquee"><div class="marquee-track"><span data-i18n="mq1"></span><b>·</b><span data-i18n="mq2"></span><b>·</b><span data-i18n="mq3"></span><b>·</b><span data-i18n="mq4"></span><b>·</b><span data-i18n="mq5"></span><b>·</b><span data-i18n="mq6"></span><b>·</b><span data-i18n="mq1"></span><b>·</b><span data-i18n="mq2"></span><b>·</b><span data-i18n="mq3"></span><b>·</b><span data-i18n="mq4"></span><b>·</b><span data-i18n="mq5"></span><b>·</b><span data-i18n="mq6"></span><b>·</b></div></div>
+
+<div class="strip">
+  <div class="wrap strip-in">
+    <div class="stat"><b>2</b><span data-i18n="stat_campaigns"></span></div>
+    <div class="stat"><b>2</b><span data-i18n="stat_entries"></span></div>
+    <div class="stat"><b>1</b><span data-i18n="stat_humans"></span></div>
+    <div class="stat"><b>2</b><span data-i18n="stat_payouts"></span></div>
+  </div>
+</div>
+
+
+<section style="padding:10px 0 0">
+  <div class="wrap">
+    <div class="sec-head"><h2 data-i18n="soon_h" style="font-size:24px"></h2><p data-i18n="soon_sub"></p></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <input type="text" data-i18n-ph="flt_search_ph" style="flex:1;min-width:180px;background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font:inherit">
+      <select style="background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font:inherit"><option data-i18n="flt_all"></option><option data-i18n="c_raffle"></option><option data-i18n="c_vote"></option><option data-i18n="c_claim"></option></select>
+      <select style="background:#101013;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font:inherit"><option data-i18n="flt_all"></option><option data-i18n="flt_live"></option><option data-i18n="flt_upcoming"></option><option data-i18n="flt_ended"></option></select>
+    </div>
+    <div class="camp-grid">
+      <div class="camp">
+        <div class="camp-top"><span class="chip" data-i18n="c_claim"></span><span class="chip live" data-i18n="c_live"></span></div>
+        <h3>V2 Trial — one human one share</h3>
+        <div class="meta"><span class="cd" data-i18n="cd_ends"></span> 23<span data-i18n="cd_h"></span> · <b>1</b> <span data-i18n="c_entries"></span></div>
+        <div class="foot"><button class="btn sm" data-i18n="c_enter"></button><button class="btn sm ghost" data-i18n="share_btn"></button></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="campaigns">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">01</span><h2 data-i18n="h_camp"></h2><p data-i18n="camp_sub"></p></div>
+    
+
+    <div class="sec-head" style="margin-bottom:14px"><h2 data-i18n="hot_h" style="font-size:22px"></h2></div>
+    <div class="hot-grid" style="margin-bottom:26px">
+      <div class="hot-col"><h4 data-i18n="hot_camps"></h4>
+        <div class="hot-row"><span class="rank">1</span><span class="hot-title">V2 Trial — one human one share</span><span class="hot-n">1 <span data-i18n="hot_entries"></span></span></div>
+        <div class="hot-row"><span class="rank">2</span><span class="hot-title">V2 Trial — escrowed 0.01 tBNB</span><span class="hot-n">1 <span data-i18n="hot_entries"></span></span></div>
+      </div>
+      <div class="hot-col"><h4 data-i18n="hot_creators"></h4>
+        <div class="hot-row"><span class="rank">1</span><span class="hot-title">0x0938…DF38</span><span class="hot-n">2 <span data-i18n="hot_entries"></span></span></div>
+      </div>
+    </div>
+    <div class="cta-banner">
+      <div><h3 data-i18n="cta_h"></h3><p data-i18n="cta_p" style="margin-top:6px"></p></div>
+      <a class="btn" href="#create" data-i18n="cta_btn" style="text-decoration:none"></a>
+    </div>
+    <div class="camp-grid">
+      <div class="camp">
+        <div class="camp-top"><span class="chip raffle" data-i18n="c_raffle"></span><span class="chip ended" data-i18n="c_drawn"></span></div>
+        <h3>V2 Trial — escrowed 0.01 tBNB</h3>
+        <div class="meta"><b data-i18n="c_window"></b> Nov 21 · 12:52 → 12:55<br><b data-i18n="c_winners"></b> 1 · <b data-i18n="c_seed"></b> 143961404<br><b data-i18n="c_prize"></b> 0.01 BNB / <span data-i18n="c_per_winner"></span></div>
+        <div class="foot"><span class="count"><b>1</b> <span data-i18n="c_entries"></span></span><span class="count"><span data-i18n="c_winner"></span> <b>0x0938…DF38</b></span></div>
+      </div>
+      <div class="camp">
+        <div class="camp-top"><span class="chip" data-i18n="c_vote"></span><span class="chip live" data-i18n="c_live"></span></div>
+        <h3>Trial vote: ship it?</h3>
+        <div class="meta"><b data-i18n="c_window"></b> Nov 21 → Nov 22<br><b data-i18n="c_options"></b> 2 · <span data-i18n="c_onevote"></span></div>
+        <div class="foot"><span class="count"><b>1</b> <span data-i18n="c_entries"></span></span>
+          <div class="tally"><span class="opt"><span data-i18n="c_opt"></span> 1 · <b>1</b></span><span class="opt"><span data-i18n="c_opt"></span> 2 · <b>0</b></span></div>
+        </div>
+      </div>
+
+      <div class="camp">
+        <div class="camp-top"><span class="chip" data-i18n="c_claim"></span><span class="chip live" data-i18n="c_live"></span></div>
+        <h3>V3 Trial — lucky draw</h3>
+        <div class="meta"><b data-i18n="c_pool"></b> 0.006 BNB · <b style="color:var(--gold)" data-i18n="c_lucky"></b> · <b data-i18n="c_remaining"></b> 0.0025 BNB</div>
+        <div class="foot"><span class="count"><b>1/3</b> <span data-i18n="c_claimed_n"></span></span><button class="btn sm" data-i18n="c_claim_btn"></button></div><div class="tally" style="margin-top:8px"><span class="opt" style="color:var(--faint)" data-i18n="c_recent"></span><span class="opt">0x0938…DF38 · <b>0.0035</b> · <span style="color:var(--gold)" data-i18n="c_best"></span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">02</span><h2 data-i18n="h_how"></h2><p data-i18n="how_sub"></p></div>
+    <div class="keys">
+      <div class="key"><div class="q" data-i18n="q1_k"></div><h3 data-i18n="q1_h"></h3><p data-i18n="q1_p"></p><div class="who"><span data-i18n="q1_who"></span> <b data-i18n="q1_who_b"></b></div></div>
+      <div class="key"><div class="q" data-i18n="q2_k"></div><h3 data-i18n="q2_h"></h3><p data-i18n="q2_p"></p><div class="who"><span data-i18n="q2_who"></span> <b data-i18n="q2_who_b"></b></div></div>
+    </div>
+    <div style="height:16px"></div>
+    <div class="bounds">
+      <div class="bound"><div class="x" data-i18n="b1_x"></div><h3 data-i18n="b1_h"></h3><p data-i18n="b1_p"></p></div>
+      <div class="bound"><div class="x" data-i18n="b2_x"></div><h3 data-i18n="b2_h"></h3><p data-i18n="b2_p"></p></div>
+      <div class="bound"><div class="x" data-i18n="b3_x"></div><h3 data-i18n="b3_h"></h3><p data-i18n="b3_p"></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="builders">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">03</span><h2 data-i18n="h_build"></h2><p data-i18n="build_sub"></p></div>
+    <div class="codebox"><span class="kw">interface</span> IBeCounted { <span class="kw">function</span> isHuman(address) <span class="kw">external view returns</span> (bool); }<br><br><span class="kw">function</span> enter() <span class="kw">external</span> {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">require</span>(gate.isHuman(msg.sender), <span class="str">"not a unique human"</span>);<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">require</span>(!entered[msg.sender], <span class="str">"already counted"</span>);<br>&nbsp;&nbsp;&nbsp;&nbsp;entered[msg.sender] = <span class="kw">true</span>;<br>}</div>
+    <table class="addr-table">
+      <tr><td data-i18n="a_gate"></td><td>0x4858c1c6a4428c65ee6f60aac21a3f404d85d598</td></tr>
+      <tr><td data-i18n="a_apps"></td><td>0x42c9f4bfa02e0b4365d9701f962b4dcd4bf39a07</td></tr>
+      <tr><td data-i18n="a_reg"></td><td>0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F (SPACE ID Agent ID)</td></tr>
+    </table>
+  </div>
+</section>
+
+
+<section id="create">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">04</span><h2 data-i18n="h_create"></h2><p data-i18n="create_sub"></p></div>
+    <div class="form">
+      <div class="tabs"><button type="button" class="on" data-i18n="f_tab_raffle"></button><button type="button" data-i18n="f_tab_vote"></button><button type="button" data-i18n="f_tab_claim"></button></div>
+      <div class="f-row"><label data-i18n="f_title"></label><input placeholder="…" id="pvTitle"></div>
+      <div class="f-2col">
+        <div class="f-row"><label data-i18n="f_start"></label><input type="datetime-local"></div>
+        <div class="f-row"><label data-i18n="f_end"></label><input type="datetime-local"></div>
+      </div>
+      <div class="f-row"><label data-i18n="f_prize_token"></label><select><option data-i18n="f_tok_none"></option><option selected data-i18n="f_tok_bnb"></option><option data-i18n="f_tok_erc20"></option></select></div>
+      <div class="f-row"><label data-i18n="f_mode"></label><div class="tabs" style="margin-bottom:8px"><button type="button" data-i18n="f_mode_fixed"></button><button type="button" class="on" data-i18n="f_mode_random"></button></div><div class="hint" data-i18n="f_mode_hint"></div></div>
+      <div class="f-row"><label data-i18n="f_winners"></label><input type="number" value="1"></div>
+      <div class="f-row"><label data-i18n="f_per_winner"></label><input value="0.01"><div class="hint" data-i18n="f_prize_hint"></div></div>
+      <div class="f-row"><div class="hint" data-i18n="f_seed_hint"></div></div>
+      <button class="btn" data-i18n="f_submit_raffle"></button>
+    </div>
+  </div>
+</section>
+
+<section id="card">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">05</span><h2 data-i18n="h_card"></h2><p data-i18n="card_sub"></p></div>
+    <div class="idcard">
+      <div class="row1"><span class="lbl" data-i18n="card_lbl"></span><span class="status" data-i18n="card_yes"></span></div>
+      <div class="addr">0x119B2Bf71856155b234f818476ae0610634A2aB9</div>
+      <p class="note" data-i18n="card_note_yes"></p>
+    </div>
+
+    <div style="margin-top:20px">
+      <button class="btn" data-i18n="card_img_btn"></button>
+      <div style="margin-top:14px;max-width:680px;border:1px solid rgba(240,185,11,.55);border-radius:12px;background:#0d0d0f;padding:26px 28px">
+        <div style="font-family:var(--mono);color:var(--gold);font-size:13px;letter-spacing:.1em">BeCounted · ONE HUMAN · ONE ENTRY</div>
+        <div style="font-size:30px;font-weight:800;margin:14px 0 8px" data-i18n="img_verified"></div>
+        <div style="font-family:var(--mono);color:var(--gold);font-size:14px">0x119B2Bf718…364A2aB9</div>
+        <div style="margin-top:14px;color:var(--muted);font-size:14.5px">1 <span data-i18n="img_entries"></span> · 1 <span data-i18n="img_wins"></span> · 1 <span data-i18n="img_claims"></span></div>
+      </div>
+    </div>
+    <div style="height:22px"></div>
+    <div class="sec-head"><h2 data-i18n="rec_h" style="font-size:22px"></h2></div>
+    <div style="display:flex;gap:34px;flex-wrap:wrap;margin-bottom:10px">
+      <div class="stat"><b>1</b><span data-i18n="rec_entered"></span></div>
+      <div class="stat"><b>0</b><span data-i18n="rec_voted"></span></div>
+      <div class="stat"><b>1</b><span data-i18n="rec_claimed"></span></div>
+      <div class="stat"><b>1</b><span data-i18n="rec_won"></span></div>
+    </div>
+    <ul style="list-style:none;font-size:14.5px;line-height:2.1;color:var(--muted)">
+      <li><b style="color:var(--text)">V2 Trial — one human one share</b> <span style="color:var(--faint)">#1</span></li>
+      <li><b style="color:var(--text)">V2 Trial — escrowed 0.01 tBNB</b> <span style="color:var(--faint)">#0 · </span><b style="color:var(--gold)" data-i18n="rec_won"></b></li>
+    </ul>
+  </div>
+</section>
+
+
+
+<section id="creator">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">07</span><h2 data-i18n="creator_h"></h2><p>0x0938…DF38</p></div>
+    <div style="display:flex;gap:34px;flex-wrap:wrap;margin-bottom:18px">
+      <div class="stat"><b>2</b><span data-i18n="creator_camps"></span></div>
+      <div class="stat"><b>2</b><span data-i18n="creator_entries"></span></div>
+    </div>
+    <div class="camp-grid">
+      <div class="camp"><div class="camp-top"><span class="chip raffle" data-i18n="c_raffle"></span></div><h3>V2 Trial — escrowed 0.01 tBNB</h3><div class="meta"><b>1</b> <span data-i18n="c_entries"></span></div></div>
+      <div class="camp"><div class="camp-top"><span class="chip" data-i18n="c_claim"></span></div><h3>V2 Trial — one human one share</h3><div class="meta"><b>1</b> <span data-i18n="c_entries"></span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="mine">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">06</span><h2 data-i18n="mine_h"></h2><p data-i18n="mine_sub"></p></div>
+    <div class="camp-grid">
+      <div class="camp">
+        <div class="camp-top"><span class="chip raffle" data-i18n="c_raffle"></span><span class="chip ended" data-i18n="c_drawn"></span></div>
+        <h3>V2 Trial — escrowed 0.01 tBNB</h3>
+        <div class="meta"><b data-i18n="c_entries"></b> 1<br><b data-i18n="c_prize"></b> 0.01 BNB · <span data-i18n="paid_out"></span> 0.01</div>
+        <div class="foot"><button class="btn sm ghost" data-i18n="m_copy"></button></div>
+      </div>
+      <div class="camp">
+        <div class="camp-top"><span class="chip" data-i18n="c_claim"></span><span class="chip live" data-i18n="c_live"></span></div>
+        <h3>V2 Trial — one human one share</h3>
+        <div class="meta"><b data-i18n="c_entries"></b> 1<br><b data-i18n="c_pool"></b> 0.006 BNB · <span data-i18n="paid_out"></span> 0.002</div>
+        <div class="foot"><span class="count">1/3 <span data-i18n="c_claimed_n"></span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap f-in">
+    <div data-i18n="foot_l"></div>
+    <div class="mono" data-i18n="foot_r"></div>
+  </div>
+</footer>
+
+<script>
+const I18N = {
+en: {
+  nav_campaigns:"Campaigns", nav_how:"How it works", nav_builders:"Builders", nav_card:"ID Card",
+  connect:"Connect wallet",
+  kick_home:"Agent ID · BNB Chain · Sybil Resistance",
+  h1a:"One human.", h1b:"One", h1c:"entry.",
+  hero_sub:"Raffles and votes where every entry is backed by <b>exactly one KYC-anchored human</b> — not one wallet, not one botnet. BeCounted reads Binance <b>Agent ID</b> on-chain and lets only verified humans through. The second address simply doesn't pass.",
+  hero_note:"One person, one entry — enforced by structure, not by rules.",
+  check_label:"Check any address against the live Agent ID registry (BNB mainnet)",
+  check_btn:"Is human?",
+  check_try:"Try a known holder:", check_try_link:"9nosing.ai's wallet", check_try2:"— or paste your own Agentic Wallet address.",
+  stat_campaigns:"campaigns on testnet", stat_entries:"verified-human entries",
+  stat_per:"Agent IDs per human — structural, not policy", stat_funds:"funds held by the contracts, ever",
+  t1_no:"01 / Campaigns", t1_h:"Enter with your one ID", t1_p:"Live raffles and votes gated by BeCounted. One Agent ID, one entry — duplicates and second wallets are rejected on-chain.", t_go:"Open →",
+  t2_no:"02 / How it works", t2_h:"Two questions, two keys", t2_p:"Why the gate is stateless, why dedup belongs to each campaign, and the three things BeCounted will never do.", t_go2:"Read →",
+  t3_no:"03 / Builders", t3_h:"One read call is the API", t3_p:"Contract addresses, the integration snippet, and the is-human skill any AI agent can run before it acts.", t_go3:"Build →",
+  foot_l:"BeCounted — built for the Binance Wallet × BNB Chain Agent ID Hackathon. The contracts never hold funds. Prizes are paid by campaign creators; the chain only proves who entered and who won.",
+  foot_r:"testnet demo · mainnet launch follows the hackathon schedule",
+  v_invalid_t:"INVALID", v_invalid:"That is not a wallet address.",
+  v_reading:"Reading the registry…",
+  v_yes_t:"UNIQUE HUMAN", v_yes:"Holds an Agent ID — exactly one KYC-anchored human is behind this address.",
+  v_yes_s:"Uniqueness is proven. Trustworthiness is not — that part is still on you.",
+  v_no_t:"NOT VERIFIED", v_no:"No Agent ID at this address — it cannot pass the gate.",
+  v_no_s:"Agent IDs live in the Agentic Wallet. Check you pasted that address, not your main wallet.",
+  v_err_t:"ERROR", v_err:"Registry read failed — try again in a moment.",
+  // campaigns page
+  kick_camp:"Live on BNB testnet",
+  h_camp:"Campaigns",
+  camp_sub:"Every entry below passed the BeCounted check. Testnet runs on a mock registry — on mainnet, the same contracts read the real Agent ID registry and any holder can enter.",
+  loading:"Loading campaigns from chain…", load_fail:"Could not reach the testnet right now — refresh in a moment.", no_camp:"No campaigns yet.",
+  c_raffle:"Raffle", c_vote:"Vote", c_live:"Live", c_ended:"Ended", c_upcoming:"Upcoming", c_drawn:"Drawn",
+  c_window:"Window", c_winners:"Winners", c_seed:"Seed block", c_options:"Options", c_onevote:"one ID, one vote",
+  c_entries:"verified entries", c_winner:"Winner:", c_enter:"Enter raffle", c_draw:"Draw now",
+  c_opt:"Option", c_vote_btn:"Vote",
+  m_connect_first:"Connect your wallet first (top right). The testnet demo uses the mock registry.",
+  m_signing:"Waiting for signature…", m_done:"Done — refreshing…",
+  m_nowallet:"No wallet found — open this page in a wallet browser or install MetaMask.",
+  m_connected:"Connected on BSC testnet: ", m_rejected:"Connection rejected or failed.",
+  // how page
+  kick_how:"The design", h_how:"Two questions. Two keys.",
+  how_sub:"Sybil resistance is two different questions. Most systems mash them into one database and one admin key. We keep them apart — that separation is the whole design.",
+  q1_k:"Question 1 — asked on every call", q1_h:"“Is a unique human behind this address?”",
+  q1_p:"Keyed by <code>address</code>. Answered by the BeCounted primitive: a single read of the Agent ID registry, <code>isHuman(address) → bool</code>. Stateless, read-only, no owner, non-upgradeable. Deployed once, never touched again — anyone can verify that on-chain.",
+  q1_who:"Answered by →", q1_who_b:"BeCounted (the primitive)",
+  q2_k:"Question 2 — asked once per campaign", q2_h:"“Has this human already been counted here?”",
+  q2_p:"Keyed by <code>Agent ID</code>. Answered by each campaign's own bookkeeping — the state lives with the caller, not in the primitive. Because an Agent ID is non-transferable and lives in exactly one wallet, per-campaign dedup by the holding address is dedup by the ID itself.",
+  q2_who:"Answered by →", q2_who_b:"each campaign contract (the caller)",
+  bounds_h:"Three lines we won't cross",
+  b1_x:"NEVER — 01", b1_h:"No reverse lookup", b1_p:"We answer address → human?, never name → wallet. A gate is not a surveillance tool, and we won't build one.",
+  b2_x:"NEVER — 02", b2_h:"No character judgement", b2_p:"An Agent ID proves “same unique person”, never “trustworthy person”. Accountable is not the same as trusted.",
+  b3_x:"NEVER — 03", b3_h:"No sybil hunting", b3_p:"We don't cluster, score or expose anyone's other addresses. Extra addresses simply don't pass the gate. That's enough.",
+  why_h:"Why a primitive, not a platform",
+  why_p:"Platforms hold your data and ask to be trusted. A primitive holds nothing: no database, no admin key, no off switch. Ptah's Proof of Agent draws and a wave of one-per-person mints already check the Agent ID registry by hand — BeCounted turns that proven pattern into one call any contract, and any agent, can reuse.",
+  // builders page
+  kick_build:"Integration", h_build:"For builders",
+  build_sub:"One read call is the whole integration. If your contract can call a view function, you have sybil resistance.",
+  code_note:"Gate any function with one line. The primitive is stateless — your contract keeps its own per-campaign dedup, keyed by the human.",
+  a_gate:"BeCounted — BSC testnet", a_apps:"OneIDCampaigns — BSC testnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
+  a_skill_v:"is-human — a zero-dependency checker any AI agent can run before it acts. Source in the project repo.",
+  skill_h:"For agents, not just contracts",
+  skill_p:"The same check ships as a skill: an AI agent about to enter, claim or pay can ask “is a unique human behind this address?” and get an answer whose evidence is on-chain — not issued by us, not stored by us.",
+  // card page
+  kick_card:"Read-only identity", h_card:"The ID card",
+  card_sub:"What a verified human looks like on the other side of the gate. Generated from chain state in your browser — nothing is stored, nothing is tracked.",
+  card_btn:"Generate", card_lbl:"BECOUNTED · IDENTITY CARD", card_not:"NOT CHECKED", card_reading:"READING…", card_fail:"READ FAILED",
+  card_yes:"✓ UNIQUE HUMAN", card_no:"NO AGENT ID",
+  card_note0:"Enter an address to read its Agent ID status from the BNB mainnet registry. This card proves uniqueness and continuity — the same one person, only one of them. It says nothing about whether that person is trustworthy.",
+  card_note_yes:"This address holds an Agent ID on BNB Chain: one verified human, one identity, non-transferable and bound to a single Agentic Wallet. It can be counted exactly once in any BeCounted campaign — here, and everywhere the gate is used.",
+  card_note_no:"No Agent ID is bound to this address. It may be a regular wallet, or the wrong address — Agent IDs live in the Agentic Wallet created inside the Binance app.",
+  card_invalid:"Not a valid address",
+  nav_create:"Create",
+  nav_mine:"Mine",
+  share_btn:"Share", c_option:"Option", m_draw:"Draw now", m_drawn:"Drawn", tx_fail:"Transaction failed", post_btn:"Creator's post", post_set:"X post link", post_ph:"Paste the post URL (https://x.com/...)", post_save:"Save link", f_posturl:"Your X post link (optional — can add later)",
+  nav_bind:"Bind X",
+  flt_search_ph:"Search campaigns…", flt_all:"All", flt_live:"Live", flt_upcoming:"Upcoming", flt_ended:"Ended",
+  d_details:"Details", d_participants:"Participants", d_winners:"Winners", d_back:"All campaigns",
+  d_proof_h:"Draw proof — verify it yourself", d_proof_seed:"Seed (from the Drawn event)", d_proof_seedblock:"Seed block",
+  d_proof_fallback:"Fallback seed used (original seed block aged out)", d_proof_verify:"Recompute winners",
+  d_proof_ok:"Recomputed winners match the on-chain winners exactly.", d_proof_bad:"Mismatch — do not trust this draw.",
+  d_proof_how:"Winners are picked by a partial Fisher–Yates shuffle: for each slot i, j = i + keccak256(seed, i) mod (n − i) over the entry list, in entry order. Anyone can redo this math.",
+  d_notdrawn:"Not drawn yet — the draw can be triggered by anyone after the end time.",
+  bind_kick:"Social binding", bind_h:"Bind your X account",
+  bind_sub:"A public, verifiable statement — not a trust score. It proves this X account and this wallet are the same person, nothing more. The tweet itself is the record; there is no database and no way to look anyone up by name.",
+  bind_handle_ph:"Your X handle (without @)", bind_make:"Sign the binding statement",
+  bind_stmt:"Statement", bind_sig:"Signature", bind_tweet:"Post this on X", bind_post:"Post on X",
+  bind_verify_h:"Verify a binding", bind_verify_btn:"Verify",
+  bind_addr_ph:"Wallet address 0x…", bind_sig_ph:"Signature 0x…",
+  bind_ok:"Signature valid — this address signed for @{h}.", bind_ok_human:"And the address holds an Agent ID: a verified unique human.",
+  bind_not_human:"Signature valid, but this address holds no Agent ID.", bind_bad:"Invalid — the signature does not match this handle and address.",
+
+  stat_humans:"Verified humans in", stat_payouts:"Payouts made",
+  invite_btn:"Invite", invite_prompt:"Your friend's X handle (without @)?",
+  invite_text:"@{friend} come join \"{title}\" on BeCounted — one Agent ID each, bot farms can\'t get in. I\'m in already:",
+  discuss_btn:"Discuss on X", discuss_text:"Discussing \"{title}\" on BeCounted — one human, one entry, provably fair. #BeCounted{id}",
+  card_img_btn:"Make my share card", card_img_dl:"Download PNG", card_img_share:"Post it on X",
+  card_img_share_text:"I\'m a verified unique human on BeCounted — one KYC, one Agent ID, zero bots. Check your own address:",
+  img_verified:"VERIFIED UNIQUE HUMAN", img_entries:"entries", img_wins:"wins", img_claims:"claims",
+  creator_kick:"Creator", creator_h:"Creator page", creator_camps:"campaigns", creator_entries:"total entries",
+  creator_share:"Share this creator", creator_none:"This address has not created any campaign yet.",
+  creator_by:"by",
+
+  share_text_raffle:"I just entered \"{title}\" on BeCounted — one Agent ID, one ticket. Bot farms can\'t get in, every entry is a verified unique human. Join me:",
+  share_text_vote:"I just voted in \"{title}\" on BeCounted — one Agent ID, one vote, no sybil stuffing. Have your say:",
+  share_text_claim:"I just claimed my share in \"{title}\" on BeCounted — one Agent ID, one share, paid on-chain instantly. Claim yours:",
+  share_text_win:"I won \"{title}\" on BeCounted and claimed the prize on-chain — one Agent ID, one ticket, provably fair draw. Next one:",
+  share_done_hint:"Done! Share it on X — posts with #BinanceWalletHackathon #AgenticWallet can also win the official 100 USDC community prize:",
+  guide_h:"No Agent ID yet? Get one in the Binance app — about 3 minutes",
+  guide_1:"Open the Binance app and go to Wallet",
+  guide_2:"Tap the Agent ID banner on the wallet home page",
+  guide_3:"Claim your name.ai — one KYC, one ID, free (a little BNB covers gas)",
+  guide_4:"Come back here, connect the Agentic Wallet, and you are in",
+  cd_ends:"ends in", cd_starts:"starts in", cd_d:"d", cd_h:"h", cd_m:"m",
+  soon_h:"Ending soon", soon_sub:"Live now, closing first — do not miss the window.",
+  hot_h:"Trending", hot_camps:"Hot campaigns", hot_creators:"Top creators", hot_entries:"entries",
+  f_tok_usdt:"USDT (preset)", f_tok_usdc:"USDC (preset)",
+
+  c_claim:"Claim drop", c_pool:"Pool", c_each:"Each gets", c_claimed_n:"claimed", c_claim_btn:"Claim",
+  c_prize:"Prize", c_per_winner:"per winner", c_claim_prize:"Claim prize", c_prize_claimed:"Prize claimed",
+  ev_claimed:"claimed a share", ev_prize:"claimed a prize",
+  f_tab_claim:"Claim drop",
+  f_mode:"Payout mode", f_mode_fixed:"Fixed shares", f_mode_random:"Lucky draw (random)",
+  f_mode_hint:"Lucky draw uses the double-mean rule: every draw lands between a minimum and twice the remaining average, the last claimant takes the rest. Amounts are drawn from on-chain pseudo-randomness — made for fun-size pools.",
+  c_lucky:"Lucky draw", c_fixed_mode:"Fixed", c_remaining:"left in pool", c_recent:"Recent draws", c_best:"Best luck",
+
+  f_prize_token:"Prize", f_tok_none:"No prize", f_tok_bnb:"BNB", f_tok_erc20:"ERC20 token",
+  f_token_addr:"Token contract address", f_per_winner:"Prize per winner", f_pool:"Total pool", f_maxclaims:"Number of shares",
+  f_submit_claim:"Create claim drop",
+  f_err_amount:"Amounts must be above zero.", f_err_token:"That token address is not valid.",
+  f_approving:"Approving the token spend first…",
+  mine_kick:"Creator console", mine_h:"My campaigns",
+  mine_sub:"Campaigns you created from the connected wallet: draw them when they end, copy the winner list, reclaim what was never claimed.",
+  mine_none:"Nothing here yet — this wallet has not created a campaign.", mine_connect:"Connect your wallet to see your campaigns.",
+  m_copy:"Copy winners", m_copied:"Copied!", m_reclaim:"Reclaim remainder",
+  rec_h:"Participation record", rec_loading:"Loading the on-chain record…",
+  rec_none:"No participation found for this address yet.",
+  paid_out:"Paid out",
+  rec_entered:"raffles entered", rec_voted:"votes cast", rec_claimed:"shares claimed", rec_won:"raffles won",
+
+  mq1:"One human", mq2:"One entry", mq3:"No reverse lookup", mq4:"No character judgement", mq5:"Stateless · Read-only · No owner", mq6:"Sybil resistance as a primitive",
+  feed_h:"Live from the gate — BSC testnet", feed_blk:"block",
+  ev_created:"campaign created", ev_entered:"entered raffle", ev_voted:"voted", ev_drawn:"raffle drawn",
+  feed_empty:"No events yet in the recent window.", feed_fail:"Feed unavailable right now.",
+  cta_h:"Run your own draw — gated by real humans",
+  cta_p:"Anyone can create a raffle or vote here. Entries are checked against Agent ID on-chain: one human, one entry, no bot farms. You bring the prize and the crowd; the gate brings the fairness.",
+  cta_btn:"Create a campaign",
+  kick_create:"Open to everyone", h_create:"Create a campaign",
+  create_sub:"No permission needed, no listing fee, the contract never touches your prize. Set it up, share the link, and every entry is verified against Agent ID automatically.",
+  f_title:"Title", f_title_ph:"e.g. Community airdrop draw — 20 USDC",
+  f_start:"Starts at", f_end:"Ends at", f_winners:"Number of winners",
+  f_options:"Number of options (2–16)",
+  f_seed_hint:"The draw's seed block is fixed automatically at creation — a future block right after the end time, whose hash nobody can know in advance. Results are reproducible by anyone.",
+  f_prize_hint:"Prizes are paid by you directly to the winners after the draw. The contract never holds funds.",
+  f_submit_raffle:"Create raffle", f_submit_vote:"Create vote",
+  f_tab_raffle:"Raffle", f_tab_vote:"Vote",
+  f_err_title:"Give the campaign a title.", f_err_time:"End time must be after the start time, and the start cannot be in the past.",
+  f_err_winners:"Winners must be at least 1.",
+  f_ok:"Campaign created — it's live on the Campaigns page now. Share it!",
+  f_creating:"Creating on-chain…",
+},
+zh: {
+  nav_campaigns:"活动", nav_how:"原理", nav_builders:"开发者", nav_card:"身份卡",
+  connect:"连接钱包",
+  kick_home:"Agent ID · BNB 链 · 抗女巫",
+  h1a:"一个真人。", h1b:"一张", h1c:"票。",
+  hero_sub:"在这里，每一次报名背后都站着<b>恰好一个经过 KYC 锚定的真人</b>——不是一个钱包，更不是一群机器人。BeCounted 在链上读取币安 <b>Agent ID</b>，只放行已验证的真人。第二个地址，就是过不去。",
+  hero_note:"一人一票——不是规则定的，是结构定的。",
+  check_label:"用主网真实 Agent ID 注册表，查任意地址",
+  check_btn:"是真人吗？",
+  check_try:"试试已知持有者：", check_try_link:"9nosing.ai 的钱包", check_try2:"——也可以粘贴你自己的 Agentic Wallet 地址。",
+  stat_campaigns:"测试网上的活动", stat_entries:"真人报名人次",
+  stat_per:"每个真人可领的 Agent ID——结构决定，非规则", stat_funds:"合约经手的资金，永远为零",
+  t1_no:"01 / 活动", t1_h:"用你的唯一 ID 报名", t1_p:"正在进行的抽奖与投票，全部由 BeCounted 把关。一个 Agent ID 一张票——重复报名和第二个钱包都会在链上被拒。", t_go:"进入 →",
+  t2_no:"02 / 原理", t2_h:"两个问题，两把钥匙", t2_p:"为什么门禁本身无状态、为什么去重状态归每个活动自己管，以及 BeCounted 永远不会做的三件事。", t_go2:"查看 →",
+  t3_no:"03 / 开发者", t3_h:"一次只读调用就是 API", t3_p:"合约地址、接入代码片段，以及任何 AI Agent 动手前都能先跑一遍的 is-human 技能。", t_go3:"接入 →",
+  foot_l:"BeCounted——为币安钱包 × BNB 链 Agent ID 黑客松而建。合约从不经手资金：奖品由活动发起方发放，链只负责证明谁报了名、谁中了奖。",
+  foot_r:"测试网演示 · 主网按黑客松排期上线",
+  v_invalid_t:"无效", v_invalid:"这不是一个钱包地址。",
+  v_reading:"正在读取注册表…",
+  v_yes_t:"唯一真人", v_yes:"持有 Agent ID——这个地址背后恰好站着一个 KYC 锚定的真人。",
+  v_yes_s:"唯一性已证明。可不可信，仍然要你自己判断。",
+  v_no_t:"未验证", v_no:"这个地址没有 Agent ID——过不了这道门。",
+  v_no_s:"Agent ID 在 Agentic Wallet 里。确认你粘贴的是那个地址，而不是主钱包。",
+  v_err_t:"出错", v_err:"注册表读取失败——稍等片刻再试。",
+  kick_camp:"BNB 测试网运行中",
+  h_camp:"活动",
+  camp_sub:"下面每一次报名都通过了 BeCounted 的核验。测试网用的是模拟注册表；主网上线后，同一套合约读取真实 Agent ID 注册表，任何持有者都能报名。",
+  loading:"正在从链上加载活动…", load_fail:"暂时连不上测试网——稍后刷新。", no_camp:"暂无活动。",
+  c_raffle:"抽奖", c_vote:"投票", c_live:"进行中", c_ended:"已结束", c_upcoming:"未开始", c_drawn:"已开奖",
+  c_window:"时间", c_winners:"中奖名额", c_seed:"种子区块", c_options:"选项数", c_onevote:"一 ID 一票",
+  c_entries:"人已报名", c_winner:"中奖者：", c_enter:"报名抽奖", c_draw:"立即开奖",
+  c_opt:"选项", c_vote_btn:"投",
+  m_connect_first:"先连接钱包（右上角）。测试网演示使用模拟注册表。",
+  m_signing:"等待签名…", m_done:"完成——刷新中…",
+  m_nowallet:"没找到钱包——请在钱包浏览器里打开本页，或安装 MetaMask。",
+  m_connected:"已在 BSC 测试网连接：", m_rejected:"连接被拒绝或失败。",
+  kick_how:"设计", h_how:"两个问题。两把钥匙。",
+  how_sub:"抗女巫其实是两个不同的问题。多数系统把它们塞进同一个数据库、同一把管理员钥匙。我们把它们彻底分开——这个分离，就是全部设计。",
+  q1_k:"问题一——每次调用都要问", q1_h:"「这个地址背后，是不是一个唯一真人？」",
+  q1_p:"用 <code>地址</code> 作钥匙。由 BeCounted 原语回答：对 Agent ID 注册表做一次只读查询，<code>isHuman(address) → bool</code>。无状态、只读、无 owner、不可升级。部署一次，永不再动——任何人都能在链上验证这一点。",
+  q1_who:"回答者 →", q1_who_b:"BeCounted（原语）",
+  q2_k:"问题二——每个活动只问一次", q2_h:"「这个人，在这个活动里算过没有？」",
+  q2_p:"用 <code>Agent ID</code> 作钥匙。由每个活动自己的账本回答——状态归调用方，不进原语。因为 Agent ID 不可转让、只存在于一个钱包里，按持有地址去重，就等于按 ID 本人去重。",
+  q2_who:"回答者 →", q2_who_b:"每个活动合约（调用方）",
+  bounds_h:"三条线，我们不越",
+  b1_x:"绝不 — 01", b1_h:"不做反查", b1_p:"我们回答「地址 → 是不是真人」，绝不回答「名字 → 钱包」。门是用来把关的，不是用来监视的。",
+  b2_x:"绝不 — 02", b2_h:"不判人品", b2_p:"Agent ID 证明的是「同一个人、且只有一个」，不是「这个人可信」。可问责，不等于可信。",
+  b3_x:"绝不 — 03", b3_h:"不查小号", b3_p:"我们不聚类、不打分、不曝光任何人的其他地址。多余的地址过不了门——这就够了。",
+  why_h:"为什么是原语，不是平台",
+  why_p:"平台握着你的数据，要求你信任它。原语什么都不握：没有数据库、没有管理员钥匙、没有关停开关。Ptah 的 Proof of Agent 抽奖和一批「一人一份」的 Mint 已经在手工查 Agent ID 注册表了——BeCounted 把这个被验证过的模式，做成任何合约、任何 Agent 都能复用的一次调用。",
+  kick_build:"接入", h_build:"开发者",
+  build_sub:"一次只读调用，就是全部接入工作。你的合约只要能调 view 函数，就拥有了抗女巫能力。",
+  code_note:"一行代码给任何函数加门。原语无状态——去重状态由你的合约按「人」自己记。",
+  a_gate:"BeCounted — BSC 测试网", a_apps:"OneIDCampaigns — BSC 测试网", a_reg:"Agent ID 注册表 — BSC 主网", a_skill:"Agent 技能",
+  a_skill_v:"is-human——零依赖的小工具，任何 AI Agent 在动手之前都能先跑一遍。源码在项目仓库里。",
+  skill_h:"不只给合约，也给 Agent",
+  skill_p:"同一套核验也做成了技能：AI Agent 在报名、领取或付款之前，可以先问一句「这个地址背后是不是唯一真人？」——答案的证据在链上，不由我们签发，也不经我们存储。",
+  kick_card:"只读身份", h_card:"身份卡",
+  card_sub:"一个已验证真人，在门的另一侧长什么样。由你的浏览器直接读链生成——不存储、不追踪。",
+  card_btn:"生成", card_lbl:"BECOUNTED · 身份卡", card_not:"未查询", card_reading:"读取中…", card_fail:"读取失败",
+  card_yes:"✓ 唯一真人", card_no:"无 AGENT ID",
+  card_note0:"输入地址，从 BNB 主网注册表读取它的 Agent ID 状态。这张卡证明唯一性与连续性——同一个人、且只有一个。它不说明这个人是否可信。",
+  card_note_yes:"这个地址在 BNB 链上持有 Agent ID：一个已验证真人、一个身份，不可转让、只绑定一个 Agentic Wallet。在任何接入 BeCounted 的活动里，它都只能被计算一次——在这里如此，在所有用这道门的地方都如此。",
+  card_note_no:"这个地址没有绑定 Agent ID。它可能只是个普通钱包，或者地址贴错了——Agent ID 在币安 App 里创建的 Agentic Wallet 里。",
+  card_invalid:"这不是有效的地址",
+  nav_create:"发布活动",
+  nav_mine:"我的活动",
+  share_btn:"分享", c_option:"选项", m_draw:"立即开奖", m_drawn:"已开奖", tx_fail:"交易失败", post_btn:"发行人的帖子", post_set:"X 帖子链接", post_ph:"粘贴帖子链接（https://x.com/…）", post_save:"保存链接", f_posturl:"你的 X 帖子链接（选填，可稍后补）",
+  nav_bind:"绑定 X",
+  flt_search_ph:"搜索活动…", flt_all:"全部", flt_live:"进行中", flt_upcoming:"未开始", flt_ended:"已结束",
+  d_details:"详情", d_participants:"参与者", d_winners:"中奖名单", d_back:"全部活动",
+  d_proof_h:"开奖证明 — 自己验一遍", d_proof_seed:"种子（来自 Drawn 事件）", d_proof_seedblock:"种子区块",
+  d_proof_fallback:"用了备用种子（原种子区块已过期）", d_proof_verify:"复算中奖名单",
+  d_proof_ok:"复算结果与链上中奖名单完全一致。", d_proof_bad:"对不上——这次开奖不可信。",
+  d_proof_how:"中奖者由部分 Fisher–Yates 洗牌决定：第 i 个名额 j = i + keccak256(种子, i) 对 (n − i) 取模，按报名顺序在名单上换位。任何人都能重算这笔账。",
+  d_notdrawn:"尚未开奖——结束时间过后，任何人都能触发开奖。",
+  bind_kick:"社交绑定", bind_h:"绑定你的 X 账号",
+  bind_sub:"一份公开可验的声明——不是信誉分。它只证明这个 X 账号和这个钱包是同一个人，仅此而已。推文本身就是记录；没有数据库，也不能拿名字反查任何人。",
+  bind_handle_ph:"你的 X 账号（不带 @）", bind_make:"签名生成绑定声明",
+  bind_stmt:"声明原文", bind_sig:"签名", bind_tweet:"把这段发到 X 上", bind_post:"发到 X",
+  bind_verify_h:"验证一份绑定", bind_verify_btn:"验证",
+  bind_addr_ph:"钱包地址 0x…", bind_sig_ph:"签名 0x…",
+  bind_ok:"签名有效——这个地址确实为 @{h} 签了名。", bind_ok_human:"且该地址持有 Agent ID：已验证的唯一真人。",
+  bind_not_human:"签名有效，但这个地址没有 Agent ID。", bind_bad:"无效——签名与这个账号、地址对不上。",
+
+  stat_humans:"已验证真人", stat_payouts:"已发放笔数",
+  invite_btn:"邀请", invite_prompt:"朋友的 X 账号（不带 @）？",
+  invite_text:"@{friend} 来参加 BeCounted 的《{title}》——一人一个 Agent ID，机器人农场进不来。我已经参加了：",
+  discuss_btn:"去 X 讨论", discuss_text:"聊聊 BeCounted 的《{title}》——一人一票、开奖可复算。#BeCounted{id}",
+  card_img_btn:"生成我的晒卡", card_img_dl:"下载 PNG", card_img_share:"发推晒卡",
+  card_img_share_text:"我在 BeCounted 已验证为唯一真人——一个 KYC、一个 Agent ID、零机器人。查查你自己的地址：",
+  img_verified:"已验证 · 唯一真人", img_entries:"参与", img_wins:"中奖", img_claims:"领取",
+  creator_kick:"创作者", creator_h:"创作者主页", creator_camps:"个活动", creator_entries:"总参与人次",
+  creator_share:"分享这位创作者", creator_none:"这个地址还没有发起过活动。",
+  creator_by:"发起人",
+
+  share_text_raffle:"我刚在 BeCounted 参加了《{title}》——一人一个 Agent ID、一张票，机器人农场进不来，每个名额都是验证过的真人。一起来：",
+  share_text_vote:"我刚在 BeCounted 的《{title}》投了一票——一个 Agent ID 一票，女巫刷不了票。你也来表个态：",
+  share_text_claim:"我刚在 BeCounted 的《{title}》领到了我那一份——一个 Agent ID 一份，链上即时到账。你也来领：",
+  share_text_win:"我在 BeCounted 的《{title}》中奖了，奖品已在链上领到——一人一票、开奖可复算。下期一起：",
+  share_done_hint:"搞定！发条推晒一下——带 #BinanceWalletHackathon #AgenticWallet 的原创推还有机会拿官方 100 USDC 社区奖：",
+  guide_h:"还没有 Agent ID？去币安 App 领一个，大约 3 分钟",
+  guide_1:"打开币安 App，进入钱包",
+  guide_2:"点钱包首页的 Agent ID 横幅",
+  guide_3:"领取你的 name.ai——一个 KYC 一个、免费（备一点点 BNB 付 gas）",
+  guide_4:"回到这里，连接 Agentic Wallet，就能参加了",
+  cd_ends:"距结束", cd_starts:"距开始", cd_d:"天", cd_h:"小时", cd_m:"分",
+  soon_h:"即将结束", soon_sub:"正在进行、先到截止时间的排前面——别错过窗口。",
+  hot_h:"热度榜", hot_camps:"热门活动", hot_creators:"创作者榜", hot_entries:"人参与",
+  f_tok_usdt:"USDT（预设）", f_tok_usdc:"USDC（预设）",
+
+  c_claim:"领取", c_pool:"奖池", c_each:"每份", c_claimed_n:"已领", c_claim_btn:"领取",
+  c_prize:"奖品", c_per_winner:"每位中奖者", c_claim_prize:"领取奖品", c_prize_claimed:"奖品已领取",
+  ev_claimed:"领取了一份", ev_prize:"领取了奖品",
+  f_tab_claim:"领取活动",
+  f_mode:"发放方式", f_mode_fixed:"固定金额", f_mode_random:"拼手气（随机）",
+  f_mode_hint:"拼手气用二倍均值法：每次领取在保底和剩余平均值两倍之间随机，最后一位拿走剩余。金额由链上伪随机决定——适合小额娱乐局。",
+  c_lucky:"拼手气", c_fixed_mode:"固定", c_remaining:"奖池剩余", c_recent:"领取记录", c_best:"手气最佳",
+
+  f_prize_token:"奖品", f_tok_none:"无奖品", f_tok_bnb:"BNB", f_tok_erc20:"ERC20 代币",
+  f_token_addr:"代币合约地址", f_per_winner:"每位中奖者奖品", f_pool:"奖池总额", f_maxclaims:"份数",
+  f_submit_claim:"创建领取活动",
+  f_err_amount:"金额必须大于零。", f_err_token:"代币地址不对。",
+  f_approving:"先授权代币额度…",
+  mine_kick:"创作者控制台", mine_h:"我发起的活动",
+  mine_sub:"用当前连接的钱包发起的活动都在这里：到点开奖、复制中奖名单、回收没人领走的部分。",
+  mine_none:"还没有——这个钱包没发起过活动。", mine_connect:"先连接钱包，才能看到你发起的活动。",
+  m_copy:"复制中奖名单", m_copied:"已复制！", m_reclaim:"回收剩余",
+  rec_h:"参与战绩", rec_loading:"正在读取链上记录…",
+  rec_none:"这个地址还没有参与记录。",
+  paid_out:"已发放",
+  rec_entered:"参加抽奖", rec_voted:"参与投票", rec_claimed:"领取份额", rec_won:"中奖次数",
+
+  mq1:"一个真人", mq2:"一张票", mq3:"不做反查", mq4:"不判人品", mq5:"无状态 · 只读 · 无所有者", mq6:"把抗女巫做成原语",
+  feed_h:"门边的实时动态 — BSC 测试网", feed_blk:"区块",
+  ev_created:"新建了活动", ev_entered:"报名了抽奖", ev_voted:"投了一票", ev_drawn:"抽奖已开奖",
+  feed_empty:"最近还没有事件。", feed_fail:"动态暂时不可用。",
+  cta_h:"办你自己的抽奖——由真人把关",
+  cta_p:"任何人都能在这里发起抽奖或投票。每次报名都对照 Agent ID 在链上核验：一人一票，机器人农场进不来。你出奖品和人气，门负责公平。",
+  cta_btn:"发起一个活动",
+  kick_create:"对所有人开放", h_create:"发起活动",
+  create_sub:"无需许可、没有上架费，合约也永不经手你的奖品。设置好、把链接发出去，每一次报名都会自动对照 Agent ID 核验。",
+  f_title:"标题", f_title_ph:"例如：社区空投抽奖 — 20 USDC",
+  f_start:"开始时间", f_end:"结束时间", f_winners:"中奖人数",
+  f_options:"选项数量（2–16）",
+  f_seed_hint:"开奖的种子区块会在创建时自动定死——取结束时间之后的一个未来区块，它的哈希无人能提前知道。开奖结果任何人可复算。",
+  f_prize_hint:"奖品由你在开奖后直接发给中奖者。合约从不经手资金。",
+  f_submit_raffle:"创建抽奖", f_submit_vote:"创建投票",
+  f_tab_raffle:"抽奖", f_tab_vote:"投票",
+  f_err_title:"给活动起个标题。", f_err_time:"结束时间必须晚于开始时间，开始时间不能是过去。",
+  f_err_winners:"中奖人数至少为 1。",
+  f_ok:"活动创建成功——已经出现在活动页了。快分享出去！",
+  f_creating:"正在上链创建…",
+}};
+let LANG = (navigator.language || 'en').startsWith('zh') ? 'zh' : 'en';
+const t = k => (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || k;
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+  document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.dataset.lang === LANG));
+}
+function setLang(l){ LANG = l; applyI18n(); }
+applyI18n();
+</script>
+
+<section id="detail">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">08</span><h2 data-i18n="d_details"></h2><p>Testnet Trial Draw 20U</p></div>
+    <div class="panel">
+      <div class="rows">
+        <div class="row"><span data-i18n="d_participants"></span><b>1</b></div>
+        <div class="row"><span>0x09385E06…1B1d0DF38</span><b>✓</b></div>
+        <div class="row"><span data-i18n="d_winners"></span><b>0x09385E06…1B1d0DF38</b></div>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-weight:700;margin-bottom:6px" data-i18n="d_proof_h"></div>
+        <p style="color:var(--muted);font-size:14px" data-i18n="d_proof_how"></p>
+        <button class="btn sm" data-i18n="d_proof_verify"></button>
+        <span style="color:var(--gold);margin-left:10px">✓ <span data-i18n="d_proof_ok"></span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="bind">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">09</span><h2 data-i18n="bind_h"></h2><p data-i18n="bind_sub"></p></div>
+    <div class="panel" style="max-width:640px">
+      <div class="rows">
+        <div class="row"><span data-i18n="bind_stmt"></span><b style="white-space:pre-wrap;text-align:right">BeCounted X binding<br>Handle: @jiusi<br>Address: 0x119B2Bf7…364A2aB9<br>Network: BNB Chain</b></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn sm" data-i18n="bind_make"></button>
+        <button class="btn sm ghost" data-i18n="bind_verify_btn"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,711 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import {BeCounted} from "./BeCounted.sol";
+
+interface IERC20 {
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function transfer(address to, uint256 amount) external returns (bool);
+}
+
+interface IBindingCheck {
+    function isBindingValid(address who) external view returns (bool);
+}
+
+interface IQuestStamps {
+    function stampCount(address who) external view returns (uint32);
+}
+
+interface IBalanceOf {
+    function balanceOf(address who) external view returns (uint256);
+}
+
+/// @title OneIDCampaignsV8 — reference applications built on BeCounted
+/// @notice Three applications that integrate the BeCounted primitive the
+///         way a third-party project would:
+///           1. RAFFLE — one Agent ID, one ticket. The draw seed block is
+///              fixed at creation; results are reproducible by anyone.
+///              The creator MAY escrow a prize (BNB or any ERC20) in the
+///              contract; winners claim their share on-chain.
+///           2. VOTE   — one Agent ID, one vote; tallies are public. The
+///              creator MAY escrow a prize pool that is drawn among ALL
+///              voters after the vote ends (see createVote).
+///           3. CLAIM  — one Agent ID, one share. The creator escrows a
+///              pool; each verified human claims exactly one share, paid
+///              out immediately. Two modes: FIXED (equal shares) or
+///              RANDOM ("lucky draw" red-packet style, double-mean
+///              algorithm — every draw is between 1 unit and twice the
+///              remaining average, the last claimant takes the rest).
+///              Randomness is blockhash-based pseudo-randomness, fit
+///              for entertainment-size pools, NOT for large sums; it is
+///              labelled as such in the UI. The canonical fair-drop /
+///              allowlist pattern, minus the sybil farms.
+///
+/// @dev Two-key design: BeCounted answers "is a unique human?" (keyed by
+///      address, stateless). THIS contract keeps the per-campaign dedup
+///      state (keyed by participant — effectively by Agent ID, since the
+///      ID is non-transferable and lives in exactly one wallet).
+///
+///      FUNDS: escrow is opt-in per campaign and fully accounted:
+///      every wei/token unit deposited is either paid to a winner or
+///      claimant, or reclaimable by the creator after the window
+///      (unclaimed prizes after 30 days; claim-pool remainders after
+///      the campaign ends). The contract holds no other funds and
+///      has no owner. No yield is promised anywhere, by design.
+/// @notice V6 added an entry-condition engine. A creator may attach any
+///         combination of on-chain-verifiable conditions to a campaign;
+///         `_join` enforces them at entry, after the human check and
+///         before the dedup mark (a failed condition never consumes
+///         the entry):
+///           0 - the entrant has a valid X binding (IdentityBindings);
+///           1 - the entrant holds at least `gateMin` of `gateToken`
+///               (any ERC20, or an ERC721 counted by balanceOf);
+///           2 - the entrant already entered campaign `requireEnteredId`
+///               in this contract (returning-participant campaigns);
+///           3 - the entrant holds at least `minStamps` stamps in the
+///               QuestPass season contract named by `questRef`.
+///         "Follows the creator on X" is deliberately NOT a condition:
+///         a follow lives only on X's servers and cannot be verified
+///         on-chain without a trusted server. Condition 0 is the
+///         trustless half of that pattern - every entrant carries a
+///         public handle that anyone can check against the creator's
+///         follower list on X itself.
+/// @notice V7 added two creator options on top of V6 (both kept in V8):
+///           4 - ALLOWLIST: the creator commits a Merkle root of an
+///               address list at creation (`allowRoot`); an entrant
+///               joins by presenting a Merkle proof for their own
+///               address. The list itself never touches the chain, so
+///               list size does not change creation cost, and anyone
+///               holding the list can recompute the root and check it
+///               against the committed value.
+///           VOTE PRIZES: a vote may carry an escrowed prize pool.
+///               After the vote ends, `prizeWinners` voters are drawn
+///               at random from ALL voters — the option a voter picked
+///               plays no role, so the pool thanks participation
+///               instead of buying a side — and split the pool
+///               equally; winners claim on-chain, and anyone can
+///               recompute the draw from the voter list and the seed
+///               in the Drawn event, exactly like a raffle.
+contract OneIDCampaignsV8 {
+    enum Kind {
+        Raffle,
+        Vote,
+        Claim
+    }
+
+    uint256 public constant PRIZE_CLAIM_WINDOW = 30 days;
+
+    struct Campaign {
+        address creator;
+        Kind kind;
+        string title;
+        uint64 startAt;
+        uint64 endAt;
+        // Raffle + prize votes
+        uint32 winnerCount;
+        uint64 seedBlock; // fixed at creation; its blockhash seeds the draw
+        bool drawn;
+        bool usedFallbackSeed;
+        // Vote only
+        uint8 optionCount;
+        // Shared
+        uint256 entryCount;
+        // Funds (Raffle escrow + Claim pool + Vote prize pool in `pool`);
+        // prizeToken == address(0) = BNB
+        address prizeToken;
+        uint256 prizePerWinner; // Raffle: fixed at creation. Vote: set at draw (pool / drawn winners)
+        uint256 pool; // Claim: total escrowed pool. Vote: total escrowed prize pool
+        uint256 claimAmount; // Claim (fixed mode): pool / maxClaims, fixed at creation
+        uint32 maxClaims; // Claim: cap on number of claims
+        bool claimRandom; // Claim: true = lucky-draw random shares
+        uint256 paidOut; // total already paid out (prizes + claims)
+        bool reclaimed; // creator has taken the remainder
+    }
+
+    BeCounted public immutable gate;
+    /// @notice X-binding registry consulted by entry condition 0.
+    ///         May be address(0), which disables that condition.
+    IBindingCheck public immutable bindings;
+
+    Campaign[] private _campaigns;
+
+    /// @notice Entry conditions attached at creation; immutable after.
+    ///         `requireEnteredId == type(uint256).max` means "no
+    ///         prior-participation condition"; `allowRoot == bytes32(0)`
+    ///         means "no allowlist".
+    struct Conditions {
+        bool requireBinding;
+        address gateToken;
+        uint256 gateMin;
+        bool gateIs721;
+        uint256 requireEnteredId;
+        uint32 minStamps;
+        address questRef;
+        bytes32 allowRoot;
+    }
+
+    mapping(uint256 => Conditions) private _conditions;
+
+    mapping(uint256 => mapping(address => bool)) public hasEntered;
+    mapping(uint256 => address[]) private _entries;
+    mapping(uint256 => mapping(address => uint8)) public voteOf;
+    mapping(uint256 => mapping(uint8 => uint256)) public tally;
+    mapping(uint256 => address[]) private _winners;
+    /// @notice The creator's own X announcement post for a campaign,
+    ///         set by the creator after posting. Stored on-chain so any
+    ///         visitor can find the real discussion thread — the post
+    ///         itself is the discussion anchor, not a hashtag guess.
+    mapping(uint256 => string) public postUrl;
+    /// @notice Optional series / season label for a campaign, set by the
+    ///         creator (e.g. "Season 2"). Campaigns sharing a label form
+    ///         a series: the site groups and filters by it, and a
+    ///         participant's record accumulates across the season.
+    mapping(uint256 => string) public series;
+    /// @notice Option labels for vote campaigns, written at creation
+    ///         and immutable afterwards. A vote is only meaningful if
+    ///         everyone can read what each option stands for, so the
+    ///         labels live on-chain next to the tally.
+    mapping(uint256 => string[]) private _optionLabels;
+    mapping(uint256 => mapping(address => bool)) public isWinner;
+    mapping(uint256 => mapping(address => bool)) public prizeClaimed;
+
+    event CampaignCreated(
+        uint256 indexed id,
+        address indexed creator,
+        Kind kind,
+        string title,
+        uint64 startAt,
+        uint64 endAt
+    );
+    event Funded(uint256 indexed id, address token, uint256 total);
+    event Entered(uint256 indexed id, address indexed participant);
+    event Voted(uint256 indexed id, address indexed participant, uint8 option);
+    event Drawn(uint256 indexed id, uint256 seed, bool usedFallbackSeed, uint256 winnerCount);
+    event Claimed(uint256 indexed id, address indexed participant, uint256 amount);
+    event PostUrlSet(uint256 indexed id, string url);
+    event SeriesSet(uint256 indexed id, string series);
+    event PrizeClaimed(uint256 indexed id, address indexed winner, uint256 amount);
+    event Reclaimed(uint256 indexed id, address indexed creator, uint256 amount);
+    event ConditionsSet(uint256 indexed id, Conditions conditions);
+
+    error NotHuman();
+    error AlreadyCounted();
+    error NotOpen();
+    error NotEnded();
+    error AlreadyDrawn();
+    error BadOption();
+    error BadParams();
+    error WrongValue();
+    error NotWinner();
+    error NotCreator();
+    error NoSlots();
+    error TooEarly();
+    error TransferFailed();
+    /// @notice Entry condition `which` (0..4, see contract doc) failed.
+    error ConditionFailed(uint8 which);
+
+    bool private _locked;
+    modifier nonReentrant() {
+        require(!_locked, "reentrant");
+        _locked = true;
+        _;
+        _locked = false;
+    }
+
+    constructor(address gate_, address bindings_) {
+        require(gate_ != address(0), "gate is zero");
+        gate = BeCounted(gate_);
+        bindings = IBindingCheck(bindings_);
+    }
+
+    // ------------------------------------------------------------------
+    // Funding helpers
+    // ------------------------------------------------------------------
+
+    function _fund(address token, uint256 total) internal {
+        if (total == 0) {
+            if (msg.value != 0) revert WrongValue();
+            return;
+        }
+        if (token == address(0)) {
+            if (msg.value != total) revert WrongValue();
+        } else {
+            if (msg.value != 0) revert WrongValue();
+            if (!IERC20(token).transferFrom(msg.sender, address(this), total)) revert TransferFailed();
+        }
+    }
+
+    function _pay(address token, address to, uint256 amount) internal {
+        if (amount == 0) return;
+        if (token == address(0)) {
+            (bool ok, ) = to.call{value: amount}("");
+            if (!ok) revert TransferFailed();
+        } else {
+            if (!IERC20(token).transfer(to, amount)) revert TransferFailed();
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Creation
+    // ------------------------------------------------------------------
+
+    /// @notice Create a raffle. `seedBlock` must be a future block after
+    ///         the campaign ends; its blockhash seeds the draw.
+    /// @param prizeToken address(0) for BNB, or an ERC20. If
+    ///        `prizePerWinner` > 0 the full escrow (perWinner × winners)
+    ///        must be funded in this call (msg.value for BNB, allowance
+    ///        for ERC20). Zero means no escrow (unfunded raffle).
+    function createRaffle(
+        string calldata title,
+        uint64 startAt,
+        uint64 endAt,
+        uint32 winnerCount,
+        uint64 seedBlock,
+        address prizeToken,
+        uint256 prizePerWinner,
+        Conditions calldata cond
+    ) external payable returns (uint256 id) {
+        if (endAt <= startAt || winnerCount == 0) revert BadParams();
+        if (seedBlock <= block.number) revert BadParams();
+        uint256 total = prizePerWinner * winnerCount;
+        _fund(prizeToken, total);
+        id = _campaigns.length;
+        _campaigns.push(
+            Campaign({
+                creator: msg.sender,
+                kind: Kind.Raffle,
+                title: title,
+                startAt: startAt,
+                endAt: endAt,
+                winnerCount: winnerCount,
+                seedBlock: seedBlock,
+                drawn: false,
+                usedFallbackSeed: false,
+                optionCount: 0,
+                entryCount: 0,
+                prizeToken: prizeToken,
+                prizePerWinner: prizePerWinner,
+                pool: 0,
+                claimAmount: 0,
+                maxClaims: 0,
+                claimRandom: false,
+                paidOut: 0,
+                reclaimed: false
+            })
+        );
+        emit CampaignCreated(id, msg.sender, Kind.Raffle, title, startAt, endAt);
+        _setConditions(id, cond);
+        if (total > 0) emit Funded(id, prizeToken, total);
+    }
+
+    /// @notice Create a vote with `optionCount` options (2..16).
+    ///         `optionLabels` must carry exactly one label per option
+    ///         (1..60 bytes each); labels are stored on-chain at
+    ///         creation and cannot be changed afterwards.
+    /// @param prizeToken address(0) for BNB, or an ERC20. If
+    ///        `prizeTotal` > 0 the full pool must be funded in this
+    ///        call (msg.value for BNB, allowance for ERC20) and
+    ///        `prizeWinners` / `seedBlock` must be set; after the vote
+    ///        ends, that many voters are drawn from all voters and
+    ///        split the pool equally (per-winner share fixed at draw
+    ///        time as pool / actual winners). Zero `prizeTotal` means
+    ///        a plain vote with no prize; then `prizeWinners` and
+    ///        `seedBlock` must both be zero.
+    function createVote(
+        string calldata title,
+        uint64 startAt,
+        uint64 endAt,
+        uint8 optionCount,
+        address prizeToken,
+        uint256 prizeTotal,
+        uint32 prizeWinners,
+        uint64 seedBlock,
+        Conditions calldata cond,
+        string[] calldata optionLabels
+    ) external payable returns (uint256 id) {
+        if (endAt <= startAt || optionCount < 2 || optionCount > 16) revert BadParams();
+        if (prizeTotal == 0) {
+            if (prizeWinners != 0 || seedBlock != 0 || msg.value != 0) revert BadParams();
+        } else {
+            if (prizeWinners == 0 || prizeTotal < prizeWinners) revert BadParams();
+            if (seedBlock <= block.number) revert BadParams();
+            _fund(prizeToken, prizeTotal);
+        }
+        id = _pushVote(title, startAt, endAt, optionCount, prizeToken, prizeTotal, prizeWinners, seedBlock);
+        _setConditions(id, cond);
+        _storeLabels(id, optionCount, optionLabels);
+        if (prizeTotal > 0) emit Funded(id, prizeToken, prizeTotal);
+    }
+
+    /// @notice Create a one-human-one-share claim. The pool is split into
+    ///         `maxClaims` equal shares (integer division; any dust stays
+    ///         in the creator's reclaimable remainder).
+    function createClaim(
+        string calldata title,
+        uint64 startAt,
+        uint64 endAt,
+        uint32 maxClaims,
+        address token,
+        uint256 totalPool,
+        bool random,
+        Conditions calldata cond
+    ) external payable returns (uint256 id) {
+        if (endAt <= startAt || maxClaims == 0 || totalPool == 0) revert BadParams();
+        // The pool must be able to give every claimant at least 1 unit.
+        if (totalPool < maxClaims) revert BadParams();
+        uint256 per = random ? 0 : totalPool / maxClaims;
+        if (!random && per == 0) revert BadParams();
+        _fund(token, totalPool);
+        id = _campaigns.length;
+        _campaigns.push(
+            Campaign({
+                creator: msg.sender,
+                kind: Kind.Claim,
+                title: title,
+                startAt: startAt,
+                endAt: endAt,
+                winnerCount: 0,
+                seedBlock: 0,
+                drawn: false,
+                usedFallbackSeed: false,
+                optionCount: 0,
+                entryCount: 0,
+                prizeToken: token,
+                prizePerWinner: 0,
+                pool: totalPool,
+                claimAmount: per,
+                maxClaims: maxClaims,
+                claimRandom: random,
+                paidOut: 0,
+                reclaimed: false
+            })
+        );
+        emit CampaignCreated(id, msg.sender, Kind.Claim, title, startAt, endAt);
+        _setConditions(id, cond);
+        emit Funded(id, token, totalPool);
+    }
+
+    // ------------------------------------------------------------------
+    // Entry conditions (V6 engine + V7 allowlist)
+    // ------------------------------------------------------------------
+
+    /// @dev Push a vote campaign. Split out of createVote to stay
+    ///      clear of the stack limit there.
+    function _pushVote(
+        string calldata title,
+        uint64 startAt,
+        uint64 endAt,
+        uint8 optionCount,
+        address prizeToken,
+        uint256 prizeTotal,
+        uint32 prizeWinners,
+        uint64 seedBlock
+    ) internal returns (uint256 id) {
+        id = _campaigns.length;
+        _campaigns.push(
+            Campaign({
+                creator: msg.sender,
+                kind: Kind.Vote,
+                title: title,
+                startAt: startAt,
+                endAt: endAt,
+                winnerCount: prizeWinners,
+                seedBlock: seedBlock,
+                drawn: false,
+                usedFallbackSeed: false,
+                optionCount: optionCount,
+                entryCount: 0,
+                prizeToken: prizeToken,
+                prizePerWinner: 0,
+                pool: prizeTotal,
+                claimAmount: 0,
+                maxClaims: 0,
+                claimRandom: false,
+                paidOut: 0,
+                reclaimed: false
+            })
+        );
+        emit CampaignCreated(id, msg.sender, Kind.Vote, title, startAt, endAt);
+    }
+
+    /// @dev Validate and store vote option labels. Kept out of
+    ///      createVote to stay clear of the stack limit there.
+    function _storeLabels(uint256 id, uint8 optionCount, string[] calldata labels) internal {
+        if (labels.length != optionCount) revert BadParams();
+        for (uint256 i = 0; i < labels.length; i++) {
+            uint256 n = bytes(labels[i]).length;
+            if (n == 0 || n > 60) revert BadParams();
+            _optionLabels[id].push(labels[i]);
+        }
+    }
+
+    function _setConditions(uint256 id, Conditions calldata cond) internal {
+        if (cond.requireBinding && address(bindings) == address(0)) revert BadParams();
+        if (cond.gateToken != address(0) && cond.gateMin == 0) revert BadParams();
+        if (cond.requireEnteredId != type(uint256).max && cond.requireEnteredId >= id) revert BadParams();
+        if (cond.minStamps > 0 && (cond.questRef == address(0) || cond.minStamps > 7)) revert BadParams();
+        _conditions[id] = cond;
+        emit ConditionsSet(id, cond);
+    }
+
+    /// @dev Merkle proof check for condition 4. Leaf = keccak256 of the
+    ///      packed address; each pair is sorted before hashing, and an
+    ///      unpaired node is promoted unchanged — the same construction
+    ///      the site's list builder uses, so any list holder can
+    ///      recompute the committed root off-chain.
+    function _verifyAllow(bytes32 root, address who, bytes32[] calldata proof) internal pure returns (bool) {
+        bytes32 computed = keccak256(abi.encodePacked(who));
+        for (uint256 i = 0; i < proof.length; i++) {
+            bytes32 p = proof[i];
+            computed = computed < p
+                ? keccak256(abi.encodePacked(computed, p))
+                : keccak256(abi.encodePacked(p, computed));
+        }
+        return computed == root;
+    }
+
+    function _checkConditions(uint256 id, address who, bytes32[] calldata proof) internal view {
+        Conditions storage cd = _conditions[id];
+        if (cd.requireBinding && !bindings.isBindingValid(who)) revert ConditionFailed(0);
+        if (cd.gateToken != address(0) && IBalanceOf(cd.gateToken).balanceOf(who) < cd.gateMin) {
+            revert ConditionFailed(1);
+        }
+        if (cd.requireEnteredId != type(uint256).max && !hasEntered[cd.requireEnteredId][who]) {
+            revert ConditionFailed(2);
+        }
+        if (cd.minStamps > 0 && IQuestStamps(cd.questRef).stampCount(who) < cd.minStamps) {
+            revert ConditionFailed(3);
+        }
+        if (cd.allowRoot != bytes32(0) && !_verifyAllow(cd.allowRoot, who, proof)) {
+            revert ConditionFailed(4);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Participation — gate + caller-side dedup
+    // ------------------------------------------------------------------
+
+    function _join(uint256 id, bytes32[] calldata proof) internal returns (Campaign storage c) {
+        c = _campaigns[id];
+        if (block.timestamp < c.startAt || block.timestamp > c.endAt) revert NotOpen();
+        // Q1, answered by the primitive:
+        if (!gate.isHuman(msg.sender)) revert NotHuman();
+        // Entry conditions, enforced before the dedup mark so a
+        // failed condition never consumes the entry:
+        _checkConditions(id, msg.sender, proof);
+        // Q2, answered by this contract's own bookkeeping:
+        if (hasEntered[id][msg.sender]) revert AlreadyCounted();
+        hasEntered[id][msg.sender] = true;
+        _entries[id].push(msg.sender);
+        c.entryCount += 1;
+    }
+
+    /// @notice Enter a raffle. One Agent ID, one ticket. `proof` is the
+    ///         Merkle proof for condition 4 (empty when the campaign
+    ///         has no allowlist).
+    function enterRaffle(uint256 id, bytes32[] calldata proof) external {
+        Campaign storage c = _join(id, proof);
+        require(c.kind == Kind.Raffle, "not a raffle");
+        emit Entered(id, msg.sender);
+    }
+
+    /// @notice Cast a vote. One Agent ID, one vote; no changing votes.
+    function castVote(uint256 id, uint8 option, bytes32[] calldata proof) external {
+        Campaign storage c = _campaigns[id];
+        if (option >= c.optionCount) revert BadOption();
+        _join(id, proof);
+        require(c.kind == Kind.Vote, "not a vote");
+        voteOf[id][msg.sender] = option;
+        tally[id][option] += 1;
+        emit Voted(id, msg.sender, option);
+    }
+
+    /// @notice Claim one share of a claim campaign. One Agent ID, one
+    ///         share, paid out in this same transaction. Fixed mode pays
+    ///         the precomputed equal share; random mode draws a
+    ///         lucky-draw amount (double-mean, see _randomShare).
+    function claim(uint256 id, bytes32[] calldata proof) external nonReentrant {
+        Campaign storage c = _campaigns[id];
+        require(c.kind == Kind.Claim, "not a claim");
+        if (c.entryCount >= c.maxClaims) revert NoSlots();
+        _join(id, proof);
+        uint256 amount = c.claimRandom
+            ? _randomShare(c.pool - c.paidOut, c.maxClaims - (c.entryCount - 1))
+            : c.claimAmount;
+        c.paidOut += amount;
+        emit Claimed(id, msg.sender, amount);
+        _pay(c.prizeToken, msg.sender, amount);
+    }
+
+    uint256 private _drawNonce;
+
+    /// @dev WeChat-style double-mean draw: the amount is uniform in
+    ///      [1, 2 x remaining average], so the pool can never run dry
+    ///      early, every remaining claimant is guaranteed at least 1
+    ///      unit, and the final claimant takes whatever is left.
+    ///      Randomness: keccak256(previous blockhash, claimant, nonce) —
+    ///      pseudo-random, entertainment-grade (see contract doc).
+    function _randomShare(uint256 remaining, uint256 slotsLeft) internal returns (uint256) {
+        if (slotsLeft == 1) return remaining;
+        uint256 avg = remaining / slotsLeft;
+        uint256 cap = avg * 2;
+        if (cap > remaining) cap = remaining;
+        uint256 r = uint256(
+            keccak256(abi.encodePacked(blockhash(block.number - 1), msg.sender, address(this), _drawNonce++))
+        );
+        uint256 amount = 1 + (r % cap);
+        uint256 reserve = slotsLeft - 1; // 1 unit guaranteed per remaining claimant
+        if (amount > remaining - reserve) amount = remaining - reserve;
+        return amount;
+    }
+
+    // ------------------------------------------------------------------
+    // Draw + prize claim + reclaim (raffles and prize votes)
+    // ------------------------------------------------------------------
+
+    function _hasPrizeDraw(Campaign storage c) internal view returns (bool) {
+        return c.kind == Kind.Raffle || (c.kind == Kind.Vote && c.pool > 0);
+    }
+
+    /// @notice Draw after the campaign ends. Callable by anyone.
+    ///         Raffles draw from their entries; prize votes draw from
+    ///         all their voters. For votes the per-winner share is
+    ///         fixed here as pool / actual winners drawn.
+    /// @dev Partial Fisher–Yates driven by keccak256(seed, index); anyone
+    ///      can recompute the winners from the entry list and the seed.
+    ///      If the seed block's hash aged out of the 256-block window,
+    ///      the previous block's hash is the documented fallback and
+    ///      `usedFallbackSeed` is set — the draw can never get stuck.
+    function draw(uint256 id) external {
+        Campaign storage c = _campaigns[id];
+        require(_hasPrizeDraw(c), "no prize draw");
+        if (block.timestamp <= c.endAt) revert NotEnded();
+        if (c.drawn) revert AlreadyDrawn();
+        if (block.number <= c.seedBlock) revert NotEnded();
+
+        bytes32 h = blockhash(c.seedBlock);
+        bool usedFallback = (h == bytes32(0));
+        if (usedFallback) {
+            h = blockhash(block.number - 1);
+            c.usedFallbackSeed = true;
+        }
+        uint256 seed = uint256(h);
+        c.drawn = true;
+
+        uint256 n = _entries[id].length;
+        uint256 k = c.winnerCount;
+        if (k > n) k = n;
+        if (c.kind == Kind.Vote && k > 0) {
+            c.prizePerWinner = c.pool / k;
+        }
+
+        uint256[] memory idx = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) idx[i] = i;
+        for (uint256 i = 0; i < k; i++) {
+            uint256 j = i + (uint256(keccak256(abi.encode(seed, i))) % (n - i));
+            (idx[i], idx[j]) = (idx[j], idx[i]);
+            address w = _entries[id][idx[i]];
+            _winners[id].push(w);
+            isWinner[id][w] = true;
+        }
+        emit Drawn(id, seed, usedFallback, k);
+    }
+
+    /// @notice Winners claim their escrowed prize share on-chain.
+    function claimPrize(uint256 id) external nonReentrant {
+        Campaign storage c = _campaigns[id];
+        require(_hasPrizeDraw(c), "no prize");
+        if (!c.drawn) revert NotEnded();
+        if (!isWinner[id][msg.sender]) revert NotWinner();
+        if (prizeClaimed[id][msg.sender]) revert AlreadyCounted();
+        prizeClaimed[id][msg.sender] = true;
+        c.paidOut += c.prizePerWinner;
+        emit PrizeClaimed(id, msg.sender, c.prizePerWinner);
+        _pay(c.prizeToken, msg.sender, c.prizePerWinner);
+    }
+
+    /// @notice Creator reclaims whatever was never paid out:
+    ///         Claim pools — the remainder after the campaign ends.
+    ///         Raffles and prize votes — unclaimed prize money 30 days
+    ///         after the end (winners keep the full window to claim
+    ///         first). For prize votes the reclaimable total is the
+    ///         pool, including any integer-division dust.
+    function reclaim(uint256 id) external nonReentrant {
+        Campaign storage c = _campaigns[id];
+        if (msg.sender != c.creator) revert NotCreator();
+        if (c.reclaimed) revert AlreadyCounted();
+        uint256 total;
+        if (c.kind == Kind.Claim) {
+            if (block.timestamp <= c.endAt) revert TooEarly();
+            total = c.pool;
+        } else if (c.kind == Kind.Raffle) {
+            if (block.timestamp <= c.endAt + PRIZE_CLAIM_WINDOW) revert TooEarly();
+            total = c.prizePerWinner * c.winnerCount;
+        } else if (c.kind == Kind.Vote && c.pool > 0) {
+            if (block.timestamp <= c.endAt + PRIZE_CLAIM_WINDOW) revert TooEarly();
+            total = c.pool;
+        } else {
+            revert BadParams();
+        }
+        uint256 remainder = total - c.paidOut;
+        c.reclaimed = true;
+        c.paidOut = total;
+        emit Reclaimed(id, msg.sender, remainder);
+        _pay(c.prizeToken, msg.sender, remainder);
+    }
+
+    // ------------------------------------------------------------------
+    // Views
+    // ------------------------------------------------------------------
+
+    function campaignCount() external view returns (uint256) {
+        return _campaigns.length;
+    }
+
+    /// @notice The option labels of a vote campaign, in option order.
+    ///         Empty for raffles and claims.
+    function optionLabelsOf(uint256 id) external view returns (string[] memory) {
+        return _optionLabels[id];
+    }
+
+    /// @notice Set or update the creator's X post link for a campaign.
+    ///         Only the campaign's creator. Intended flow: create the
+    ///         campaign, post about it on X, then paste the post URL so
+    ///         the campaign card links straight to that thread.
+    function setPostUrl(uint256 id, string calldata url) external {
+        Campaign storage c = _campaigns[id];
+        if (msg.sender != c.creator) revert NotCreator();
+        bytes memory u = bytes(url);
+        if (u.length == 0 || u.length > 200) revert BadParams();
+        // Must be an https link (x.com / twitter.com expected, not enforced).
+        if (!(u[0] == "h" && u[1] == "t" && u[2] == "t" && u[3] == "p" && u[4] == "s")) revert BadParams();
+        postUrl[id] = url;
+        emit PostUrlSet(id, url);
+    }
+
+    /// @notice Set or update the campaign's series label. Creator only.
+    ///         Empty string clears it.
+    function setSeries(uint256 id, string calldata label) external {
+        Campaign storage c = _campaigns[id];
+        if (msg.sender != c.creator) revert NotCreator();
+        if (bytes(label).length > 60) revert BadParams();
+        series[id] = label;
+        emit SeriesSet(id, label);
+    }
+
+    function getCampaign(uint256 id) external view returns (Campaign memory) {
+        return _campaigns[id];
+    }
+
+    function getEntries(uint256 id) external view returns (address[] memory) {
+        return _entries[id];
+    }
+
+    function conditionsOf(uint256 id) external view returns (Conditions memory) {
+        return _conditions[id];
+    }
+
+    function getWinners(uint256 id) external view returns (address[] memory) {
+        return _winners[id];
+    }
+}

@@ -1,0 +1,30 @@
+{
+  "network": "bsc-testnet",
+  "date": "2026-11-23T09:15:54.513Z",
+  "apps": "0x5c6bd30ead292b97e910d761209736A440f4bA3e",
+  "campaigns": [
+    {
+      "kind": "vote",
+      "id": 1,
+      "hash": "0x9be347426c8978e1ff938e92120a33171feb13ccbf848ddeb8a1729a84c7f830",
+      "block": 144379327
+    },
+    {
+      "kind": "claim",
+      "id": 2,
+      "hash": "0x6eaf4f773c9fd94dd81e1203b5a26dc2ac4f36a3932d3f750234139f84fdefb6",
+      "block": 144379335
+    },
+    {
+      "kind": "raffle-cond5",
+      "idListHandles": [
+        "trialone",
+        "questfan"
+      ],
+      "idListRoot": "0x452d114bdb96921aa84cec8bc562def2657e3d1c6cc989191fdfe392df3ae9ed",
+      "id": 3,
+      "hash": "0xe8b4bf79a2eac99ed2f73859ff9441a0040506adf709c8d5a8fe17212cb410f2",
+      "block": 144379344
+    }
+  ]
+}

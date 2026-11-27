@@ -1,0 +1,12 @@
+{
+  "network": "bsc-testnet",
+  "chainId": 97,
+  "gate": "0x9D3a18e06d5Ec7174D733Be6014dae3B5b75C349",
+  "bindingsV4": "0xE9262F8508D704F98eB01abbB2B5D9113A6dE4d0",
+  "checkInV2": "0xB8143e2c97205bAE88aF540d9ADcb6617CC67Ec7",
+  "campaignsV16": "0x25C47b6F2fbD73F9FD916Ac347255D6228e22a23",
+  "deployTx": "0xf60df24044c8dbfc5b99455bb5e4dffd5e8b62c70acb7eab9b5b74c0fd657708",
+  "trial": "deploy/wiring/checkIn wiring/weighted BadParams replay on checkIn-less instance/weighted raffle H(2)+U(1) enter/lockDraw/draw/DrawWeighted total=3/winner matches JS recomputation/registration claim regression all PASS",
+  "trialWeightedWinner": "0x925943c5dcBc98bdDEB10da8f1089A8D7C90Cec6",
+  "deployedAt": "2026-11-27T00:25:04.017Z"
+}
