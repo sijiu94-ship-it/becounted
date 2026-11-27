@@ -1,11 +1,14 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0x59Ea103C1f9d1DBBd91F1Ec9FC22C4eBD58c3B5C"; // OneIDCampaignsV16 = V15 + weighted raffle draws (check-in weight), wired to IdentityBindingsV4 + CheckInV2 (mainnet)
-/* Legacy apps contracts: V15 and V14 still host the campaigns created
-   on them (V14 hosts #0). The site reads ALL sources and every
-   campaign carries a source ref ("v16:<id>" / "v15:<id>" / "v14:<id>")
-   so ids never collide across contracts. getCampaign tuples differ:
-   V16 appends `weighted` — sources carry their own ABI (see below). */
+const APPS_TESTNET     = "0x59Ea103C1f9d1DBBd91F1Ec9FC22C4eBD58c3B5C"; // OneIDCampaignsV16 (legacy)
+const APPS_V17_ADDR    = "0xc1a396eFc40e1E943574CFDd162F5e6BE5CA1A5E"; // OneIDCampaignsV17 = V16 + external-audit fixes (lockDraw weight snapshot, full https:// checks, constructor checkIn guard) — CURRENT
+const APPS_V17_BLOCK   = 136008461; // V17 deployment block
+/* Legacy apps contracts: V16, V15 and V14 still host the campaigns
+   created on them (V14 hosts #0). The site reads ALL sources and every
+   campaign carries a source ref ("v17:<id>" / "v16:<id>" / "v15:<id>"
+   / "v14:<id>") so ids never collide across contracts. getCampaign
+   tuples differ: V16+ appends `weighted` — sources carry their own ABI
+   (see below). V17's ABI is identical to V16's. */
 const APPS_V15_ADDR    = "0x6abA2aa96076DFB6eb4c038475D4495d3Ae97D2C"; // OneIDCampaignsV15 (legacy)
 const APPS_V15_BLOCK   = 135937722; // V15 deployment block
 const APPS_V14_ADDR    = "0x119541Cafa25118cd54F5548Df2A7D1aeE99B0f8"; // OneIDCampaignsV14 (legacy)
@@ -119,6 +122,7 @@ const NETWORK = {
 const APPS_DEPLOY_BLOCK = 135942248; // V16 deployment block: event scans start here
 /* ---------- multi-contract campaign sources ---------- */
 const APPS_SOURCES = [
+  { key: "v17", addr: APPS_V17_ADDR, block: APPS_V17_BLOCK, abi: APPS_ABI_V16 },
   { key: "v16", addr: APPS_TESTNET, block: APPS_DEPLOY_BLOCK, abi: APPS_ABI_V16 },
   { key: "v15", addr: APPS_V15_ADDR, block: APPS_V15_BLOCK, abi: APPS_ABI },
   { key: "v14", addr: APPS_V14_ADDR, block: APPS_V14_BLOCK, abi: APPS_ABI }
@@ -221,7 +225,7 @@ en: {
   kick_build:"Integration", h_build:"For builders",
   build_sub:"One read call is the whole integration. If your contract can call a view function, you have sybil resistance.",
   code_note:"Gate any function with one line. The primitive is stateless — your contract keeps its own per-campaign dedup, keyed by the human.",
-  a_gate:"BeCounted — BSC mainnet", a_apps:"OneIDCampaignsV16 — BSC mainnet (current)", a_apps_hist:"OneIDCampaigns V15 / V14 — legacy campaigns", a_checkin:"CheckInV2 — check-in & weight", a_bind:"IdentityBindingsV4", a_quest:"QuestPass — BSC mainnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
+  a_gate:"BeCounted — BSC mainnet", a_apps:"OneIDCampaignsV17 — BSC mainnet (current)", a_apps_hist:"OneIDCampaigns V16 / V15 / V14 — legacy campaigns", a_checkin:"CheckInV2 — check-in & weight", a_bind:"IdentityBindingsV4", a_quest:"QuestPass — BSC mainnet", a_reg:"Agent ID registry — BSC mainnet", a_skill:"Agent skill",
   a_skill_v:"is-human — a zero-dependency checker any AI agent can run before it acts. Source in the project repo.",
   a_profile:"IdentityProfile (bio + links)", embed_h:"Embed the check on your site", embed_p:"Two lines of code put a live Agent ID check on any web page. It reads the registry directly - no API key, no backend, read-only. For on-chain gating, use the contract interface or the template instead.",
   nav_white:"Whitepaper", kick_wp:"WHITEPAPER", h_wp:"The BeCounted Whitepaper", wp_sub:"What this is, how it works, what it refuses to do, and where its limits are - in one page.",
@@ -304,7 +308,7 @@ en: {
     d_escrow: "Prize escrowed in the contract \u2014 winners claim it themselves",
     d_escrow_no: "No prize escrow in this campaign",
     warn_token: "Custom prize token — its value and transferability are not verified. Check the token contract before entering.",
-    note_weight_scope: "Raffles can now draw by check-in weight on-chain: tick 'Draw by check-in weight' when creating a raffle and the contract reads each entrant's weight at draw time (weight = 1 + check-in days in the last 14 days). Raffles created without it keep equal odds. Check-in records moved to a new contract (V2) on 2026-11-27 with the 14-day window — earlier V1 records stay readable on the old contract but no longer count.",
+    note_weight_scope: "Raffles can now draw by check-in weight on-chain: tick 'Draw by check-in weight' when creating a raffle and each entrant's weight (1 + check-in days in the last 14 days) is frozen into an on-chain snapshot when the draw seed is locked after entries close — the draw reads only that snapshot. Raffles created without it keep equal odds. Check-in records moved to a new contract (V2) on 2026-11-27 with the 14-day window — earlier V1 records stay readable on the old contract but no longer count.",
     d_contract: "Contract",
     hero_cta_join: "Join a campaign",
     hero_cta_create: "Create a campaign",
@@ -362,7 +366,7 @@ en: {
   soon_h:"Ending soon", soon_sub:"Live now, closing first — do not miss the window.",
   hot_h:"Trending", hot_camps:"Hot campaigns", hot_creators:"Top creators", hot_entries:"entries",
   f_tok_usdt:"USDT \u00b7 {chain} (preset)", f_tok_usdc:"USDC \u00b7 {chain} (preset)", f_tok_custom:"Custom prize (off-chain)", f_chain_main:"BSC mainnet", f_chain_test:"BSC testnet",
-  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.", f_claim_custom_note:"Off-chain prize: nothing is escrowed and no pool is needed. Claiming only records the claimant on-chain \u2014 first come, first served, one slot per human. You deliver the prize yourself using the on-chain claimant list.", d_reg_note:"Off-chain prize: claiming records your slot on-chain (first come, first served, one per human). The contract pays nothing \u2014 the creator delivers the prize off-chain using the claimant list.", d_legacy_tag:"Legacy \u00b7", f_weighted:"Draw by check-in weight", f_weighted_hint:"Winners are drawn on-chain by activity weight \u2014 weight = 1 + check-in days in the last 14 days, read at draw time. More check-in days means a proportionally higher chance. Leave off for an equal-odds draw.", c_weighted_tag:"weighted draw", d_weighted_note:"This raffle draws by check-in weight: at draw time the contract reads each entrant's weight on-chain (1 + check-in days in the last 14 days). More check-in days = a proportionally higher chance. The seed and the weights are public and recomputable.", d_weighted_total:"total weight", d_verify_weighted:"Weighted draw \u2014 winners were picked by check-in weight read on-chain at draw time, so the equal-odds recomputation does not apply. The DrawWeighted event records the total weight used; recompute from the entrants' weights at the draw block.",
+  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.", f_claim_custom_note:"Off-chain prize: nothing is escrowed and no pool is needed. Claiming only records the claimant on-chain \u2014 first come, first served, one slot per human. You deliver the prize yourself using the on-chain claimant list.", d_reg_note:"Off-chain prize: claiming records your slot on-chain (first come, first served, one per human). The contract pays nothing \u2014 the creator delivers the prize off-chain using the claimant list.", d_legacy_tag:"Legacy \u00b7", f_weighted:"Draw by check-in weight", f_weighted_hint:"Winners are drawn on-chain by activity weight \u2014 weight = 1 + check-in days in the last 14 days, frozen into a snapshot when the draw is locked after entries close. More check-in days means a proportionally higher chance. Leave off for an equal-odds draw.", c_weighted_tag:"weighted draw", d_weighted_note:"This raffle draws by check-in weight: each entrant's weight (1 + check-in days in the last 14 days) was frozen into an on-chain snapshot when the draw seed was locked. More check-in days = a proportionally higher chance. The seed and the snapshot are public and recomputable.", d_weighted_total:"total weight", d_verify_weighted:"Weighted draw \u2014 winners were picked by check-in weight frozen into the snapshot when the draw seed was locked, so the equal-odds recomputation does not apply. The DrawWeighted event records the snapshot's total weight; recompute from each entrant's weightOf read at the lock block.",
 
   c_claim:"Claim drop", c_pool:"Pool", c_each:"Each gets", c_claimed_n:"claimed", c_claim_btn:"Claim",
   c_prize:"Prize", c_claim_prize:"Claim prize", c_prize_claimed:"Prize claimed",
@@ -500,7 +504,7 @@ zh: {
   kick_build:"接入", h_build:"开发者",
   build_sub:"一次只读调用，就是全部接入工作。你的合约只要能调 view 函数，就拥有了抗女巫能力。",
   code_note:"一行代码给任何函数加门。原语无状态——去重状态由你的合约按「人」自己记。",
-  a_gate:"BeCounted — BSC 主网", a_apps:"OneIDCampaignsV16 — BSC 主网（现行）", a_apps_hist:"OneIDCampaigns V15 / V14 — 历史活动", a_checkin:"CheckInV2 — 签到与权重", a_bind:"绑定登记合约", a_quest:"QuestPass — BSC 主网", a_reg:"Agent ID 注册表 — BSC 主网", a_skill:"Agent 技能",
+  a_gate:"BeCounted — BSC 主网", a_apps:"OneIDCampaignsV17 — BSC 主网（现行）", a_apps_hist:"OneIDCampaigns V16 / V15 / V14 — 历史活动", a_checkin:"CheckInV2 — 签到与权重", a_bind:"绑定登记合约", a_quest:"QuestPass — BSC 主网", a_reg:"Agent ID 注册表 — BSC 主网", a_skill:"Agent 技能",
   a_skill_v:"is-human——零依赖的小工具，任何 AI Agent 在动手之前都能先跑一遍。源码在项目仓库里。",
   a_profile:"个人主页资料（简介 + 链接）", embed_h:"把查真人嵌入你的网站", embed_p:"两行代码就能把实时查真人放到任何网页上：直读注册表、无需密钥、无需后端、纯只读。链上门禁请用上方的合约接口或模板。",
   nav_white:"白皮书", kick_wp:"白皮书", h_wp:"BeCounted 白皮书", wp_sub:"它是什么、怎么工作、拒绝做什么、局限在哪里——一页说清。",
@@ -582,7 +586,7 @@ zh: {
     d_escrow: "\u5956\u91d1\u7531\u5408\u7ea6\u6258\u7ba1 \u00b7 \u4e2d\u5956\u8005\u81ea\u52a9\u9886\u53d6",
     d_escrow_no: "\u672c\u6d3b\u52a8\u65e0\u5956\u91d1\u6258\u7ba1",
     warn_token: "\u81ea\u5b9a\u4e49\u5956\u54c1\u4ee3\u5e01\u2014\u2014\u5176\u4ef7\u503c\u4e0e\u53ef\u8f6c\u8ba9\u6027\u672a\u7ecf\u9a8c\u8bc1\uff0c\u53c2\u52a0\u524d\u8bf7\u81ea\u884c\u6838\u67e5\u8be5\u4ee3\u5e01\u5408\u7ea6\u3002",
-    note_weight_scope: "抽奖活动现在可以直接在链上按签到权重开奖：创建抽奖时勾选「按签到权重开奖」，开奖时合约读取每位参与者的权重（权重 = 1 + 近 14 天签到天数）。未勾选的活动仍为等概率开奖。签到记录已于 2026-11-27 迁至新合约（V2，窗口 14 天）——V1 的旧记录仍可在原合约查到，但不再计入权重。",
+    note_weight_scope: "抽奖活动现在可以直接在链上按签到权重开奖：创建抽奖时勾选「按签到权重开奖」，每位参与者的权重（1 + 近 14 天签到天数）在报名截止、锁定开奖种子时快照冻结，开奖只读快照。未勾选的活动仍为等概率开奖。签到记录已于 2026-11-27 迁至新合约（V2，窗口 14 天）——V1 的旧记录仍可在原合约查到，但不再计入权重。",
     d_contract: "\u5408\u7ea6",
     hero_cta_join: "\u53c2\u52a0\u6d3b\u52a8",
     hero_cta_create: "\u521b\u5efa\u6d3b\u52a8",
@@ -640,7 +644,7 @@ zh: {
   soon_h:"即将结束", soon_sub:"正在进行、先到截止时间的排前面——别错过窗口。",
   hot_h:"热度榜", hot_camps:"热门活动", hot_creators:"创作者榜", hot_entries:"人参与",
   f_tok_usdt:"USDT \u00b7 {chain}（预设）", f_tok_usdc:"USDC \u00b7 {chain}（预设）", f_tok_custom:"自定义奖品（链下发放）", f_chain_main:"BSC 主网", f_chain_test:"BSC 测试网",
-  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。", f_claim_custom_note:"链下奖品：不托管代币、不用填奖池。领取只在链上记名占位——一人一份、先到先得。活动结束后你按链上领取名单自行发放。", d_reg_note:"链下奖品：领取即在链上记名占位（一人一份、先到先得），合约不付款——发起人按链上领取名单线下发放。", d_legacy_tag:"历史活动 ·", f_weighted:"按签到权重开奖", f_weighted_hint:"按参与者的活跃权重在链上开奖——权重 = 1 + 近 14 天签到天数，开奖时读取。签到天数越多，中奖概率按比例越高。不勾选则为等概率抽奖。", c_weighted_tag:"加权开奖", d_weighted_note:"本活动按签到权重开奖：开奖时合约在链上读取每位参与者的权重（1 + 近 14 天签到天数）。签到天数越多，中奖概率按比例越高；种子与权重全部公开、可复算。", d_weighted_total:"总权重", d_verify_weighted:"加权开奖——中奖者按开奖时链上读取的签到权重抽取，等概率复算不适用。DrawWeighted 事件记录了本次开奖使用的总权重；可用开奖区块时各参与者的权重独立复算。",
+  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。", f_claim_custom_note:"链下奖品：不托管代币、不用填奖池。领取只在链上记名占位——一人一份、先到先得。活动结束后你按链上领取名单自行发放。", d_reg_note:"链下奖品：领取即在链上记名占位（一人一份、先到先得），合约不付款——发起人按链上领取名单线下发放。", d_legacy_tag:"历史活动 ·", f_weighted:"按签到权重开奖", f_weighted_hint:"按参与者的活跃权重在链上开奖——权重 = 1 + 近 14 天签到天数，报名截止锁定开奖时快照冻结。签到天数越多，中奖概率按比例越高。不勾选则为等概率抽奖。", c_weighted_tag:"加权开奖", d_weighted_note:"本活动按签到权重开奖：每位参与者的权重在锁定开奖种子时已快照冻结在链上（1 + 近 14 天签到天数）。签到天数越多，中奖概率按比例越高；种子与快照全部公开、可复算。", d_weighted_total:"总权重", d_verify_weighted:"加权开奖——中奖者按锁定开奖种子时快照冻结的签到权重抽取，等概率复算不适用。DrawWeighted 事件记录了本次开奖使用的总权重；可用锁定区块时各参与者的权重独立复算。",
 
   c_claim:"领取", c_pool:"奖池", c_each:"每份", c_claimed_n:"已领", c_claim_btn:"领取",
   c_prize:"奖品", c_claim_prize:"领取奖品", c_prize_claimed:"奖品已领取",
@@ -743,7 +747,7 @@ function chain(){
     providerMain = fb(NETWORK.mainRpcs, 56);
     providerTest = fb(NETWORK.appsRpcs, NETWORK.appsChainId);
     registry = new ethers.Contract(REGISTRY_MAINNET, ERC721_ABI, providerMain);
-    appsRead = new ethers.Contract(APPS_TESTNET, APPS_ABI_V16, providerTest);
+    appsRead = new ethers.Contract(APPS_V17_ADDR, APPS_ABI_V16, providerTest);
     bindingsRead = new ethers.Contract(BINDINGS_TESTNET, BINDINGS_ABI, providerTest);
     profileRead = new ethers.Contract(PROFILE_TESTNET, PROFILE_ABI, providerTest);
     questRead = new ethers.Contract(QUEST_TESTNET, QUEST_ABI, providerTest);
@@ -1709,7 +1713,7 @@ async function fundApprove(token, total, msg){
   if (token === null || token === ethers.ZeroAddress || total === 0n) return;
   msg.textContent = t("f_approving");
   const erc = new ethers.Contract(token, ERC20_ABI, signer);
-  await (await erc.approve(APPS_TESTNET, total)).wait();
+  await (await erc.approve(APPS_V17_ADDR, total)).wait();
 }
 function markErr(id, bad){ const el = $(id); if(el) el.classList.toggle("f-err", !!bad); return bad; }
 function validateCreate(){
@@ -1860,7 +1864,7 @@ async function submitCreate(){
   const cond = await buildCond(msg);
   if (!cond) return;
   try{
-    const apps = new ethers.Contract(APPS_TESTNET, APPS_ABI_V16, signer);
+    const apps = new ethers.Contract(APPS_V17_ADDR, APPS_ABI_V16, signer);
     let createRcpt = null;
     if(createKind === 0){
       const winners = parseInt($("fWinners").value, 10);
