@@ -183,9 +183,16 @@ try {
   if (s.chainId === CHAIN_ID && s.sections) scanState = s;
 } catch { /* no state yet — first run sweeps from the deploy blocks */ }
 
-function sectionFrom(key, deployBlock) {
+function sectionFrom(key, deployBlock, address) {
   const sec = scanState.sections[key];
   if (!sec || !sec.lastBlock) return { from: deployBlock, prior: [], priorPayouts: [] };
+  // A section key must never silently change which contract it describes:
+  // if the stored section names a different address than the one this key
+  // resolves to now (e.g. the "checkin" key outliving CheckIn V1 and being
+  // reused for V2), the prior uniques belong to the OLD contract — reset.
+  if (address && sec.address && sec.address.toLowerCase() !== address.toLowerCase()) {
+    return { from: deployBlock, prior: [], priorPayouts: [] };
+  }
   return {
     from: Math.max(deployBlock, sec.lastBlock - OVERLAP + 1),
     prior: sec.unique ?? [],
@@ -198,6 +205,7 @@ function saveScanState(head, scans) {
     if (!s || !s.key) continue;
     scanState.sections[s.key] = {
       lastBlock: head,
+      address: s.address,
       unique: s.unique,
       payouts: (s.payouts ?? []).map((p) => p.campaignId !== undefined
         ? { campaignId: p.campaignId, amount: p.amount.toString() }
@@ -341,7 +349,7 @@ async function scanApps(head, version) {
 // IdentityProfile). No payout tracking.
 async function scanSimple(label, target, head, eventSigs) {
   if (!target) { log(`  ${label}: no address in record — skipped`); return null; }
-  const { from, prior } = sectionFrom(label, target.block);
+  const { from, prior } = sectionFrom(label, target.block, target.address);
   const events = {};
   const unique = new Set(prior);
   for (const sig of eventSigs) {
@@ -430,8 +438,8 @@ async function main() {
   }
   log("scanning QuestPass events…");
   const quest = await scanQuest(head);
-  log("scanning CheckIn events…");
-  const checkin = await scanSimple("checkin", CHECKIN, head, ["CheckedIn(address,uint256,uint256)"]);
+  log("scanning CheckInV2 events…");
+  const checkin = await scanSimple("checkinV2", CHECKIN, head, ["CheckedIn(address,uint256,uint256)"]);
   log("scanning CheckIn V1 (legacy) events…");
   const checkinV1 = await scanSimple("checkinV1", CHECKIN_V1, head, ["CheckedIn(address,uint256,uint256)"]);
   log("scanning IdentityBindingsV4 events…");
@@ -474,7 +482,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     appsVersions: appsScans.map((s) => ({ label: s.label, ...scanSummary(s), payoutsByTokenRaw: appsPayoutsByToken })),
     quest: scanSummary(quest) && { ...scanSummary(quest), prizeClaimedTotal: questPayout },
-    checkin: scanSummary(checkin),
+    checkinV2: scanSummary(checkin),
     checkinV1: scanSummary(checkinV1),
     bindingsV4: scanSummary(bindingsV4),
     bindingsV3: scanSummary(bindingsV3),
@@ -498,7 +506,7 @@ async function main() {
   }
 
   console.log("");
-  const DISPLAY = { checkin: "CheckIn", bindingsV4: "IdentityBindingsV4", bindingsV3: "IdentityBindingsV3 (legacy)", profile: "IdentityProfile" };
+  const DISPLAY = { checkinV2: "CheckInV2", checkinV1: "CheckIn V1 (legacy)", bindingsV4: "IdentityBindingsV4", bindingsV3: "IdentityBindingsV3 (legacy)", profile: "IdentityProfile" };
   for (const s of allScans) {
     if (!s) continue;
     const name = s.label && DISPLAY[s.label] ? DISPLAY[s.label] : s.label ? `OneIDCampaigns ${s.label}` : "QuestPass";

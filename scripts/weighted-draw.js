@@ -291,7 +291,7 @@ const ALGORITHM_TEXT = [
   "  cumulative weight is strictly greater than r wins this round",
   "  remove the winner and subtract their weight, then continue with i+1",
   "weight of an entrant = 1 + (number of their check-in days d with",
-  "  snapshotDay - 29 <= d <= snapshotDay), where day indexes use the",
+  "  snapshotDay - " + (WINDOW_DAYS - 1) + " <= d <= snapshotDay), where day indexes use the",
   "  Beijing-time boundary dayIndex = (unix timestamp + 28800) / 86400 and",
   "  snapshotDay is the day index of the snapshot block's timestamp",
 ].join("\n");

@@ -2,7 +2,7 @@
 
 > 用途：邀请 1–2 个外部项目/社区，真实使用 BeCounted 门禁或空投门模板合约 GatedClaim 发起一次活动。
 > 原则：只谈真实采用、真实参与；不互刷、不承诺收益。发送前请按对象替换 `{{...}}` 占位内容。
-> 版本：2026-11-22（当前为测试网阶段；主网部署后把地址换成主网版再外发）
+> 版本：2026-11-27（主网版：主网已于 2026-11-25 上线，地址已全部换成主网，可直接外发）
 
 ---
 
@@ -10,7 +10,7 @@
 
 > 你发空投、办抽奖，最头疼的是什么？女巫农场——一个人开几百个钱包，把池子刷走一半，真人用户反而抢不到。以前防女巫靠规则、靠事后筛查，永远慢一步。币安的 Agent ID 不一样：一人一个，是 KYC 结构定的，不是规则定的，开再多钱包也变不出第二个 ID。
 >
-> 我们做的 BeCounted，就是把这个锚点变成一道谁都能调用的门：合约里一行 `isHuman(address)`，只读、免费、无管理员、不可升级。你的空投、抽奖、领取活动接上它，只有真人能进，一人一份由合约强制执行。我们还做了一个现成的空投门模板合约，你部署、注资就能发，十分钟接入。已经在 BSC 测试网完整跑通，主网活动期间上线。
+> 我们做的 BeCounted，就是把这个锚点变成一道谁都能调用的门：合约里一行 `isHuman(address)`，只读、免费、无管理员、不可升级。你的空投、抽奖、领取活动接上它，只有真人能进，一人一份由合约强制执行。我们还做了一个现成的空投门模板合约，你部署、注资就能发（设计目标：十分钟量级接入）。主网已经上线并跑过真实活动（首场活动 2026-11-26 开、链上可查）；模板在 BSC 测试网有完整试跑实例，可先验流程。不想部署合约的话，也可以直接在官网创建一场活动，零部署。
 
 要点速记（对方追问时用）：
 
@@ -24,7 +24,7 @@
 >
 > Binance's Agent ID changes the game structurally — one KYC, one ID, non-transferable. No amount of extra wallets creates a second identity.
 >
-> BeCounted turns that anchor into a gate anyone can call: a single read-only `isHuman(address)` check. No owner, no upgrade path, no fees, open source. On top of it we ship GatedClaim, a ready-made gated-claim contract: fund a pool, set the number of shares, and only verified Agent ID holders can claim — one share each, enforced on-chain. Fully tested on BSC testnet, going live on mainnet during the hackathon window. Integration takes about ten minutes.
+> BeCounted turns that anchor into a gate anyone can call: a single read-only `isHuman(address)` check. No owner, no upgrade path, no fees, open source. On top of it we ship GatedClaim, a ready-made gated-claim contract: fund a pool, set the number of shares, and only verified Agent ID holders can claim — one share each, enforced on-chain. Live on BSC mainnet since 2026-11-25 with real campaigns already run; the template also has a fully worked testnet instance. Integration is designed to take about ten minutes, and you can also skip deployment entirely by creating a campaign on the live site.
 
 ---
 
@@ -34,7 +34,7 @@
 
 > {{对方称呼}} 你好，我是 BeCounted 的作者玖肆，也在参加这次 Agent ID 黑客松。看到你们的项目 {{对方项目名}} 也在做 {{对方方向}}，有个合作想法跟你聊聊。
 >
-> 我们做的是一个只读的真人门禁原语 BeCounted，加一个现成的空投门模板合约 GatedClaim：你注资一个奖池、设好份数，只有持有 Agent ID 的真人能领、一人一份，女巫农场进不来。合约无 owner、不可升级，源码都开源，测试网已经完整跑通，有一个在线的演示实例可以先点开看效果。
+> 我们做的是一个只读的真人门禁原语 BeCounted，加一个现成的空投门模板合约 GatedClaim：你注资一个奖池、设好份数，只有持有 Agent ID 的真人能领、一人一份，女巫农场进不来。合约无 owner、不可升级，源码都开源；主网已经上线、跑过真实活动，测试网也有完整试跑实例可以先点开看效果。
 >
 > 如果你们正好要做一场面向 Agent ID 持有者的领取/抽奖活动，用这个模板能省掉自己写门禁的时间；活动页和开奖结果都在链上可查。互惠方面：你们的活动我会在我的渠道和参赛圈里帮着转发导流；对我来说，你们真实用它发一次活动，就是我参赛材料里最有分量的「真实采用」证据——比自说自话强得多。
 >
@@ -44,7 +44,7 @@
 
 > {{对方称呼}} 你好，我是玖肆，平时在 X 上写 Web3 早期项目，最近在做一个参赛项目 BeCounted，想跟咱们社区谈个小合作。
 >
-> 简单说：我们做了一道「真人门」——基于币安 Agent ID（一人一号、不可转让），接上这道门的领取活动，只有真人能参加、一人一份，机器人和多开农场会被合约直接挡在外面。我们有个现成的模板合约，社区如果想给成员发一次福利领取（小额空投、纪念品、白名单名额都行），部署注资就能开，十分钟的事，合约开源、无管理员权限，资金全程在合约里按规则发放，领没领、领多少，链上都查得到。
+> 简单说：我们做了一道「真人门」——基于币安 Agent ID（一人一号、不可转让），接上这道门的领取活动，只有真人能参加、一人一份，机器人和多开农场会被合约直接挡在外面。我们有个现成的模板合约，社区如果想给成员发一次福利领取（小额空投、纪念品、白名单名额都行），部署注资就能开（设计上十分钟量级），合约开源、无管理员权限，资金全程在合约里按规则发放，领没领、领多少，链上都查得到。
 >
 > 我这边能提供的：模板合约和接入支持全程陪跑、活动页现成、我会在自己的 X 和参赛圈帮活动做宣传导流。对我这边的回报很简单：社区真实用它办一次活动，就是我比赛提交里最需要的真实用例，我会如实写进材料并致谢。
 >
@@ -54,7 +54,7 @@
 
 > {{对方称呼}} 你好，我是 BeCounted 的作者玖肆。我们在为 BNB Chain 做一个抗女巫的门禁原语，想邀请 {{项目名}} 成为最早的一批采用方，听听你们的真实反馈。
 >
-> 背景很简单：Agent ID 一人一号由 KYC 结构保证，BeCounted 把它封装成一行只读调用 `isHuman(address)`——无 owner、不可升级、零费用。除原语外，我们提供一个开箱即用的空投门模板 GatedClaim：项目方注资奖池、设定份数与时间窗，持有 Agent ID 的真人一人领一份、即时到账，活动结束后未领部分自动可回收。合约已在 BSC 测试网完成全流程实测（部署、注资、领取、回收），源码开源。
+> 背景很简单：Agent ID 一人一号由 KYC 结构保证，BeCounted 把它封装成一行只读调用 `isHuman(address)`——无 owner、不可升级、零费用。除原语外，我们提供一个开箱即用的空投门模板 GatedClaim：项目方注资奖池、设定份数与时间窗，持有 Agent ID 的真人一人领一份、即时到账，活动结束后未领部分自动可回收。合约已在 BSC 测试网完成全流程实测（部署、注资、领取、回收），主网已上线并跑过真实活动，源码开源、主网合约全部完成 BscScan 验证。
 >
 > 采用成本只有部署和注资的 gas；接入方式灵活：直接部署模板，或在你们现有合约里调 isHuman 做前置校验都可以，我们提供文档和一对一接入支持。回报方面：你们的活动会进入我们的官网案例与参赛提交材料（经你们同意后展示），我们也会在自己的渠道为活动导流。
 >
@@ -76,7 +76,8 @@
 |---|---|---|
 | 空投门模板 GatedClaim（源码） | 仓库 `contracts/templates/GatedClaim.sol` + 同目录 README | 单实例 = 一场活动；参数构造时写死（门禁、代币、奖池、份数、时间窗），全部 immutable |
 | 模板测试网演示实例 | `0xe216ddd066e2cae40cead9000307f411bf55dc28`（BSC 测试网） | 已部署并注资的活实例：0.003 tBNB 奖池、3 份、窗口 7 天；已真实领取 1 份，可当场演示完整流程 |
-| 门禁原语 BeCounted（测试网） | `0x0cb41f96c84df7bed5db273e77b62414b1a80cbd` | 测试网版指向 mock 注册表；主网上线后换主网地址（构造参数为官方注册表，见下） |
+| 门禁原语 BeCounted（主网） | `0xdA585A4aE5b73Ee2728AadA3e877A3A1F84027cd` | 主网现行版，构造参数为官方 Agent ID 注册表 `0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F`；BscScan 已验证 |
+| 活动合约 OneIDCampaignsV16（主网） | `0x59Ea103C1f9d1DBBd91F1Ec9FC22C4eBD58c3B5C` | 现行参考应用（抽奖/投票/领取 + 参加条件引擎 + 按签到权重开奖 + 登记型领取）；可直接在官网创建活动、零部署 |
 | 官网（含开发者页与在线查真人工具） | https://becounted.9nosing.com/ | 开发者页有地址表、接口说明、两键原则讲解 |
 
 ### 对方需要做的（四步）
@@ -96,7 +97,7 @@
 ### 时间预期
 
 - 测试网试跑：约 10 分钟部署注资，流程当场走完。
-- 主网正式活动：主网合约部署完成后即可开始，建议给活动留 3–7 天领取窗口。
+- 主网正式活动：主网已上线、随时可开始（部署模板，或直接在官网创建一场活动），建议给活动留 3–7 天领取窗口。
 
 ---
 
@@ -115,4 +116,4 @@
 
 - 首选对象：已在互助圈里公开喊缺交互的参赛同行（需求最真实）、自己有发福利习惯的中小社区。
 - 一次只谈 1–2 家，谈成一家、陪跑跑通一家，再谈下一家——真实跑通比广撒网重要。
-- 主网部署（11-25）后第一时间把主网模板地址补进本文档并替换测试网口径，再正式外发私信。**警告：上线后、主网地址替换完成之前，不要拿本文档现有的测试网地址外发私信——对方点开会是测试网合约；先换成主网地址再发。**
+- 主网地址已于 2026-11-27 补齐（本文档现为纯主网口径），可直接外发；外发前只需替换各模板的 {{...}} 占位。

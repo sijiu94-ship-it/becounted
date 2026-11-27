@@ -1,9 +1,12 @@
-// settle-vote.js — Minority-vote settlement recompute for OneIDCampaignsV11.
+// settle-vote.js — Minority-vote settlement recompute for OneIDCampaignsV11–V16
+// (one ABI lineage: the Voted event and tally() reads are unchanged across
+// V12–V16, and the V11 artifact ABI decodes V16 getCampaign returns — the
+// trailing `weighted` field is ignored; verified 2026-11-27).
 //
 // Usage:
 //   node scripts/settle-vote.js <campaignId> <prizeRawAmount>
 //
-//   <campaignId>      id of a VOTE campaign on OneIDCampaignsV11
+//   <campaignId>      id of a VOTE campaign on OneIDCampaigns (V11–V16)
 //   <prizeRawAmount>  total prize as an integer string in the raw units of
 //                     the campaign's prize token (campaign.prizeToken; for
 //                     vote campaigns this is address(0) on-chain — the prize
@@ -13,8 +16,8 @@
 //                     units for BSC USDC).
 //
 // Mainnet settlement (the launch minority vote — see LAUNCH-RUNBOOK §8):
-//   APPS_ADDRESS=<appsV11 from mainnet-address.json> \
-//   DEPLOY_BLOCK=<appsBlock from mainnet-address.json> \
+//   APPS_ADDRESS=<appsV16 from mainnet-address.json> \
+//   DEPLOY_BLOCK=<appsV16Block from mainnet-address.json> \
 //   CHAIN_ID=56 \
 //   RPC_URLS=https://bsc-rpc.publicnode.com,https://bsc-dataseed.binance.org,https://bsc-dataseed1.bnbchain.org \
 //   node scripts/settle-vote.js <campaignId> 15000000000000000000
@@ -24,8 +27,10 @@
 //      has not ended yet (current block timestamp <= endAt).
 //   2. Scans every Voted(id, participant, option) event for the campaign
 //      from the apps deploy block to the chain head, sequentially in
-//      45,000-block chunks (public RPCs cap eth_getLogs range and rate-limit
-//      bursts), and recomputes the per-option tallies from the events alone.
+//      10,000-block chunks on mainnet (public endpoints cap eth_getLogs at
+//      10k blocks/call there; 45,000 on testnet), splitting a chunk in half
+//      if it keeps failing, and recomputes the per-option tallies from the
+//      events alone.
 //   3. Cross-checks the recomputed tallies against the contract's tally()
 //      storage reads. A mismatch is reported loudly and the payout file is
 //      marked tallyVerified=false (exit code 2).
@@ -64,13 +69,15 @@ const CHAIN_ID = Number(process.env.CHAIN_ID || 97);
 // — refuse loudly instead of producing a plausible-looking wrong file.
 if (CHAIN_ID === 56 && APPS_ADDRESS.toLowerCase() === "0x8ce3052c7ccafd29a58306981d2235433d386d32") {
   console.error("REFUSING: CHAIN_ID=56 but APPS_ADDRESS is the testnet trial default.");
-  console.error("Set APPS_ADDRESS and DEPLOY_BLOCK from mainnet-address.json (appsV14 / appsV14Block) explicitly.");
+  console.error("Set APPS_ADDRESS and DEPLOY_BLOCK from mainnet-address.json (appsV16 / appsV16Block) explicitly.");
   process.exit(1);
 }
 const RPC_URLS = (process.env.RPC_URLS || process.env.READ_RPC ||
   "https://bsc-testnet-rpc.publicnode.com,https://bsc-testnet.publicnode.com,https://bnb-testnet.api.onfinality.io/public"
 ).split(",").map((s) => s.trim()).filter(Boolean);
-const CHUNK = 45000;
+// Public mainnet endpoints cap eth_getLogs at 10,000 blocks per call
+// (measured 2026-11-26 — see count-interactions.js); testnet tolerates more.
+const CHUNK = CHAIN_ID === 56 ? 10000 : 45000;
 
 const KIND_NAMES = ["Raffle", "Vote", "Claim"];
 
@@ -101,24 +108,37 @@ async function rpc(method, params) {
   throw last ?? new Error("all RPCs failed for " + method);
 }
 
-// Sequential chunked log scan with retry/backoff per chunk.
+// Sequential chunked log scan with retry/backoff per chunk; a chunk that
+// keeps failing is split in half recursively before giving up.
+async function scanRange(filter, from, to, logs) {
+  let attempt = 0;
+  for (;;) {
+    try {
+      const part = await rpc("eth_getLogs", [{ ...filter, fromBlock: "0x" + from.toString(16), toBlock: "0x" + to.toString(16) }]);
+      logs.push(...part);
+      return;
+    } catch (e) {
+      attempt++;
+      if (attempt > 3) {
+        if (to - from >= 1000) {
+          const mid = from + Math.floor((to - from) / 2);
+          console.error(`    chunk ${from}-${to} keeps failing (${e.message}) — splitting at ${mid}`);
+          await scanRange(filter, from, mid, logs);
+          await scanRange(filter, mid + 1, to, logs);
+          return;
+        }
+        throw new Error(`eth_getLogs chunk ${from}-${to} failed after retries: ${e.message}`);
+      }
+      await sleep(1500 * attempt);
+    }
+  }
+}
+
 async function scanLogs(filter, fromBlock, toBlock) {
   const logs = [];
   for (let from = fromBlock; from <= toBlock; from += CHUNK) {
-    const to = Math.min(from + CHUNK - 1, toBlock);
-    let attempt = 0;
-    for (;;) {
-      try {
-        const part = await rpc("eth_getLogs", [{ ...filter, fromBlock: "0x" + from.toString(16), toBlock: "0x" + to.toString(16) }]);
-        logs.push(...part);
-        break;
-      } catch (e) {
-        attempt++;
-        if (attempt > 4) throw new Error(`eth_getLogs chunk ${from}-${to} failed after retries: ${e.message}`);
-        await sleep(1500 * attempt);
-      }
-    }
-    if (to < toBlock) await sleep(250); // be gentle with public RPC rate limits
+    await scanRange(filter, from, Math.min(from + CHUNK - 1, toBlock), logs);
+    if (from + CHUNK <= toBlock) await sleep(250); // be gentle with public RPC rate limits
   }
   return logs;
 }

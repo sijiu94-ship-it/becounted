@@ -1,5 +1,7 @@
 # Agent ID 黑客松 · 创新奖参赛方案 v2（2026-11-21 定稿）
 
+> **历史文档（2026-11-27 注）**：本方案为 2026-11-21 定稿的设计文档，产品其后由 HumanGate 更名为 BeCounted，并已迭代至 OneIDCampaignsV16 + CheckInV2 上线 BSC 主网；QuestPass 赛季经决定未部署主网。现行事实以 `docs/submission-draft.md` 与 `mainnet-address.json` 为准。
+
 > 活动：币安钱包 × BNB 链 Agent ID 黑客松（总奖池 60,000 USDC）
 > 目标奖项：创新奖（前 10 名：10,000 / 6,000 / 4,000 / 3,000 / 2,000 / 800×5 USDC）
 > 硬截止：2026-12-09 16:00（东八区）；本方案按 12-08 提交倒排
