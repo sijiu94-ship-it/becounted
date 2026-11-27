@@ -1,6 +1,12 @@
 /* BeCounted — shared logic: i18n, registry checker, wallet, campaigns, ID card */
 const REGISTRY_MAINNET = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
-const APPS_TESTNET     = "0x119541Cafa25118cd54F5548Df2A7D1aeE99B0f8"; // OneIDCampaignsV14 = V13 code + winner-info freeze at the draw, wired to IdentityBindingsV4 (mainnet)
+const APPS_TESTNET     = "0x6abA2aa96076DFB6eb4c038475D4495d3Ae97D2C"; // OneIDCampaignsV15 = V14 code + claim prizeLabel (registration claims), wired to IdentityBindingsV4 (mainnet)
+/* Legacy apps contract: V14 still hosts the campaigns created on it
+   (starting with #0). The site reads BOTH contracts (dual-read) and
+   every campaign carries a source ref ("v15:<id>" / "v14:<id>") so
+   ids never collide across contracts. */
+const APPS_V14_ADDR    = "0x119541Cafa25118cd54F5548Df2A7D1aeE99B0f8"; // OneIDCampaignsV14 (legacy)
+const APPS_V14_BLOCK   = 135798706; // V14 deployment block
 const BINDINGS_TESTNET = "0x5FC906B394BA23Dd1B546aea8F217101DEc07F85"; // IdentityBindingsV4 (self-registration + cooldown)
 const PROFILE_TESTNET  = "0x42c9f4bfa02e0b4365d9701f962b4dcd4bf39a07"; // IdentityProfile (Wave 2)
 const PROFILE_ABI = [
@@ -77,7 +83,7 @@ const APPS_ABI = [
   "function createRaffle(string, uint64, uint64, uint32, address, uint256, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string) payable returns (uint256)",
   "function createVote(string, uint64, uint64, uint8, address, uint256, uint32, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string[]) payable returns (uint256)",
   "function optionLabelsOf(uint256) view returns (string[])",
-  "function createClaim(string, uint64, uint64, uint32, address, uint256, bool, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot)) payable returns (uint256)",
+  "function createClaim(string, uint64, uint64, uint32, address, uint256, bool, tuple(bool requireBinding, address gateToken, uint256 gateMin, bool gateIs721, uint256 requireEnteredId, uint32 minStamps, address questRef, bytes32 allowRoot, bytes32 idListRoot), string) payable returns (uint256)",
   "function postUrl(uint256) view returns (string)","function series(uint256) view returns (string)","function setSeries(uint256,string)",
   "function setPostUrl(uint256, string)",
   "function winnerInfoUrl(uint256) view returns (string)", "function winnerInfoNote(uint256) view returns (string)", "function setWinnerInfo(uint256,string,string)",
@@ -99,7 +105,26 @@ const NETWORK = {
   appsRpcs: ["https://bsc-dataseed.binance.org","https://bsc-rpc.publicnode.com","https://rpc.ankr.com/bsc","https://bsc-dataseed1.bnbchain.org","https://bsc-dataseed2.bnbchain.org"],
   mainRpcs: ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com", "https://rpc.ankr.com/bsc", "https://bsc-dataseed1.bnbchain.org", "https://bsc-dataseed2.bnbchain.org"],
 };
-const APPS_DEPLOY_BLOCK = 135798706; // V14 deployment block: event scans start here
+const APPS_DEPLOY_BLOCK = 135937722; // V15 deployment block: event scans start here
+/* ---------- dual-contract campaign sources ---------- */
+const APPS_SOURCES = [
+  { key: "v15", addr: APPS_TESTNET, block: APPS_DEPLOY_BLOCK },
+  { key: "v14", addr: APPS_V14_ADDR, block: APPS_V14_BLOCK }
+];
+function srcByKey(k){ return APPS_SOURCES.find(x => x.key === k) || APPS_SOURCES[0]; }
+function parseRef(ref){
+  if (typeof ref === "string" && ref.indexOf(":") >= 0){ const p = ref.split(":"); return { src: srcByKey(p[0]), id: Number(p[1]), ref }; }
+  const id = Number(ref);
+  return { src: APPS_SOURCES[0], id, ref: APPS_SOURCES[0].key + ":" + id };
+}
+function makeRef(srcKey, id){ return srcKey + ":" + id; }
+const __readCache = {};
+function readFor(src){
+  chain();
+  if (!__readCache[src.key]) __readCache[src.key] = new ethers.Contract(src.addr, APPS_ABI, providerTest);
+  return __readCache[src.key];
+}
+function signerApps(src){ return new ethers.Contract(src.addr, APPS_ABI, signer); }
 // Token presets. Testnet addresses verified on-chain (symbol/decimals read
 // 2026-11-21). Mainnet switch on 2026-11-25: USDT 0x55d398326f99059fF775485246999027B3197955,
 // USDC 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d (both 18 decimals on BSC).
@@ -320,7 +345,7 @@ en: {
   soon_h:"Ending soon", soon_sub:"Live now, closing first — do not miss the window.",
   hot_h:"Trending", hot_camps:"Hot campaigns", hot_creators:"Top creators", hot_entries:"entries",
   f_tok_usdt:"USDT \u00b7 {chain} (preset)", f_tok_usdc:"USDC \u00b7 {chain} (preset)", f_tok_custom:"Custom prize (off-chain)", f_chain_main:"BSC mainnet", f_chain_test:"BSC testnet",
-  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.",
+  f_prize_label:"Prize description (stored on-chain)", f_prize_label_ph:"e.g. Partner whitelist spot \u00d71", f_custom_hint:"Off-chain prizes are NOT escrowed by the contract. Winners are drawn on-chain; you deliver the prize to the winner list yourself.", f_err_label:"Describe the custom prize (1\u201380 bytes).", c_custom_tag:"off-chain prize", d_custom_note:"Off-chain prize \u2014 delivered by the creator to the winners; nothing is escrowed on-chain.", d_custom_claim:"You won \u2014 the creator delivers this off-chain prize.", f_claim_custom_note:"Off-chain prize: nothing is escrowed and no pool is needed. Claiming only records the claimant on-chain \u2014 first come, first served, one slot per human. You deliver the prize yourself using the on-chain claimant list.", d_reg_note:"Off-chain prize: claiming records your slot on-chain (first come, first served, one per human). The contract pays nothing \u2014 the creator delivers the prize off-chain using the claimant list.", d_legacy_tag:"Legacy \u00b7 V14",
 
   c_claim:"Claim drop", c_pool:"Pool", c_each:"Each gets", c_claimed_n:"claimed", c_claim_btn:"Claim",
   c_prize:"Prize", c_claim_prize:"Claim prize", c_prize_claimed:"Prize claimed",
@@ -593,7 +618,7 @@ zh: {
   soon_h:"即将结束", soon_sub:"正在进行、先到截止时间的排前面——别错过窗口。",
   hot_h:"热度榜", hot_camps:"热门活动", hot_creators:"创作者榜", hot_entries:"人参与",
   f_tok_usdt:"USDT \u00b7 {chain}（预设）", f_tok_usdc:"USDC \u00b7 {chain}（预设）", f_tok_custom:"自定义奖品（链下发放）", f_chain_main:"BSC 主网", f_chain_test:"BSC 测试网",
-  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。",
+  f_prize_label:"奖品说明（存上链）", f_prize_label_ph:"如：合作方白名单名额 \u00d71", f_custom_hint:"链下奖品不由合约托管。中奖名单在链上开奖产生，奖品由你按名单自行发放。", f_err_label:"请填写自定义奖品说明（1\u201380 字节）。", c_custom_tag:"链下奖品", d_custom_note:"链下奖品\u2014\u2014由发起人按中奖名单发放，合约不托管。", d_custom_claim:"你中奖了\u2014\u2014奖品由发起人链下发放。", f_claim_custom_note:"链下奖品：不托管代币、不用填奖池。领取只在链上记名占位——一人一份、先到先得。活动结束后你按链上领取名单自行发放。", d_reg_note:"链下奖品：领取即在链上记名占位（一人一份、先到先得），合约不付款——发起人按链上领取名单线下发放。", d_legacy_tag:"历史活动 · V14",
 
   c_claim:"领取", c_pool:"奖池", c_each:"每份", c_claimed_n:"已领", c_claim_btn:"领取",
   c_prize:"奖品", c_claim_prize:"领取奖品", c_prize_claimed:"奖品已领取",
@@ -961,10 +986,10 @@ setInterval(tickCountdowns, 30000);
 
 /* ---------- share ---------- */
 window.__campTitles = {};
-window.shareCampaign = (id, won) => {
+window.shareCampaign = (ref, won) => {
   chain();
-  const title = window.__campTitles[id] || "BeCounted";
-  const kind = window.__campKinds ? window.__campKinds[id] : 0;
+  const title = window.__campTitles[ref] || "BeCounted";
+  const kind = window.__campKinds ? window.__campKinds[ref] : 0;
   const key = won ? "share_text_win" : kind === 2 ? "share_text_claim" : kind === 1 ? "share_text_vote" : "share_text_raffle";
   const text = t(key).replace("{title}", title) + " " + SITE_URL + " #BinanceWalletHackathon #AgenticWallet";
   window.open("https://x.com/intent/tweet?text=" + encodeURIComponent(text), "_blank");
@@ -996,13 +1021,14 @@ function fmtAmt(v, token){ // bigint amount -> short decimal, in the token's own
 }
 
 const LABELS = {};
-async function voteLabels(appsRead, i){
-  if (LABELS[i]) return LABELS[i];
+async function voteLabels(rd, ref){
+  if (LABELS[ref]) return LABELS[ref];
+  const _p = parseRef(ref); const i = _p.id;
   // A failed read is NOT cached: caching the empty fallback would degrade
   // every option label to "Option N" for the rest of the session.
-  try { const ls = Array.from(await appsRead.optionLabelsOf(i)); LABELS[i] = ls; return ls; } catch(e){ return []; }
+  try { const ls = Array.from(await rd.optionLabelsOf(i)); LABELS[ref] = ls; return ls; } catch(e){ return []; }
 }
-function optText(i, o){ const ls = LABELS[i]; return (ls && ls[o]) ? escHtml(ls[o]) : `${t("c_option")} ${o + 1}`; }
+function optText(ref, o){ const ls = LABELS[ref]; return (ls && ls[o]) ? escHtml(ls[o]) : `${t("c_option")} ${o + 1}`; }
 let __campSeq = 0;
 async function loadCampaigns(){
   const seq = ++__campSeq; // a newer load supersedes this round; a stale round must not render over it
@@ -1010,21 +1036,29 @@ async function loadCampaigns(){
   if(!grid && !$("soonGrid") && !$("statCampaigns")) return;
   chain();
   try{
-    const n = Number(await appsRead.campaignCount());
-    if (seq !== __campSeq) return;
     let totalEntries = 0;
+    let totalCamps = 0;
     let all = [];
-    if(n === 0){ if(grid) grid.innerHTML = `<div class="empty">${t("no_camp")}</div>`; }
-    else{
+    let items = [];
+    for (const src of APPS_SOURCES){
+      const rd = readFor(src);
+      const n = Number(await rd.campaignCount());
+      totalCamps += n;
+      if (!n) continue;
       const order = [];
       for(let i = n-1; i >= 0; i--) order.push(i);
-      const fetched = await Promise.all(order.map(i => appsRead.getCampaign(i)));
-      if (grid) await Promise.all(order.map((ci, ix) => Number(fetched[ix].kind) === 1 ? voteLabels(appsRead, ci) : null));
-      fetched.forEach((c, pos) => { const i = order[pos]; all.push([i, c]); window.__campTitles[i] = String(c.title); window.__campKinds[i] = Number(c.kind); window.__campTokens = window.__campTokens || {}; window.__campTokens[i] = c.prizeToken; totalEntries += Number(c.entryCount); });
+      const fetched = await Promise.all(order.map(i => rd.getCampaign(i)));
+      if (grid) await Promise.all(order.map((ci, ix) => Number(fetched[ix].kind) === 1 ? voteLabels(rd, makeRef(src.key, ci)) : null));
+      fetched.forEach((c, pos) => { const i = order[pos]; const ref = makeRef(src.key, i); items.push({ ref, id: i, src, rd, c }); all.push([ref, c]); window.__campTitles[ref] = String(c.title); window.__campKinds[ref] = Number(c.kind); window.__campTokens = window.__campTokens || {}; window.__campTokens[ref] = c.prizeToken; totalEntries += Number(c.entryCount); });
+    }
+    if (seq !== __campSeq) return;
+    if(totalCamps === 0){ if(grid) grid.innerHTML = `<div class="empty">${t("no_camp")}</div>`; }
+    else{
       if (grid){
         let curBlock = 0; try{ curBlock = await providerTest.getBlockNumber(); }catch(e){}
-        const cards = await Promise.all(order.map(async (i, pos) => {
-          const c = fetched[pos];
+        const cards = await Promise.all(items.map(async (it) => {
+          const i = it.id, ref = it.ref, RD = it.rd;
+          const c = it.c;
           await decimalsOf(c.prizeToken);
           const now = Math.floor(Date.now()/1000);
           const live = now >= Number(c.startAt) && now <= Number(c.endAt);
@@ -1035,8 +1069,8 @@ async function loadCampaigns(){
           let extra = "";
           let entered = false, myWin = false;
           if(myAddr){
-            try{ entered = await appsRead.hasEntered(i, myAddr); }catch(e){}
-            if(c.drawn){ try{ myWin = await appsRead.isWinner(i, myAddr); }catch(e){} }
+            try{ entered = await RD.hasEntered(i, myAddr); }catch(e){}
+            if(c.drawn){ try{ myWin = await RD.isWinner(i, myAddr); }catch(e){} }
           }
           const hasPrize = isRaffle && c.prizePerWinner > 0n;
           const hasCustom = isRaffle && !hasPrize && !!c.prizeLabel;
@@ -1047,31 +1081,33 @@ async function loadCampaigns(){
               ? `<b>${String(c.prizeLabel).replace(/</g, "&lt;")}</b> \u00b7 ${t("c_custom_tag")} \u00b7 ${c.entryCount} ${t("c_entries")}`
               : `${c.winnerCount} ${t("c_winners")} \u00b7 ${c.entryCount} ${t("c_entries")}`;
             if(c.drawn){
-              let w = []; try{ w = await appsRead.getWinners(i); }catch(e){}
+              let w = []; try{ w = await RD.getWinners(i); }catch(e){}
               extra = `<span class="count">${t("c_winner")} <b>${w.length ? short(w[0]) : "\u2014"}</b>${w.length > 1 ? ` +${w.length - 1}` : ""}</span>`;
               let iw = false, ipc = false;
-              if(hasPrize && myAddr){ try{ iw = await appsRead.isWinner(i, myAddr); ipc = await appsRead.prizeClaimed(i, myAddr); }catch(e){} }
+              if(hasPrize && myAddr){ try{ iw = await RD.isWinner(i, myAddr); ipc = await RD.prizeClaimed(i, myAddr); }catch(e){} }
               if(hasPrize && myAddr && iw && !ipc){
-                primary = `<button class="cta-btn" onclick="claimPrize(${i})">${t("c_claim_prize")}</button>`;
+                primary = `<button class="cta-btn" onclick="claimPrize('${ref}')">${t("c_claim_prize")}</button>`;
               } else if(hasPrize && myAddr && ipc){
                 extra += `<span class="count">${t("c_prize_claimed")}</span>`;
               }
             } else if(live){
               primary = entered
                 ? `<button class="cta-btn" disabled style="opacity:.5;cursor:default">${t("c_entered")} \u2713</button>`
-                : `<button class="cta-btn" onclick="enterRaffle(${i})">${t("c_enter")}</button>`;
+                : `<button class="cta-btn" onclick="enterRaffle('${ref}')">${t("c_enter")}</button>`;
             } else if(ended){
-              primary = drawFlowHtml(i, c, curBlock, "cta-btn outline", "c_draw");
+              primary = drawFlowHtml(ref, c, curBlock, "cta-btn outline", "c_draw");
             }
           } else if(Number(c.kind) === 2){
             const claimed = Number(c.entryCount), max = Number(c.maxClaims);
-            keyline = c.claimRandom
+            keyline = c.prizeLabel
+              ? `<b>${String(c.prizeLabel).replace(/</g, "&lt;")}</b> \u00b7 ${t("c_custom_tag")} \u00b7 ${claimed}/${max} ${t("c_claimed_n")}`
+              : c.claimRandom
               ? `<b>${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}</b> \u00b7 ${t("c_lucky")} \u00b7 ${claimed}/${max} ${t("c_claimed_n")}`
               : `<b>${fmtAmt(c.claimAmount, c.prizeToken)} ${tokenLabel(c.prizeToken)}</b> / ${t("c_each")} \u00b7 ${claimed}/${max} ${t("c_claimed_n")}`;
             if(live && claimed < max){
               primary = entered
                 ? `<button class="cta-btn" disabled style="opacity:.5;cursor:default">${t("c_claimed_done")} \u2713</button>`
-                : `<button class="cta-btn" onclick="claimShare(${i})">${t("c_claim_btn")}</button>`;
+                : `<button class="cta-btn" onclick="claimShare('${ref}')">${t("c_claim_btn")}</button>`;
             }
           } else {
             keyline = c.pool > 0n
@@ -1079,39 +1115,39 @@ async function loadCampaigns(){
               : `${c.optionCount} ${t("c_options")} \u00b7 ${c.entryCount} ${t("c_entries")}`;
             let opts = "";
             for(let o = 0; o < Number(c.optionCount); o++){
-              let tv = 0n; try{ tv = await appsRead.tally(i, o); }catch(e){}
-              opts += `<span class="opt">${optText(i, o)} \u00b7 <b>${tv}</b></span>`;
+              let tv = 0n; try{ tv = await RD.tally(i, o); }catch(e){}
+              opts += `<span class="opt">${optText(ref, o)} \u00b7 <b>${tv}</b></span>`;
             }
             extra = `<div class="tally">${opts}</div>`;
             if(live){
               if(entered){
                 let myOpt = 0;
-                try{ myOpt = Number(await appsRead.voteOf(i, myAddr)); }catch(e){}
-                primary = `<button class="cta-btn" disabled style="opacity:.5;cursor:default">${t("c_voted")} \u00b7 ${optText(i, myOpt)} \u2713</button>`;
+                try{ myOpt = Number(await RD.voteOf(i, myAddr)); }catch(e){}
+                primary = `<button class="cta-btn" disabled style="opacity:.5;cursor:default">${t("c_voted")} \u00b7 ${optText(ref, myOpt)} \u2713</button>`;
               } else {
-                primary = `<div class="vote-row">` + Array.from({length:Number(c.optionCount)},(_,o)=>`<button class="cta-btn outline" onclick="voteCampaign(${i},${o})">${optText(i, o)}</button>`).join("") + `</div>`;
+                primary = `<div class="vote-row">` + Array.from({length:Number(c.optionCount)},(_,o)=>`<button class="cta-btn outline" onclick="voteCampaign('${ref}',${o})">${optText(ref, o)}</button>`).join("") + `</div>`;
               }
             }
           }
           if (Number(c.kind) === 1 && c.pool > 0n){
             if (c.drawn){
               if (myAddr && myWin){
-                let pc = true; try{ pc = await appsRead.prizeClaimed(i, myAddr); }catch(e){}
-                if (!pc) primary = `<button class="cta-btn" onclick="claimPrize(${i})">${t("c_claim_prize")}</button>`;
+                let pc = true; try{ pc = await RD.prizeClaimed(i, myAddr); }catch(e){}
+                if (!pc) primary = `<button class="cta-btn" onclick="claimPrize('${ref}')">${t("c_claim_prize")}</button>`;
                 else extra += `<span class="count">${t("c_prize_claimed")}</span>`;
               }
             } else if (ended){
-              primary = drawFlowHtml(i, c, curBlock, "cta-btn outline", "c_draw");
+              primary = drawFlowHtml(ref, c, curBlock, "cta-btn outline", "c_draw");
             }
           }
           let postBtn = "";
           try{
-            const pu = await appsRead.postUrl(i);
+            const pu = await RD.postUrl(i);
             if (pu && pu.startsWith("https://")) postBtn = `<a class="btn sm ghost" href="${pu.replace(/"/g, "%22")}" target="_blank" rel="noopener">${t("post_btn")}</a>`;
           }catch(e){}
           let seriesTag = "";
-          try{ seriesTag = await appsRead.series(i); }catch(e){}
-          let cond = null; try{ cond = await appsRead.conditionsOf(i); }catch(e){}
+          try{ seriesTag = await RD.series(i); }catch(e){}
+          let cond = null; try{ cond = await RD.conditionsOf(i); }catch(e){}
           if (cond) await decimalsOf(cond.gateToken);
           const creatorHtml = await creatorLabel(c.creator);
           return `<div class="camp${ended ? " is-ended" : ""}" data-kind="${Number(c.kind)}" data-status="${live ? "live" : ended ? "ended" : "upcoming"}" data-title="${String(c.title).replace(/"/g, "").toLowerCase()}" data-series="${seriesTag.replace(/"/g, "").toLowerCase()}" data-slabel="${seriesTag.replace(/"/g, "")}">
@@ -1125,8 +1161,8 @@ async function loadCampaigns(){
             <div class="cta-zone">
               ${extra}
               ${primary}
-              <span class="camp-msg" role="status" id="msg-${i}"></span>
-              <div class="subrow"><button class="btn sm ghost" onclick="shareCampaign(${i})">${t("share_btn")}</button>${postBtn}<a class="btn sm ghost" href="campaign.html?id=${i}" style="text-decoration:none">${t("d_details")}</a></div>
+              <span class="camp-msg" role="status" id="msg-${ref}"></span>
+              <div class="subrow"><button class="btn sm ghost" onclick="shareCampaign('${ref}')">${t("share_btn")}</button>${postBtn}<a class="btn sm ghost" href="campaign.html?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
             </div>
           </div>`;
         }));
@@ -1136,7 +1172,7 @@ async function loadCampaigns(){
       }
     }
     if (seq !== __campSeq) return;
-    if($("statCampaigns")) $("statCampaigns").textContent = n;
+    if($("statCampaigns")) $("statCampaigns").textContent = totalCamps;
     if($("statEntries")) $("statEntries").textContent = totalEntries;
     renderHot(all);
     renderSoon(all);
@@ -1166,7 +1202,7 @@ function renderSoon(all){
       <div class="camp-top"><span class="chip ${Number(c.kind)===0 ? "raffle" : ""}">${Number(c.kind)===0 ? t("c_raffle") : Number(c.kind)===2 ? t("c_claim") : t("c_vote")}</span><span class="chip live">${t("c_live")}</span></div>
       <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
       <div class="meta"><span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span> · <b>${c.entryCount}</b> ${t("c_entries")}</div>
-      <div class="foot"><a class="btn sm" href="campaign.html?id=${i}" style="text-decoration:none">${t("d_details")}</a></div>
+      <div class="foot"><a class="btn sm" href="campaign.html?ref=${i}" style="text-decoration:none">${t("d_details")}</a></div>
     </div>`).join("") : `<div class="empty">${t("no_camp")}</div>`;
   tickCountdowns();
 }
@@ -1224,9 +1260,8 @@ function parseNameList(text){
    so a bare per-id key would feed a testnet list into a mainnet campaign
    with the same id. (The on-chain root check would still reject a wrong
    list — this keeps the prefill honest instead of merely safe.) */
-const LIST_NS = String(APPS_TESTNET).toLowerCase();
-function listKey(id){ return "hg_list_" + LIST_NS + "_" + id; }
-function idListKey(id){ return "hg_idlist_" + LIST_NS + "_" + id; }
+function listKey(ref){ const p = parseRef(ref); return "hg_list_" + p.src.addr.toLowerCase() + "_" + p.id; }
+function idListKey(ref){ const p = parseRef(ref); return "hg_idlist_" + p.src.addr.toLowerCase() + "_" + p.id; }
 // One-time purge of the pre-namespace bare keys (hg_list_<id> / hg_idlist_<id>).
 (function purgeLegacyListKeys(){
   try{
@@ -1235,12 +1270,12 @@ function idListKey(id){ return "hg_idlist_" + LIST_NS + "_" + id; }
     dead.forEach(k => localStorage.removeItem(k));
   }catch(e){}
 })();
-function storedIdList(id){ try{ const j = JSON.parse(localStorage.getItem(idListKey(id)) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
-function storeIdList(id, list){ try{ localStorage.setItem(idListKey(id), JSON.stringify(list)); }catch(e){} }
-function dlIdListJson(list, id){
+function storedIdList(ref){ try{ const j = JSON.parse(localStorage.getItem(idListKey(ref)) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
+function storeIdList(ref, list){ try{ localStorage.setItem(idListKey(ref), JSON.stringify(list)); }catch(e){} }
+function dlIdListJson(list, ref){
   try{
     const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "becounted-idlist-" + id + ".json"; a.click();
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "becounted-idlist-" + parseRef(ref).id + ".json"; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }catch(e){}
 }
@@ -1296,12 +1331,12 @@ function parseAddrList(text){
   for (const a of raw){ if (!ethers.isAddress(a)) return null; const k = a.toLowerCase(); if (!seen.has(k)){ seen.add(k); out.push(ethers.getAddress(a)); } }
   return out;
 }
-function storedList(id){ try{ const j = JSON.parse(localStorage.getItem(listKey(id)) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
-function storeList(id, list){ try{ localStorage.setItem(listKey(id), JSON.stringify(list)); }catch(e){} }
-function dlListJson(list, id){
+function storedList(ref){ try{ const j = JSON.parse(localStorage.getItem(listKey(ref)) || "null"); return Array.isArray(j) ? j : null; }catch(e){ return null; } }
+function storeList(ref, list){ try{ localStorage.setItem(listKey(ref), JSON.stringify(list)); }catch(e){} }
+function dlListJson(list, ref){
   try{
     const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "becounted-list-" + id + ".json"; a.click();
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "becounted-list-" + parseRef(ref).id + ".json"; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }catch(e){}
 }
@@ -1318,7 +1353,8 @@ window.toggle721 = () => {
   const hint = $("cd721Hint"); if (hint) hint.style.display = on ? "" : "none";
   const min = $("cdTokenMin"); if (min) min.placeholder = on ? "1" : "100";
 };
-async function proofsFor(id, who){
+async function proofsFor(ref, who){
+  const _pr = parseRef(ref); const id = _pr.id; const _rd = readFor(_pr.src);
   // { p4, p5 }: each is [] (condition off), a proof array, or null
   // (condition on but unprovable from here: list missing / not on the
   // list / no handle). Callers map null to m_cond_4 / m_cond_5.
@@ -1328,17 +1364,17 @@ async function proofsFor(id, who){
   // wrong thing.
   const out = { p4: [], p5: [], readErr: false };
   let cd;
-  try{ chain(); cd = await appsRead.conditionsOf(id); }
+  try{ chain(); cd = await _rd.conditionsOf(id); }
   catch(e){ out.readErr = true; out.p4 = null; out.p5 = null; return out; }
   try{
     if (cd.allowRoot && cd.allowRoot !== ethers.ZeroHash){
-      const list = storedList(id);
+      const list = storedList(ref);
       // The local list must reproduce the on-chain root; a stale or wrong
       // list fails here with a human message, not with an on-chain revert.
       out.p4 = (list && mkRoot(list).toLowerCase() === String(cd.allowRoot).toLowerCase()) ? mkProof(list, who) : null;
     }
     if (cd.idListRoot && cd.idListRoot !== ethers.ZeroHash){
-      const list = storedIdList(id);
+      const list = storedIdList(ref);
       if (!list || idRootOf(list).toLowerCase() !== String(cd.idListRoot).toLowerCase()) out.p5 = null;
       else {
         const h = await handleOfAddr(who);
@@ -1348,9 +1384,9 @@ async function proofsFor(id, who){
   }catch(e){ /* proof construction failed: fail closed — callers surface m_cond_4/5 instead of sending an empty proof on-chain */ out.p4 = null; out.p5 = null; }
   return out;
 }
-function addrListPanelHtml(id, cd){
+function addrListPanelHtml(ref, cd){
   if (!cd || !cd.allowRoot || cd.allowRoot === ethers.ZeroHash) return "";
-  const list = storedList(id);
+  const list = storedList(ref);
   let status = "";
   if (list){
     const rootOk = mkRoot(list).toLowerCase() === String(cd.allowRoot).toLowerCase();
@@ -1358,39 +1394,39 @@ function addrListPanelHtml(id, cd){
     if (myAddr) mine = mkProof(list, myAddr) ? t("lst_in") : t("lst_out");
     status = `<div class="count" style="margin-top:6px">${rootOk ? t("lst_root_ok") : t("lst_root_bad")}${mine}</div>`;
   }
-  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("lst_h")}</h2><p>${t("lst_hint")}</p></div><textarea id="lstText-${id}" rows="3" placeholder="${t("lst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveList(${id})">${t("lst_save")}</button> <span class="camp-msg" role="status" id="lstMsg-${id}"></span></div>${status}</div>`;
+  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("lst_h")}</h2><p>${t("lst_hint")}</p></div><textarea id="lstText-${ref}" rows="3" placeholder="${t("lst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveList('${ref}')">${t("lst_save")}</button> <span class="camp-msg" role="status" id="lstMsg-${ref}"></span></div>${status}</div>`;
 }
-function listPanelHtml(id, cd){ return addrListPanelHtml(id, cd) + idListPanelHtml(id, cd); }
-function idListPanelHtml(id, cd){
+function listPanelHtml(ref, cd){ return addrListPanelHtml(ref, cd) + idListPanelHtml(ref, cd); }
+function idListPanelHtml(ref, cd){
   if (!cd || !cd.idListRoot || cd.idListRoot === ethers.ZeroHash) return "";
-  const list = storedIdList(id);
+  const list = storedIdList(ref);
   let status = "";
   if (list){
     const rootOk = idRootOf(list).toLowerCase() === String(cd.idListRoot).toLowerCase();
-    status = `<div class="count" style="margin-top:6px">${rootOk ? t("lst_root_ok") : t("lst_root_bad")}<span id="idlstMine-${id}"></span></div>`;
+    status = `<div class="count" style="margin-top:6px">${rootOk ? t("lst_root_ok") : t("lst_root_bad")}<span id="idlstMine-${ref}"></span></div>`;
   }
-  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("idlst_h")}</h2><p>${t("idlst_hint")}</p></div><textarea id="idlstText-${id}" rows="3" placeholder="${t("idlst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveIdList(${id})">${t("lst_save")}</button> <span class="camp-msg" role="status" id="idlstMsg-${id}"></span></div>${status}</div>`;
+  return `<div class="panel" style="margin-top:14px"><div class="sec-head"><h2 style="font-size:17px">${t("idlst_h")}</h2><p>${t("idlst_hint")}</p></div><textarea id="idlstText-${ref}" rows="3" placeholder="${t("idlst_ph")}" spellcheck="false" style="width:100%">${list ? list.join("\n") : ""}</textarea><div style="margin-top:8px"><button class="btn sm" onclick="saveIdList('${ref}')">${t("lst_save")}</button> <span class="camp-msg" role="status" id="idlstMsg-${ref}"></span></div>${status}</div>`;
 }
-window.saveIdList = id => {
-  const list = parseNameList($("idlstText-" + id)?.value || "");
-  const m = $("idlstMsg-" + id);
+window.saveIdList = ref => {
+  const list = parseNameList($("idlstText-" + ref)?.value || "");
+  const m = $("idlstMsg-" + ref);
   if (!list || !list.length){ if (m) m.textContent = t("cd_err_id"); return; }
-  storeIdList(id, list);
+  storeIdList(ref, list);
   loadDetail();
 };
-async function fillIdMine(id){
-  const el = $("idlstMine-" + id);
+async function fillIdMine(ref){
+  const el = $("idlstMine-" + ref);
   if (!el || !myAddr) return;
-  const list = storedIdList(id);
+  const list = storedIdList(ref);
   if (!list) return;
   const h = await handleOfAddr(myAddr);
   el.textContent = !h ? t("idlst_nohandle") : (idProofOf(list, h) ? t("idlst_in") : t("idlst_out"));
 }
-window.saveList = id => {
-  const list = parseAddrList($("lstText-" + id)?.value || "");
-  const m = $("lstMsg-" + id);
+window.saveList = ref => {
+  const list = parseAddrList($("lstText-" + ref)?.value || "");
+  const m = $("lstMsg-" + ref);
   if (!list || !list.length){ if (m) m.textContent = t("cd_err_allow"); return; }
-  storeList(id, list);
+  storeList(ref, list);
   loadDetail();
 };
 function condChipsHtml(cd){
@@ -1406,25 +1442,27 @@ function condChipsHtml(cd){
   }catch(e){}
   return chips.length ? `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${chips.map(x => `<span class="chip" style="color:var(--gold);border-color:rgba(240,185,11,.45)">${x}</span>`).join("")}</div>` : "";
 }
-async function checkConditions(id, who){
+async function checkConditions(ref, who){
   // returns failing condition index 0..5, -1 when all pass, null on read error (pre-check only; proofsFor fails closed before anything is sent)
+  const _pr = parseRef(ref); const id = _pr.id; const _rd = readFor(_pr.src);
   try{
     chain();
-    const cd = await appsRead.conditionsOf(id);
+    const cd = await _rd.conditionsOf(id);
     if (cd.requireBinding){ const ok = await bindingsRead.isBindingValid(who).catch(() => false); if (!ok) return 0; }
     if (cd.gateToken && cd.gateToken !== ethers.ZeroAddress){
       const bal = await new ethers.Contract(cd.gateToken, ["function balanceOf(address) view returns (uint256)"], providerTest).balanceOf(who);
       if (bal < cd.gateMin) return 1;
     }
-    if (cd.requireEnteredId !== ethers.MaxUint256){ const ok = await appsRead.hasEntered(cd.requireEnteredId, who); if (!ok) return 2; }
+    if (cd.requireEnteredId !== ethers.MaxUint256){ const ok = await _rd.hasEntered(cd.requireEnteredId, who); if (!ok) return 2; }
     if (Number(cd.minStamps) > 0){ const n = await new ethers.Contract(cd.questRef, QUEST_ABI, providerTest).stampCount(who); if (Number(n) < Number(cd.minStamps)) return 3; }
-    if (cd.allowRoot && cd.allowRoot !== ethers.ZeroHash){ const list = storedList(id); if (!list || mkRoot(list).toLowerCase() !== String(cd.allowRoot).toLowerCase() || !mkProof(list, who)) return 4; }
-    if (cd.idListRoot && cd.idListRoot !== ethers.ZeroHash){ const list = storedIdList(id); if (!list || idRootOf(list).toLowerCase() !== String(cd.idListRoot).toLowerCase()) return 5; const h = await handleOfAddr(who); if (!h || !idProofOf(list, h)) return 5; }
+    if (cd.allowRoot && cd.allowRoot !== ethers.ZeroHash){ const list = storedList(ref); if (!list || mkRoot(list).toLowerCase() !== String(cd.allowRoot).toLowerCase() || !mkProof(list, who)) return 4; }
+    if (cd.idListRoot && cd.idListRoot !== ethers.ZeroHash){ const list = storedIdList(ref); if (!list || idRootOf(list).toLowerCase() !== String(cd.idListRoot).toLowerCase()) return 5; const h = await handleOfAddr(who); if (!h || !idProofOf(list, h)) return 5; }
     return -1;
   }catch(e){ return null; }
 }
-async function withSigner(fn, id, gated){
-  const msg = $("msg-"+id);
+async function withSigner(fn, ref, gated){
+  const id = ref;
+  const msg = $("msg-"+ref);
   if(!signer){ toast(t("m_connect_first")); return; }
   const scope = msg ? msg.closest(".camp, #detailBox") : null;
   const btns = scope ? [...scope.querySelectorAll("button")] : [];
@@ -1446,7 +1484,7 @@ async function withSigner(fn, id, gated){
         if (g) g.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
-      const cf = await checkConditions(id, myAddr);
+      const cf = await checkConditions(ref, myAddr);
       if (cf !== null && cf >= 0){
         if(msg) msg.textContent = t("m_cond_" + cf);
         toast(t("m_cond_" + cf));
@@ -1455,15 +1493,15 @@ async function withSigner(fn, id, gated){
     }
     if(msg) msg.textContent = t("m_signing");
     await fn(msg);
-    if(msg) msg.innerHTML = t("m_done") + " " + t("share_done_hint") + ` <a href="#" onclick="shareCampaign(${id});return false;">X</a>`;
+    if(msg) msg.innerHTML = t("m_done") + " " + t("share_done_hint") + ` <a href="#" onclick="shareCampaign('${ref}');return false;">X</a>`;
     loadCampaigns();
     if ($("detailBox")) loadDetail(); if ($("questBox")) loadQuest();
   }
   catch(e){ if(msg) msg.textContent = mappedErr(e) || (e.shortMessage || e.message || "Failed").slice(0,110); }
   finally{ btns.forEach(b => b.disabled = false); }
 }
-window.enterRaffle = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.enterRaffle(id, pf.p4, pf.p5)); }, id, true);
-window.voteCampaign = (id,o) => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.castVote(id, o, pf.p4, pf.p5)); }, id, true);
+window.enterRaffle = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); const pf = await proofsFor(ref, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.enterRaffle(p.id, pf.p4, pf.p5)); }, ref, true);
+window.voteCampaign = (ref,o) => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); const pf = await proofsFor(ref, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.castVote(p.id, o, pf.p4, pf.p5)); }, ref, true);
 /* V11 custom errors → human text. Without a mapping these surface as
    opaque revert data; match the decoded e.revert name (the APPS_ABI
    error fragments let ethers decode it) or the 4-byte selector in the
@@ -1518,23 +1556,23 @@ function mappedErr(e){
    lock is re-locked — V11 has no fallback seed. curBlock = 0 means the
    block number could not be read: fall back to the plain draw button
    (its revert is mapped to human text by mappedErr). */
-function drawFlowHtml(id, c, curBlock, btnCls, drawKey){
+function drawFlowHtml(ref, c, curBlock, btnCls, drawKey){
   const cls = btnCls || "btn";
   const sb = Number(c.seedBlock);
-  if (sb === 0) return `<button class="${cls}" onclick="lockDrawCampaign(${id})">${t("d_lock_seed")}</button> <span class="count">${t("d_lock_hint")}</span>`;
-  if (!curBlock) return `<button class="${cls}" onclick="drawCampaign(${id})">${t(drawKey || "m_draw")}</button>`;
+  if (sb === 0) return `<button class="${cls}" onclick="lockDrawCampaign('${ref}')">${t("d_lock_seed")}</button> <span class="count">${t("d_lock_hint")}</span>`;
+  if (!curBlock) return `<button class="${cls}" onclick="drawCampaign('${ref}')">${t(drawKey || "m_draw")}</button>`;
   if (curBlock <= sb) return `<span class="count">${t("d_seed_wait")} · ${t("d_seed_block")} #${sb} · ${t("d_cur_block")} #${curBlock}</span>`;
-  if (curBlock > sb + 256) return `<button class="${cls}" onclick="lockDrawCampaign(${id})">${t("d_relock_seed")}</button> <span class="count">${t("d_seed_expired")}</span>`;
-  return `<button class="${cls}" onclick="drawCampaign(${id})">${t(drawKey || "m_draw")}</button>`;
+  if (curBlock > sb + 256) return `<button class="${cls}" onclick="lockDrawCampaign('${ref}')">${t("d_relock_seed")}</button> <span class="count">${t("d_seed_expired")}</span>`;
+  return `<button class="${cls}" onclick="drawCampaign('${ref}')">${t(drawKey || "m_draw")}</button>`;
 }
-window.drawCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.draw(id)); }, id);
-window.lockDrawCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.lockDraw(id)); }, id);
-window.setPostUrlMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("posturl-" + id)?.value || "").trim(); await sendAndWait(msg, a.setPostUrl(id, v)); loadMine(); }, id);
-window.setSeriesMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const v = ($("series-" + id)?.value || "").trim(); await sendAndWait(msg, a.setSeries(id, v)); loadMine(); }, id);
-window.setWinnerInfoMine = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const u = ($("winfo-" + id)?.value || "").trim(); const n = ($("winote-" + id)?.value || "").trim(); await sendAndWait(msg, a.setWinnerInfo(id, u, n)); loadMine(); }, id);
-window.claimShare = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); const pf = await proofsFor(id, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.claim(id, pf.p4, pf.p5)); }, id, true);
-window.claimPrize = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.claimPrize(id)); }, id);
-window.reclaimCampaign = id => withSigner(async (msg) => { const a = new ethers.Contract(APPS_TESTNET, APPS_ABI, signer); await sendAndWait(msg, a.reclaim(id)); }, id);
+window.drawCampaign = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); await sendAndWait(msg, a.draw(p.id)); }, ref);
+window.lockDrawCampaign = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); await sendAndWait(msg, a.lockDraw(p.id)); }, ref);
+window.setPostUrlMine = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); const v = ($("posturl-" + ref)?.value || "").trim(); await sendAndWait(msg, a.setPostUrl(p.id, v)); loadMine(); }, ref);
+window.setSeriesMine = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); const v = ($("series-" + ref)?.value || "").trim(); await sendAndWait(msg, a.setSeries(p.id, v)); loadMine(); }, ref);
+window.setWinnerInfoMine = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); const u = ($("winfo-" + ref)?.value || "").trim(); const n = ($("winote-" + ref)?.value || "").trim(); await sendAndWait(msg, a.setWinnerInfo(p.id, u, n)); loadMine(); }, ref);
+window.claimShare = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); const pf = await proofsFor(ref, myAddr); if (pf.readErr) throw new Error(t("err_read")); if (pf.p4 === null) throw new Error(t("m_cond_4")); if (pf.p5 === null) throw new Error(t("m_cond_5")); await sendAndWait(msg, a.claim(p.id, pf.p4, pf.p5)); }, ref, true);
+window.claimPrize = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); await sendAndWait(msg, a.claimPrize(p.id)); }, ref);
+window.reclaimCampaign = ref => withSigner(async (msg) => { const p = parseRef(ref); const a = signerApps(p.src); await sendAndWait(msg, a.reclaim(p.id)); }, ref);
 window.onLangChange = () => { renderConnectBtn(); labelPresetOptions(); if (typeof window.__refillSampleMask === "function") window.__refillSampleMask(); if ($("campGrid")) loadCampaigns(); if ($("feedList")) loadFeed(); if ($("mineGrid")) loadMine(); if ($("questBox")) loadQuest(); if ($("detailBox")) loadDetail(); if ($("creatorBox")) loadCreator(); if ($("checkinBox")) loadCheckin(); };
 function labelPresetOptions(){
   const sel = $("fTokenSel"); if (!sel) return;
@@ -1554,18 +1592,24 @@ async function loadFeed(){
   try{
     const latest = await providerTest.getBlockNumber();
     if ($("feedBlock")) $("feedBlock").textContent = t("feed_blk") + " " + latest.toLocaleString();
-    const logs = await getLogsChunked({ address: APPS_TESTNET }, Math.max(0, latest - 30000), latest);
+    const merged = [];
+    for (const src of APPS_SOURCES){
+      const ls = await getLogsChunked({ address: src.addr }, Math.max(0, latest - 30000), latest);
+      for (const l of ls) merged.push({ s: src, l });
+    }
+    merged.sort((a, b) => (a.l.blockNumber - b.l.blockNumber) || ((a.l.index || 0) - (b.l.index || 0)));
     const iface = new ethers.Interface(APPS_ABI);
     const items = [];
-    for (const log of logs.slice(-40).reverse()){
+    for (const entry of merged.slice(-40).reverse()){
+      const log = entry.l;
       let p; try{ p = iface.parseLog(log); }catch(e){ continue; }
       if(!p) continue;
       if (p.name === "CampaignCreated") items.push(`<li><span class="ev">${t("ev_created")}</span> — <b>${String(p.args.title).replace(/</g,"&lt;")}</b></li>`);
       else if (p.name === "Entered") items.push(`<li><span class="ev">${t("ev_entered")}</span> — <b>${short(p.args.participant)}</b></li>`);
       else if (p.name === "Voted") items.push(`<li><span class="ev">${t("ev_voted")}</span> — <b>${short(p.args.participant)}</b> → ${t("c_opt")} ${Number(p.args.option)+1}</li>`);
       else if (p.name === "Drawn") items.push(`<li><span class="ev">${t("ev_drawn")}</span> — <b>#${p.args.id}</b></li>`);
-      else if (p.name === "Claimed") items.push(`<li><span class="ev">${t("ev_claimed")}</span> — <b>${short(p.args.participant)}</b> · ${fmtAmt(p.args.amount, (window.__campTokens || {})[Number(p.args[0])])}</li>`);
-      else if (p.name === "PrizeClaimed") items.push(`<li><span class="ev">${t("ev_prize")}</span> — <b>${short(p.args.winner)}</b> · ${fmtAmt(p.args.amount, (window.__campTokens || {})[Number(p.args[0])])}</li>`);
+      else if (p.name === "Claimed") items.push(`<li><span class="ev">${t("ev_claimed")}</span> — <b>${short(p.args.participant)}</b> · ${fmtAmt(p.args.amount, (window.__campTokens || {})[entry.s.key + ":" + Number(p.args[0])])}</li>`);
+      else if (p.name === "PrizeClaimed") items.push(`<li><span class="ev">${t("ev_prize")}</span> — <b>${short(p.args.winner)}</b> · ${fmtAmt(p.args.amount, (window.__campTokens || {})[entry.s.key + ":" + Number(p.args[0])])}</li>`);
       if (items.length >= 6) break;
     }
     ul.innerHTML = items.length ? items.join("") : `<li>${t("feed_empty")}</li>`;
@@ -1591,7 +1635,7 @@ function renderOptLabels(){
 function collectOptLabels(){ return Array.from(document.querySelectorAll("#fOptLabels input")).map(i => i.value.trim()); }
 function switchCreateTab(k){
   createKind = k;
-  const _tsel0 = $("fTokenSel"); if (_tsel0 && k !== 0 && _tsel0.value === "custom") _tsel0.value = "none";
+  const _tsel0 = $("fTokenSel"); if (_tsel0 && k === 1 && _tsel0.value === "custom") _tsel0.value = "none";
   document.querySelectorAll(".form > .tabs > button").forEach((b,i)=>{ const on = i===k; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
   $("fWinnersRow").style.display = k===0 ? "" : "none";
   $("fOptionsRow").style.display = k===1 ? "" : "none";
@@ -1605,9 +1649,10 @@ function switchCreateTab(k){
   $("fVTotalRow").style.display = vp ? "" : "none";
   $("fVWinnersRow").style.display = vp ? "" : "none";
   $("fPerWinnerRow").style.display = (k===0 && $("fTokenSel").value !== "none" && $("fTokenSel").value !== "custom") ? "" : "none";
-  if ($("fPrizeLabelRow")) $("fPrizeLabelRow").style.display = (k===0 && $("fTokenSel").value === "custom") ? "" : "none";
-  $("fPoolRow").style.display = k===2 ? "" : "none";
-  $("fModeRow").style.display = k===2 ? "" : "none";
+  if ($("fPrizeLabelRow")) $("fPrizeLabelRow").style.display = ((k===0 || k===2) && $("fTokenSel").value === "custom") ? "" : "none";
+  $("fPoolRow").style.display = (k===2 && $("fTokenSel").value !== "custom") ? "" : "none";
+  $("fModeRow").style.display = (k===2 && $("fTokenSel").value !== "custom") ? "" : "none";
+  if ($("fCustomHint")){ const _hk = (k===2 && $("fTokenSel").value === "custom") ? "f_claim_custom_note" : "f_custom_hint"; $("fCustomHint").setAttribute("data-i18n", _hk); $("fCustomHint").textContent = t(_hk); }
   $("fMaxClaimsRow").style.display = k===2 ? "" : "none";
   $("createSubmit").textContent = t(k===0 ? "f_submit_raffle" : k===1 ? "f_submit_vote" : "f_submit_claim");
 }
@@ -1661,14 +1706,19 @@ function validateCreate(){
     }
   } else {
     const csel = $("fTokenSel")?.value || "none";
-    if (csel === "none") errs.push(t("e_token"));
-    if (csel === "erc20" && markErr("fTokenAddr", !ethers.isAddress(($("fTokenAddr")?.value || "").trim()))) errs.push(t("e_token"));
-    const pool = parseFloat($("fPool")?.value || "0");
     const mc = parseInt($("fMaxClaims")?.value || "0", 10);
-    if (markErr("fPool", !(pool > 0))) errs.push(t("e_pool"));
     if (markErr("fMaxClaims", !(mc >= 1))) errs.push(t("e_claims"));
-    const random = $("fModeRandom")?.classList.contains("on");
-    if (random && pool > 0 && mc >= 1 && markErr("fPool", pool / mc < 0.0001)) errs.push(t("e_dust"));
+    if (csel === "custom"){
+      const _lb = ($("fPrizeLabel")?.value || "").trim(); const _bl = new TextEncoder().encode(_lb).length;
+      if (markErr("fPrizeLabel", !(_bl >= 1 && _bl <= 80))) errs.push(t("f_err_label"));
+    } else {
+      if (csel === "none") errs.push(t("e_token"));
+      if (csel === "erc20" && markErr("fTokenAddr", !ethers.isAddress(($("fTokenAddr")?.value || "").trim()))) errs.push(t("e_token"));
+      const pool = parseFloat($("fPool")?.value || "0");
+      if (markErr("fPool", !(pool > 0))) errs.push(t("e_pool"));
+      const random = $("fModeRandom")?.classList.contains("on");
+      if (random && pool > 0 && mc >= 1 && markErr("fPool", pool / mc < 0.0001)) errs.push(t("e_dust"));
+    }
   }
   const box = $("fErrors");
   if (box){ box.style.display = errs.length ? "" : "none"; box.innerHTML = errs.map(e => `<div>\u00b7 ${e}</div>`).join(""); }
@@ -1699,8 +1749,12 @@ function renderPreview(){
     const pool = $("fPool")?.value || "0";
     const mc = $("fMaxClaims")?.value || "10";
     const csel2 = $("fTokenSel")?.value || "bnb";
-    const tok = csel2 === "erc20" ? "ERC20" : csel2 === "none" ? "BNB" : csel2.toUpperCase();
-    keyline = `<b>${pool} ${tok}</b> \u00b7 ${mc} ${t("c_claimed_n")}`;
+    if (csel2 === "custom"){
+      keyline = `<b>${(($("fPrizeLabel")?.value || "").trim() || t("f_prize_label")).replace(/</g, "&lt;")}</b> \u00b7 ${t("c_custom_tag")} \u00b7 ${mc} ${t("c_claimed_n")}`;
+    } else {
+      const tok = csel2 === "erc20" ? "ERC20" : csel2 === "none" ? "BNB" : csel2.toUpperCase();
+      keyline = `<b>${pool} ${tok}</b> \u00b7 ${mc} ${t("c_claimed_n")}`;
+    }
     cta = t("c_claim_btn");
   }
   pv.innerHTML = `<div class="camp">
@@ -1809,17 +1863,27 @@ async function submitCreate(){
         createRcpt = await (await apps.createVote(title, startAt, endAt, options, ethers.ZeroAddress, 0n, 0, cond, collectOptLabels())).wait();
       }
     } else {
-      let token = prizeTokenAddr();
-      if (token === undefined || token === null){ msg.textContent = t("f_err_token"); return; }
-      const poolAmt = $("fPool").value.trim();
       const maxClaims = parseInt($("fMaxClaims").value, 10);
-      if(!poolAmt || Number(poolAmt) <= 0 || !maxClaims || maxClaims < 1){ msg.textContent = t("f_err_amount"); return; }
-      const pool = await parseAmount(token, poolAmt);
-      await fundApprove(token, pool, msg);
-      msg.textContent = t("f_creating");
-      const value = (token === ethers.ZeroAddress) ? pool : 0n;
-      const random = $("fModeRandom") && $("fModeRandom").classList.contains("on");
-      createRcpt = await (await apps.createClaim(title, startAt, endAt, maxClaims, token, pool, random, cond, { value })).wait();
+      if(!maxClaims || maxClaims < 1){ msg.textContent = t("f_err_amount"); return; }
+      if ($("fTokenSel").value === "custom"){
+        // Registration claim (V15): off-chain prize — nothing is
+        // escrowed, claiming only records the claimant on-chain.
+        const label = ($("fPrizeLabel").value || "").trim();
+        if (!label){ msg.textContent = t("f_err_label"); return; }
+        msg.textContent = t("f_creating");
+        createRcpt = await (await apps.createClaim(title, startAt, endAt, maxClaims, ethers.ZeroAddress, 0n, false, cond, label)).wait();
+      } else {
+        let token = prizeTokenAddr();
+        if (token === undefined || token === null){ msg.textContent = t("f_err_token"); return; }
+        const poolAmt = $("fPool").value.trim();
+        if(!poolAmt || Number(poolAmt) <= 0){ msg.textContent = t("f_err_amount"); return; }
+        const pool = await parseAmount(token, poolAmt);
+        await fundApprove(token, pool, msg);
+        msg.textContent = t("f_creating");
+        const value = (token === ethers.ZeroAddress) ? pool : 0n;
+        const random = $("fModeRandom") && $("fModeRandom").classList.contains("on");
+        createRcpt = await (await apps.createClaim(title, startAt, endAt, maxClaims, token, pool, random, cond, "", { value })).wait();
+      }
     }
     // The new campaign's real id comes from the create receipt's
     // CampaignCreated log — guessing campaignCount()-1 breaks the moment
@@ -1862,16 +1926,16 @@ async function submitCreate(){
     if (window.__newList){
       try{
         if (newId === null) throw new Error("new campaign id unknown");
-        storeList(newId, window.__newList);
-        dlListJson(window.__newList, newId);
+        storeList(makeRef(APPS_SOURCES[0].key, newId), window.__newList);
+        dlListJson(window.__newList, makeRef(APPS_SOURCES[0].key, newId));
       }catch(e){ /* list stays in the create form */ }
       window.__newList = null;
     }
     if (window.__newIdList){
       try{
         if (newId === null) throw new Error("new campaign id unknown");
-        storeIdList(newId, window.__newIdList);
-        dlIdListJson(window.__newIdList, newId);
+        storeIdList(makeRef(APPS_SOURCES[0].key, newId), window.__newIdList);
+        dlIdListJson(window.__newIdList, makeRef(APPS_SOURCES[0].key, newId));
       }catch(e){ /* list stays in the create form */ }
       window.__newIdList = null;
     }
@@ -2287,55 +2351,65 @@ async function loadCardQuest(addr){
 
 async function loadDetail(){
   const box = $("detailBox"); if(!box) return;
-  const id = Number(new URLSearchParams(location.search).get("id"));
-  if(!Number.isInteger(id) || id < 0){ box.innerHTML = `<div class="empty">${t("load_fail")}</div>`; return; }
+  const qs = new URLSearchParams(location.search);
+  let ref = qs.get("ref");
   chain();
   try{
-    const totalCampaigns = Number(await appsRead.campaignCount());
+    if (!ref && qs.get("id") !== null){
+      // Legacy bare-id link: prefer the current contract, else legacy.
+      const want = Number(qs.get("id"));
+      for (const s of APPS_SOURCES){ try{ if (Number.isInteger(want) && want >= 0 && want < Number(await readFor(s).campaignCount())){ ref = makeRef(s.key, want); break; } }catch(e){} }
+      if (!ref){ box.innerHTML = `<div class="empty">${t("d_notfound")}</div>`; return; }
+    }
+    const _pr = parseRef(ref || "");
+    const src = _pr.src, id = _pr.id;
+    if (!ref || !Number.isInteger(id) || id < 0){ box.innerHTML = `<div class="empty">${t("load_fail")}</div>`; return; }
+    const RD = readFor(src);
+    const totalCampaigns = Number(await RD.campaignCount());
     if (id >= totalCampaigns){ box.innerHTML = `<div class="empty">${t("d_notfound")}</div>`; return; }
-    const c = await appsRead.getCampaign(id);
+    const c = await RD.getCampaign(id);
     await decimalsOf(c.prizeToken);
-    window.__campTokens = window.__campTokens || {}; window.__campTokens[id] = c.prizeToken;
-    if (Number(c.kind) === 1) await voteLabels(appsRead, id);
-    let cond = null; try{ cond = await appsRead.conditionsOf(id); }catch(e){}
+    window.__campTokens = window.__campTokens || {}; window.__campTokens[ref] = c.prizeToken;
+    if (Number(c.kind) === 1) await voteLabels(RD, ref);
+    let cond = null; try{ cond = await RD.conditionsOf(id); }catch(e){}
     if (cond) await decimalsOf(cond.gateToken);
-    window.__campTitles = window.__campTitles || {}; window.__campTitles[id] = String(c.title);
+    window.__campTitles = window.__campTitles || {}; window.__campTitles[ref] = String(c.title);
     const kind = Number(c.kind);
     const nowS = Math.floor(Date.now() / 1000);
     const live = nowS >= Number(c.startAt) && nowS <= Number(c.endAt);
     const ended = nowS > Number(c.endAt);
     let curBlock = 0;
     if (ended && !c.drawn && (kind === 0 || (kind === 1 && c.pool > 0n))){ try{ curBlock = await providerTest.getBlockNumber(); }catch(e){} }
-    const entries = await appsRead.getEntries(id);
+    const entries = await RD.getEntries(id);
     const myState = { entered: false, voted: false, option: 0, claimed: false, winner: false, prizeClaimed: false };
     if (myAddr){
       try{
         if (kind === 0){
-          myState.entered = await appsRead.hasEntered(id, myAddr);
-          if (c.drawn){ myState.winner = await appsRead.isWinner(id, myAddr); myState.prizeClaimed = await appsRead.prizeClaimed(id, myAddr); }
+          myState.entered = await RD.hasEntered(id, myAddr);
+          if (c.drawn){ myState.winner = await RD.isWinner(id, myAddr); myState.prizeClaimed = await RD.prizeClaimed(id, myAddr); }
         } else {
           const latestB = await providerTest.getBlockNumber();
           const topicMe = ethers.zeroPadValue(myAddr, 32);
           const topicId = ethers.zeroPadValue(ethers.toBeHex(id), 32);
           const ifaceS = new ethers.Interface(APPS_ABI);
           if (kind === 1){
-            const vl = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Voted(uint256,address,uint8)"), topicId, topicMe] }, APPS_DEPLOY_BLOCK, latestB);
+            const vl = await getLogsCached({ address: src.addr, topics: [ethers.id("Voted(uint256,address,uint8)"), topicId, topicMe] }, src.block, latestB);
             if (vl.length){ const pv = ifaceS.parseLog(vl[vl.length - 1]); if (pv){ myState.voted = true; myState.option = Number(pv.args.option); } }
           } else {
-            const cl = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Claimed(uint256,address,uint256)"), topicId, topicMe] }, APPS_DEPLOY_BLOCK, latestB);
+            const cl = await getLogsCached({ address: src.addr, topics: [ethers.id("Claimed(uint256,address,uint256)"), topicId, topicMe] }, src.block, latestB);
             myState.claimed = cl.length > 0;
           }
         }
-        if (kind === 1 && c.pool > 0n && c.drawn){ myState.winner = await appsRead.isWinner(id, myAddr); myState.prizeClaimed = await appsRead.prizeClaimed(id, myAddr); }
+        if (kind === 1 && c.pool > 0n && c.drawn){ myState.winner = await RD.isWinner(id, myAddr); myState.prizeClaimed = await RD.prizeClaimed(id, myAddr); }
       }catch(e){}
     }
     let foot = "";
     if (kind === 0){
-      if (live) foot = myState.entered ? `<button class="btn" disabled style="opacity:.5;cursor:default">${t("j_entered")} \u2713</button>` : `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`;
-      else if (ended && !c.drawn) foot = drawFlowHtml(id, c, curBlock, "btn", "m_draw");
+      if (live) foot = myState.entered ? `<button class="btn" disabled style="opacity:.5;cursor:default">${t("j_entered")} \u2713</button>` : `<button class="btn" onclick="enterRaffle('${ref}')">${t("c_enter")}</button>`;
+      else if (ended && !c.drawn) foot = drawFlowHtml(ref, c, curBlock, "btn", "m_draw");
       else if (c.drawn) foot = `<span class="count">${t("m_drawn")}</span>`;
       if (c.drawn && c.prizePerWinner > 0n){
-        if (!myAddr || (myState.winner && !myState.prizeClaimed)) foot += ` <button class="btn ghost" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`;
+        if (!myAddr || (myState.winner && !myState.prizeClaimed)) foot += ` <button class="btn ghost" onclick="claimPrize('${ref}')">${t("c_claim_prize")}</button>`;
         else if (myState.prizeClaimed) foot += ` <span class="count">${t("j_won_claimed")}</span>`;
       }
       if (c.drawn && c.prizePerWinner === 0n && c.prizeLabel && myState.winner) foot += ` <span class="count">${t("d_custom_claim")}</span>`;
@@ -2343,17 +2417,17 @@ async function loadDetail(){
       // Vote counts come from the contract's tally() — the same source
       // the campaigns list uses — not from a rescan of every Voted log.
       const counts = [];
-      for (let o = 0; o < Number(c.optionCount); o++) counts.push(Number(await appsRead.tally(id, o)));
-      const tallyBtns = counts.map((n, oi) => `<button class="opt" onclick="voteCampaign(${id}, ${oi})">${optText(id, oi)} · <b>${n}</b></button>`).join("");
-      const tallyStatic = counts.map((n, oi) => `<span class="opt">${optText(id, oi)} · <b>${n}</b></span>`).join("");
-      foot = (live && !myState.voted) ? `<div class="tally">${tallyBtns}</div>` : `<div class="tally">${tallyStatic}</div>` + (myState.voted ? `<div class="count" style="margin-top:8px">${t("j_voted")} \u00b7 ${optText(id, myState.option)} \u2713</div>` : "");
+      for (let o = 0; o < Number(c.optionCount); o++) counts.push(Number(await RD.tally(id, o)));
+      const tallyBtns = counts.map((n, oi) => `<button class="opt" onclick="voteCampaign('${ref}', ${oi})">${optText(ref, oi)} · <b>${n}</b></button>`).join("");
+      const tallyStatic = counts.map((n, oi) => `<span class="opt">${optText(ref, oi)} · <b>${n}</b></span>`).join("");
+      foot = (live && !myState.voted) ? `<div class="tally">${tallyBtns}</div>` : `<div class="tally">${tallyStatic}</div>` + (myState.voted ? `<div class="count" style="margin-top:8px">${t("j_voted")} \u00b7 ${optText(ref, myState.option)} \u2713</div>` : "");
       if (c.pool > 0n){
-        if (ended && !c.drawn) foot += " " + drawFlowHtml(id, c, curBlock, "btn", "m_draw");
-        else if (c.drawn && myState.winner && !myState.prizeClaimed) foot += ` <button class="btn ghost" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`;
+        if (ended && !c.drawn) foot += " " + drawFlowHtml(ref, c, curBlock, "btn", "m_draw");
+        else if (c.drawn && myState.winner && !myState.prizeClaimed) foot += ` <button class="btn ghost" onclick="claimPrize('${ref}')">${t("c_claim_prize")}</button>`;
         else if (c.drawn && myState.prizeClaimed) foot += ` <span class="count">${t("j_won_claimed")}</span>`;
       }
     } else {
-      if (live && Number(c.entryCount) < Number(c.maxClaims)) foot = myState.claimed ? `<button class="btn" disabled style="opacity:.5;cursor:default">${t("j_claimed")} \u2713</button>` : `<button class="btn" onclick="claimShare(${id})">${t("c_claim_btn")}${c.claimRandom ? "" : " " + fmtAmt(c.claimAmount, c.prizeToken) + " " + tokenLabel(c.prizeToken)}</button>`;
+      if (live && Number(c.entryCount) < Number(c.maxClaims)) foot = myState.claimed ? `<button class="btn" disabled style="opacity:.5;cursor:default">${t("j_claimed")} \u2713</button>` : `<button class="btn" onclick="claimShare('${ref}')">${t("c_claim_btn")}${c.prizeLabel || c.claimRandom ? "" : " " + fmtAmt(c.claimAmount, c.prizeToken) + " " + tokenLabel(c.prizeToken)}</button>`;
       else foot = `<span class="count"><b>${c.entryCount}/${c.maxClaims}</b> ${t("c_claimed_n")}</span>`;
     }
     const isCreatorView = !!(myAddr && c.creator && String(myAddr).toLowerCase() === String(c.creator).toLowerCase());
@@ -2361,21 +2435,21 @@ async function loadDetail(){
     if (kind === 0 || (kind === 1 && c.pool > 0n)){
       if (!c.drawn) proof = `<div class="sec-head" style="margin-top:34px"><h2 style="font-size:20px">${t("d_proof_h")}</h2></div><div class="empty">${t("d_notdrawn")}</div>`;
       else {
-        const winners = await appsRead.getWinners(id);
+        const winners = await RD.getWinners(id);
         proof = `<div class="sec-head" style="margin-top:34px"><h2 style="font-size:20px">${t("d_proof_h")}</h2><p>${t("d_proof_how")}</p></div>
         <div class="panel"><div class="rows">
           <div class="row"><span>${t("d_proof_seedblock")}</span><b>${c.seedBlock}</b></div>
           <div class="row"><span>${t("d_proof_fallback")}</span><b>${c.usedFallbackSeed ? "✓" : "—"}</b></div>
         </div>
-        <div style="margin-top:14px"><button class="btn sm" onclick="verifyDraw(${id})">${t("d_proof_verify")}</button> <span class="camp-msg" role="status" id="proofMsg"></span></div>
+        <div style="margin-top:14px"><button class="btn sm" onclick="verifyDraw('${ref}')">${t("d_proof_verify")}</button> <span class="camp-msg" role="status" id="proofMsg"></span></div>
         <div class="rows" style="margin-top:14px"><div class="row"><span>${t("d_winners")}</span><b>${winners.length}</b></div></div>
         <div style="margin-top:8px">${await identityItems(winners, isCreatorView)}</div>
-        ${winners.length && isCreatorView ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportWinnerAgentIds(${id})">${t("exp_ids_btn")}</button> <span class="camp-msg" role="status" id="winnerIdsMsg"></span></div>` : ""}</div>`;
+        ${winners.length && isCreatorView ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportWinnerAgentIds('${ref}')">${t("exp_ids_btn")}</button> <span class="camp-msg" role="status" id="winnerIdsMsg"></span></div>` : ""}</div>`;
       }
     }
     let postBtn = "";
     try{
-      const pu = await appsRead.postUrl(id);
+      const pu = await RD.postUrl(id);
       if (pu && pu.startsWith("https://")) postBtn = `<a class="btn sm ghost" href="${pu.replace(/"/g, "%22")}" target="_blank" rel="noopener">${t("post_btn")} ↗</a>`;
     }catch(e){}
     // Winner info-collection block: only a recorded winner sees the
@@ -2385,11 +2459,11 @@ async function loadDetail(){
     // winner list. Personal details are filled on the creator's own
     // form — never on-chain, never through this site.
     let winfoBlock = "";
-    if (c.drawn && myState.winner){
+    if ((c.drawn && myState.winner) || (kind === 2 && !!c.prizeLabel && myState.claimed)){
       try{
-        const wu = await appsRead.winnerInfoUrl(id);
+        const wu = await RD.winnerInfoUrl(id);
         if (wu && wu.startsWith("https://")){
-          const wn = await appsRead.winnerInfoNote(id).catch(() => "");
+          const wn = await RD.winnerInfoNote(id).catch(() => "");
           let host = "";
           try{ host = new URL(wu).hostname.replace(/</g, "&lt;"); }catch(e){}
           winfoBlock = `<div class="panel" style="border-color:var(--gold,#F0B90B);margin-bottom:10px"><b>${t("d_winfo_h")}</b>${wn ? `<div style="margin:6px 0">${String(wn).replace(/</g, "&lt;")}</div>` : ""}<div style="margin:8px 0"><a class="btn sm" href="${wu.replace(/"/g, "%22")}" target="_blank" rel="noopener">${t("d_winfo_btn")}</a>${host ? ` <span class="count">${t("d_winfo_dest")} <b>${host}</b></span>` : ""}</div><div class="count">${t("d_winfo_hint")}</div><div class="count" style="color:var(--gold,#F0B90B);margin-top:4px">${t("d_winfo_warn")}</div></div>`;
@@ -2407,29 +2481,30 @@ async function loadDetail(){
       && !!c.prizeToken && c.prizeToken !== ethers.ZeroAddress
       && !PRESET_TOKEN_ADDRS.has(String(c.prizeToken).toLowerCase());
     box.innerHTML = `
-      <div class="kicker">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")} · #${id}</div>
+      <div class="kicker">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")} · #${id}${src.key !== APPS_SOURCES[0].key ? " · " + t("d_legacy_tag") : ""}</div>
       <h1 style="font-size:clamp(26px,4.4vw,40px);margin:10px 0 6px">${String(c.title).replace(/</g,"&lt;")}</h1>
       <p style="color:var(--muted)">${t("creator_by")} ${creatorHtmlD} · ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}${live || !ended ? ` · <span class="cd" data-start="${c.startAt}" data-end="${c.endAt}"></span>` : ""}</p>
       ${warnToken ? `<div class="warn-banner">⚠ ${t("warn_token")}</div>` : ""}
-      <div style="margin:16px 0">${foot} <span class="camp-msg" role="status" id="msg-${id}"></span></div>
+      ${kind === 2 && c.prizeLabel ? `<div class="panel" style="margin:12px 0"><b>${String(c.prizeLabel).replace(/</g, "&lt;")}</b> \u00b7 ${t("c_custom_tag")}<div class="count" style="margin-top:6px">${t("d_reg_note")}</div></div>` : ""}
+      <div style="margin:16px 0">${foot} <span class="camp-msg" role="status" id="msg-${ref}"></span></div>
       ${postBtn ? `<div style="margin-bottom:6px">${postBtn}</div>` : ""}
       ${winfoBlock}
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign(${id})">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster(${id})">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert(${id})">${t("cert_btn")}</button>` : ""}</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="shareCampaign('${ref}')">${t("share_btn")}</button><button class="btn ghost" onclick="makePoster('${ref}')">${t("poster_btn")}</button>${kind === 0 && c.drawn ? `<button class="btn ghost" onclick="makeCert('${ref}')">${t("cert_btn")}</button>` : ""}</div>
       <div class="sec-head" style="margin-top:26px"><h2 style="font-size:20px">${t("d_participants")} · ${entries.length}</h2></div>
-      <div class="panel"><div id="partList">${partHtml}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}${entries.length && isCreatorView ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportList(${id})">${t("exp_btn")}</button></div>` : ""}</div>
+      <div class="panel"><div id="partList">${partHtml}</div>${entries.length > 50 ? `<div id="partMore" style="margin-top:10px"><button class="btn sm ghost" onclick="showAllParticipants()">${t("d_show_all")} (${entries.length})</button></div>` : ""}${entries.length && isCreatorView ? `<div style="margin-top:10px"><button class="btn sm ghost" onclick="exportList('${ref}')">${t("exp_btn")}</button></div>` : ""}</div>
       ${proof}
-      ${condChipsHtml(cond)}${listPanelHtml(id, cond)}
-      <div class="trust-row">${t("d_contract")} <a href="https://bscscan.com/address/${APPS_TESTNET}" target="_blank" rel="noopener">${short(APPS_TESTNET)} \u2197</a> \u00b7 BeCounted <a href="https://bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : (c.prizeLabel ? t("d_custom_note") : t("d_escrow_no"))}</div>`;
-    fillIdMine(id);
+      ${condChipsHtml(cond)}${listPanelHtml(ref, cond)}
+      <div class="trust-row">${t("d_contract")} <a href="https://bscscan.com/address/${src.addr}" target="_blank" rel="noopener">${short(src.addr)} \u2197</a> \u00b7 BeCounted <a href="https://bscscan.com/address/${GATE_TESTNET}" target="_blank" rel="noopener">${short(GATE_TESTNET)} \u2197</a> \u00b7 ${(c.prizePerWinner > 0n || c.pool > 0n) ? t("d_escrow") : (c.prizeLabel ? t("d_custom_note") : t("d_escrow_no"))}</div>`;
+    fillIdMine(ref);
     window.__partEntries = entries;
     const sb = $("stickyBar");
     if (sb){
       let sAct = "", sInfo = "";
-      if (kind === 0 && live && !myState.entered){ sAct = `<button class="btn" onclick="enterRaffle(${id})">${t("c_enter")}</button>`; sInfo = c.prizePerWinner > 0n ? `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : (c.prizeLabel ? String(c.prizeLabel).replace(/</g, "&lt;") : String(c.title).replace(/</g, "&lt;")); }
-      else if (kind === 0 && ended && !c.drawn){ sAct = drawFlowHtml(id, c, curBlock, "btn", "m_draw"); sInfo = String(c.title).replace(/</g, "&lt;"); }
-      else if (kind === 0 && c.drawn && c.prizePerWinner > 0n && (!myAddr || (myState.winner && !myState.prizeClaimed))){ sAct = `<button class="btn" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
-      else if (kind === 1 && c.pool > 0n && c.drawn && myState.winner && !myState.prizeClaimed){ sAct = `<button class="btn" onclick="claimPrize(${id})">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
-      else if (kind === 2 && live && Number(c.entryCount) < Number(c.maxClaims) && !myState.claimed){ sAct = `<button class="btn" onclick="claimShare(${id})">${t("c_claim_btn")}</button>`; sInfo = `${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
+      if (kind === 0 && live && !myState.entered){ sAct = `<button class="btn" onclick="enterRaffle('${ref}')">${t("c_enter")}</button>`; sInfo = c.prizePerWinner > 0n ? `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : (c.prizeLabel ? String(c.prizeLabel).replace(/</g, "&lt;") : String(c.title).replace(/</g, "&lt;")); }
+      else if (kind === 0 && ended && !c.drawn){ sAct = drawFlowHtml(ref, c, curBlock, "btn", "m_draw"); sInfo = String(c.title).replace(/</g, "&lt;"); }
+      else if (kind === 0 && c.drawn && c.prizePerWinner > 0n && (!myAddr || (myState.winner && !myState.prizeClaimed))){ sAct = `<button class="btn" onclick="claimPrize('${ref}')">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
+      else if (kind === 1 && c.pool > 0n && c.drawn && myState.winner && !myState.prizeClaimed){ sAct = `<button class="btn" onclick="claimPrize('${ref}')">${t("c_claim_prize")}</button>`; sInfo = `${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
+      else if (kind === 2 && live && Number(c.entryCount) < Number(c.maxClaims) && !myState.claimed){ sAct = `<button class="btn" onclick="claimShare('${ref}')">${t("c_claim_btn")}</button>`; sInfo = c.prizeLabel ? String(c.prizeLabel).replace(/</g, "&lt;") : `${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}`; }
       if (sAct){ sb.innerHTML = `<span class="sb-info">${sInfo}</span>${sAct}`; sb.classList.add("on"); }
     }
     tickCountdowns();
@@ -2444,15 +2519,16 @@ function wrapTitle(ctx, text, maxW){
   if (lines.length < 2 && cur) lines.push(cur);
   return lines;
 }
-window.makeCert = async id => {
-  const msg = $("msg-" + id);
+window.makeCert = async ref => {
+  const _pr = parseRef(ref); const id = _pr.id; const RD = readFor(_pr.src);
+  const msg = $("msg-" + ref);
   try{
     if (msg) msg.textContent = "\u2026";
     chain();
-    const c = await appsRead.getCampaign(id);
+    const c = await RD.getCampaign(id);
     await decimalsOf(c.prizeToken);
-    const entries = await appsRead.getEntries(id);
-    const winners = await appsRead.getWinners(id);
+    const entries = await RD.getEntries(id);
+    const winners = await RD.getWinners(id);
     const cv = document.createElement("canvas"); cv.width = 1600; cv.height = 900;
     const ctx = cv.getContext("2d");
     ctx.fillStyle = "#0a0a0b"; ctx.fillRect(0, 0, 1600, 900);
@@ -2502,22 +2578,23 @@ window.showAllParticipants = async () => {
    is omitted entirely — a name is never paired with an address the
    entrant did not publicly bind. Handles resolve through creatorBinding,
    the same bindingOf + isBindingValid read the identity card uses. */
-window.exportList = async id => {
-  const msg = $("msg-" + id);
+window.exportList = async ref => {
+  const _pr = parseRef(ref); const id = _pr.id; const src = _pr.src; const RD = readFor(src);
+  const msg = $("msg-" + ref);
   try{
     if (msg) msg.textContent = "\u2026";
     chain();
-    const c = await appsRead.getCampaign(id);
+    const c = await RD.getCampaign(id);
     const kind = Number(c.kind);
-    const entries = await appsRead.getEntries(id);
-    let cond = null; try{ cond = await appsRead.conditionsOf(id); }catch(e){}
+    const entries = await RD.getEntries(id);
+    let cond = null; try{ cond = await RD.conditionsOf(id); }catch(e){}
     const withHandle = !!(cond && cond.requireBinding);
     const winnerSet = new Set(), prizeSet = new Set();
     if (c.drawn && (kind === 0 || (kind === 1 && c.pool > 0n))){
-      const winners = await appsRead.getWinners(id);
+      const winners = await RD.getWinners(id);
       for (const w of winners){
         const k = String(w).toLowerCase(); winnerSet.add(k);
-        try{ if (await appsRead.prizeClaimed(id, w)) prizeSet.add(k); }catch(e){}
+        try{ if (await RD.prizeClaimed(id, w)) prizeSet.add(k); }catch(e){}
       }
     }
     const optOf = new Map(), claimSet = new Set();
@@ -2526,11 +2603,11 @@ window.exportList = async id => {
       const topicId = ethers.zeroPadValue(ethers.toBeHex(id), 32);
       const ifaceS = new ethers.Interface(APPS_ABI);
       if (kind === 1){
-        const vl = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Voted(uint256,address,uint8)"), topicId] }, APPS_DEPLOY_BLOCK, latestB);
+        const vl = await getLogsCached({ address: src.addr, topics: [ethers.id("Voted(uint256,address,uint8)"), topicId] }, src.block, latestB);
         for (const lg of vl){ const pv = ifaceS.parseLog(lg); if (pv) optOf.set(String(pv.args.participant).toLowerCase(), Number(pv.args.option)); }
-        await voteLabels(appsRead, id);
+        await voteLabels(RD, ref);
       } else {
-        const cl = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Claimed(uint256,address,uint256)"), topicId] }, APPS_DEPLOY_BLOCK, latestB);
+        const cl = await getLogsCached({ address: src.addr, topics: [ethers.id("Claimed(uint256,address,uint256)"), topicId] }, src.block, latestB);
         for (const lg of cl){ const pv = ifaceS.parseLog(lg); if (pv) claimSet.add(String(pv.args.participant).toLowerCase()); }
       }
     }
@@ -2548,7 +2625,7 @@ window.exportList = async id => {
       const row = [a, status];
       if (kind === 1){
         const oi = optOf.get(k);
-        const lab = oi !== undefined && LABELS[id] ? LABELS[id][oi] : "";
+        const lab = oi !== undefined && LABELS[ref] ? LABELS[ref][oi] : "";
         row.push(oi === undefined ? "" : (lab ? oi + ": " + lab : String(oi)));
       }
       if (withHandle){
@@ -2570,12 +2647,13 @@ window.exportList = async id => {
    mirror the on-chain winner order and cannot be lined up against the
    address list shown on the page. One Agent ID per line, .ai suffix
    included. */
-window.exportWinnerAgentIds = async id => {
+window.exportWinnerAgentIds = async ref => {
+  const _pr = parseRef(ref); const id = _pr.id; const RD = readFor(_pr.src);
   const msg = $("winnerIdsMsg");
   try{
-    if (msg) msg.textContent = "…";
+    if (msg) msg.textContent = "\u2026";
     chain();
-    const winners = await appsRead.getWinners(id);
+    const winners = await RD.getWinners(id);
     const names = new Set();
     for (const w of winners){
       const h = await handleOfAddr(w);
@@ -2592,14 +2670,15 @@ window.exportWinnerAgentIds = async id => {
     if (msg) msg.textContent = "✓ " + list.length;
   }catch(e){ if (msg) msg.textContent = (e.shortMessage || e.message || "Failed").slice(0, 110); }
 };
-window.verifyDraw = async id => {
+window.verifyDraw = async ref => {
+  const _pr = parseRef(ref); const id = _pr.id; const src = _pr.src; const RD = readFor(src);
   const msg = $("proofMsg"); if(msg) msg.textContent = "…";
   try{
-    const c = await appsRead.getCampaign(id);
-    const entries = await appsRead.getEntries(id);
-    const onchain = (await appsRead.getWinners(id)).map(a => a.toLowerCase());
+    const c = await RD.getCampaign(id);
+    const entries = await RD.getEntries(id);
+    const onchain = (await RD.getWinners(id)).map(a => a.toLowerCase());
     const latest = await providerTest.getBlockNumber();
-    const logs = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Drawn(uint256,uint256,bool,uint256)"), ethers.zeroPadValue(ethers.toBeHex(id), 32)] }, APPS_DEPLOY_BLOCK, latest);
+    const logs = await getLogsCached({ address: src.addr, topics: [ethers.id("Drawn(uint256,uint256,bool,uint256)"), ethers.zeroPadValue(ethers.toBeHex(id), 32)] }, src.block, latest);
     const iface = new ethers.Interface(APPS_ABI);
     const ev = iface.parseLog(logs[logs.length - 1]);
     const seed = ev.args.seed;
@@ -2756,21 +2835,24 @@ async function loadPlatformStats(){
     // Direct contract reads only. The previous version scanned every event
     // log since the deploy block, so the homepage got slower with every new
     // block the chain produced; this stays flat as history grows.
-    const n = Number(await appsRead.campaignCount());
     const humans = new Set(); let payouts = 0;
-    const per = await Promise.all(Array.from({ length: n }, async (_, i) => {
-      const c = await appsRead.getCampaign(i);
-      const entries = await appsRead.getEntries(i);
-      let pay = 0;
-      if (Number(c.kind) === 2) pay = entries.length; // claim drop: every entry was paid on entry
-      else if (c.drawn) { // raffle / vote pool: count winners who actually claimed
-        let winners = [];
-        try { winners = await appsRead.getWinners(i); } catch(e) {}
-        for (const w of winners) { try { if (await appsRead.prizeClaimed(i, w)) pay++; } catch(e) {} }
-      }
-      return { entries, pay };
-    }));
-    for (const r of per){ for (const a of r.entries) humans.add(a); payouts += r.pay; }
+    for (const src of APPS_SOURCES){
+      const rd = readFor(src);
+      const n = Number(await rd.campaignCount());
+      const per = await Promise.all(Array.from({ length: n }, async (_, i) => {
+        const c = await rd.getCampaign(i);
+        const entries = await rd.getEntries(i);
+        let pay = 0;
+        if (Number(c.kind) === 2) pay = c.prizeLabel ? 0 : entries.length; // escrow claim drop: every entry was paid on entry; registration claims pay nothing
+        else if (c.drawn) { // raffle / vote pool: count winners who actually claimed
+          let winners = [];
+          try { winners = await rd.getWinners(i); } catch(e) {}
+          for (const w of winners) { try { if (await rd.prizeClaimed(i, w)) pay++; } catch(e) {} }
+        }
+        return { entries, pay };
+      }));
+      for (const r of per){ for (const a of r.entries) humans.add(a); payouts += r.pay; }
+    }
     $("statHumans").textContent = humans.size;
     if($("statPayouts")) $("statPayouts").textContent = payouts;
   }catch(e){
@@ -2786,10 +2868,11 @@ async function loadPlatformStats(){
 }
 
 /* ---------- campaign poster (16:9) ---------- */
-window.makePoster = async id => {
+window.makePoster = async ref => {
+  const _pr = parseRef(ref); const id = _pr.id; const RD = readFor(_pr.src);
   try{
     chain();
-    const c = await appsRead.getCampaign(id);
+    const c = await RD.getCampaign(id);
     await decimalsOf(c.prizeToken);
     const cv = $("posterCanvas"); if(!cv) return;
     const x = cv.getContext("2d");
@@ -2813,14 +2896,14 @@ window.makePoster = async id => {
     x.fillStyle = "#f0b90b"; x.font = "700 62px sans-serif";
     let big = "";
     if (kind === 0) big = `${t("c_prize")} ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)} \u00d7 ${c.winnerCount}`;
-    else if (kind === 2) big = `${t("c_pool")} ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}`;
+    else if (kind === 2) big = c.prizeLabel ? `${String(c.prizeLabel)} \u00b7 ${c.entryCount}/${c.maxClaims}` : `${t("c_pool")} ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}`;
     else big = `${c.entryCount} ${t("c_entries")}`;
     x.fillText(big, 80, y0);
     x.fillStyle = "#c9c9d1"; x.font = "32px sans-serif";
     const hb = await creatorBinding(c.creator);
     x.fillText(`${t("creator_by")} ${hb ? "@" + hb.h : short(c.creator)}`, 80, y0 + 72);
     x.fillText(`${fmtTime(c.startAt)} \u2192 ${fmtTime(c.endAt)}`, 80, y0 + 124);
-    let seriesTag = ""; try{ seriesTag = await appsRead.series(id); }catch(e){}
+    let seriesTag = ""; try{ seriesTag = await RD.series(id); }catch(e){}
     x.fillStyle = "#8a8a93"; x.font = "26px monospace";
     x.fillText((seriesTag ? seriesTag + " \u00b7 " : "") + "Agent ID gated \u00b7 BNB Chain", 80, H - 84);
     const a = document.createElement("a");
@@ -2918,25 +3001,31 @@ async function loadCreator(){
   try{
     const latest = await providerTest.getBlockNumber();
     const topicAddr = ethers.zeroPadValue(addr, 32);
-    const logs = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("CampaignCreated(uint256,address,uint8,string,uint64,uint64)"), null, topicAddr] }, APPS_DEPLOY_BLOCK, latest);
-    if(!logs.length){ box.innerHTML = `<div class="empty">${t("creator_none")}</div>`; return; }
+    const logsAll = [];
+    for (const s of APPS_SOURCES){
+      const ls = await getLogsCached({ address: s.addr, topics: [ethers.id("CampaignCreated(uint256,address,uint8,string,uint64,uint64)"), null, topicAddr] }, s.block, latest);
+      for (const l of ls) logsAll.push({ s, l });
+    }
+    if(!logsAll.length){ box.innerHTML = `<div class="empty">${t("creator_none")}</div>`; return; }
     let totalEntries = 0;
     const cards = [];
-    for (const log of logs.slice().reverse()){
+    for (const ent of logsAll.slice().reverse()){
+      const log = ent.l;
       const id = Number(BigInt(log.topics[1]));
-      const c = await appsRead.getCampaign(id);
+      const ref = makeRef(ent.s.key, id);
+      const c = await readFor(ent.s).getCampaign(id);
       totalEntries += Number(c.entryCount);
       await decimalsOf(c.prizeToken);
       const kind = Number(c.kind);
       cards.push(`<div class="camp">
         <div class="camp-top"><span class="chip ${kind === 0 ? "raffle" : ""}">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")}</span></div>
         <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
-        <div class="meta"><b>${t("c_window")}</b> ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}<br><b>${c.entryCount}</b> ${t("c_entries")}${kind === 0 && c.prizePerWinner > 0n ? `<br><b>${t("c_prize")}</b> ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : ""}${kind === 2 ? `<br><b>${t("c_pool")}</b> ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : ""}</div>
-        <div class="foot"><a class="btn sm" href="campaign.html?id=${id}" style="text-decoration:none">${t("d_details")}</a></div>
+        <div class="meta"><b>${t("c_window")}</b> ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}<br><b>${c.entryCount}</b> ${t("c_entries")}${kind === 0 && c.prizePerWinner > 0n ? `<br><b>${t("c_prize")}</b> ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : ""}${kind === 2 ? (c.prizeLabel ? `<br><b>${t("c_prize")}</b> ${String(c.prizeLabel).replace(/</g, "&lt;")} \u00b7 ${t("c_custom_tag")}` : `<br><b>${t("c_pool")}</b> ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)}`) : ""}</div>
+        <div class="foot"><a class="btn sm" href="campaign.html?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
       </div>`);
     }
     box.innerHTML = `<div style="display:flex;gap:34px;flex-wrap:wrap;margin-bottom:18px">
-        <div class="stat"><b>${logs.length}</b><span>${t("creator_camps")}</span></div>
+        <div class="stat"><b>${logsAll.length}</b><span>${t("creator_camps")}</span></div>
         <div class="stat"><b>${totalEntries}</b><span>${t("creator_entries")}</span></div>
       </div><div class="camp-grid">${cards.join("")}</div>`;
   }catch(e){ box.innerHTML = `<div class="empty">${t("load_fail")}</div>`; }
@@ -2950,23 +3039,26 @@ async function loadRecord(addr){
   try{
     const latest = await providerTest.getBlockNumber();
     const topicAddr = ethers.zeroPadValue(addr, 32);
-    const from = APPS_DEPLOY_BLOCK;
-    const [entered, voted, claimed] = await Promise.all([
-      getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Entered(uint256,address)"), null, topicAddr] }, from, latest),
-      getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Voted(uint256,address,uint8)"), null, topicAddr] }, from, latest),
-      getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("Claimed(uint256,address,uint256)"), null, topicAddr] }, from, latest),
-    ]);
-    const ids = new Set();
-    entered.forEach(l => ids.add(Number(BigInt(l.topics[1]))));
-    voted.forEach(l => ids.add(Number(BigInt(l.topics[1]))));
-    claimed.forEach(l => ids.add(Number(BigInt(l.topics[1]))));
+    const entered = [], voted = [], claimed = [];
+    for (const s of APPS_SOURCES){
+      const [e2, v2, c2] = await Promise.all([
+        getLogsCached({ address: s.addr, topics: [ethers.id("Entered(uint256,address)"), null, topicAddr] }, s.block, latest),
+        getLogsCached({ address: s.addr, topics: [ethers.id("Voted(uint256,address,uint8)"), null, topicAddr] }, s.block, latest),
+        getLogsCached({ address: s.addr, topics: [ethers.id("Claimed(uint256,address,uint256)"), null, topicAddr] }, s.block, latest),
+      ]);
+      e2.forEach(l => entered.push({ s, l })); v2.forEach(l => voted.push({ s, l })); c2.forEach(l => claimed.push({ s, l }));
+    }
+    const refSet = new Set();
+    const addRef = x => refSet.add(makeRef(x.s.key, Number(BigInt(x.l.topics[1]))));
+    entered.forEach(addRef); voted.forEach(addRef); claimed.forEach(addRef);
     let wins = 0;
     const rows = [];
     lastRecord = { addr, entered: entered.length, voted: voted.length, claimed: claimed.length, wins: 0 };
-    for (const id of [...ids].sort((a,b)=>b-a)){
-      const c = await appsRead.getCampaign(id);
+    for (const ref of [...refSet].sort().reverse()){
+      const _pr = parseRef(ref); const id = _pr.id; const rd = readFor(_pr.src);
+      const c = await rd.getCampaign(id);
       let badge = "";
-      if (Number(c.kind) === 0 && c.drawn && (await appsRead.isWinner(id, addr))){ wins++; badge = ` · <b style="color:var(--gold)">${t("rec_won")} ✓</b>`; }
+      if (Number(c.kind) === 0 && c.drawn && (await rd.isWinner(id, addr))){ wins++; badge = ` · <b style="color:var(--gold)">${t("rec_won")} ✓</b>`; }
       rows.push(`<li><b>${String(c.title).replace(/</g,"&lt;")}</b> <span style="color:var(--faint)">#${id}${badge}</span></li>`);
     }
     if(lastRecord) lastRecord.wins = wins;
@@ -2996,15 +3088,21 @@ async function renderMineSummary(createdCount){
   try{
     const latest = await providerTest.getBlockNumber();
     const topicAddr = ethers.zeroPadValue(myAddr, 32);
-    const scan = (sig) => getLogsCached({ address: APPS_TESTNET, topics: [ethers.id(sig), null, topicAddr] }, APPS_DEPLOY_BLOCK, latest);
-    const eL = await scan("Entered(uint256,address)");
-    const vL = await scan("Voted(uint256,address,uint8)");
-    const cL = await scan("Claimed(uint256,address,uint256)");
-    setN("msEntered", eL.length + vL.length + cL.length);
+    let eN = 0, vN = 0, cN = 0;
+    const enteredRefs = [];
+    for (const s of APPS_SOURCES){
+      const scan = (sig) => getLogsCached({ address: s.addr, topics: [ethers.id(sig), null, topicAddr] }, s.block, latest);
+      const eL = await scan("Entered(uint256,address)");
+      const vL = await scan("Voted(uint256,address,uint8)");
+      const cL = await scan("Claimed(uint256,address,uint256)");
+      eN += eL.length; vN += vL.length; cN += cL.length;
+      eL.forEach(l => enteredRefs.push(makeRef(s.key, Number(BigInt(l.topics[1])))));
+    }
+    setN("msEntered", eN + vN + cN);
     let won = 0;
-    const ids = [...new Set(eL.map(l => Number(BigInt(l.topics[1]))))];
-    for (const id of ids){
-      try{ const c = await appsRead.getCampaign(id); if (c.drawn && await appsRead.isWinner(id, myAddr)) won++; }catch(e){}
+    for (const ref of [...new Set(enteredRefs)]){
+      const _pr = parseRef(ref); const rd = readFor(_pr.src);
+      try{ const c = await rd.getCampaign(_pr.id); if (c.drawn && await rd.isWinner(_pr.id, myAddr)) won++; }catch(e){}
     }
     setN("msWon", won);
   }catch(e){}
@@ -3023,42 +3121,45 @@ async function loadJoined(){
       ["Voted(uint256,address,uint8)", p => ({ voted: true, option: Number(p.args.option) })],
       ["Claimed(uint256,address,uint256)", p => ({ claimed: true, amount: p.args.amount })]
     ];
-    for (const [sig, mk] of scans){
-      const logs = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id(sig), null, topicAddr] }, APPS_DEPLOY_BLOCK, latest);
-      for (const l of logs){
-        const parsed = iface.parseLog(l); if (!parsed) continue;
-        const id = Number(parsed.args[0]);
-        mineMap.set(id, { ...(mineMap.get(id) || {}), ...mk(parsed) });
+    for (const s of APPS_SOURCES){
+      for (const [sig, mk] of scans){
+        const logs = await getLogsCached({ address: s.addr, topics: [ethers.id(sig), null, topicAddr] }, s.block, latest);
+        for (const l of logs){
+          const parsed = iface.parseLog(l); if (!parsed) continue;
+          const ref = makeRef(s.key, Number(parsed.args[0]));
+          mineMap.set(ref, { ...(mineMap.get(ref) || {}), ...mk(parsed) });
+        }
       }
     }
     if (!mineMap.size){ grid.innerHTML = `<div class="empty">${t("j_none")}</div>`; return; }
-    const ids = [...mineMap.keys()].sort((a, b) => b - a);
+    const ids = [...mineMap.keys()].sort().reverse();
     const cards = [];
-    for (const id of ids){
-      const c = await appsRead.getCampaign(id);
+    for (const ref of ids){
+      const _pr = parseRef(ref); const id = _pr.id; const rd = readFor(_pr.src);
+      const c = await rd.getCampaign(id);
       await decimalsOf(c.prizeToken);
       if (String(c.creator).toLowerCase() === myAddr.toLowerCase()) continue;
       const kind = Number(c.kind);
       const now = Math.floor(Date.now() / 1000);
       const live = now >= Number(c.startAt) && now <= Number(c.endAt);
       const ended = now > Number(c.endAt);
-      const st = mineMap.get(id);
+      const st = mineMap.get(ref);
       let status = "";
       if (kind === 0){
         if (!c.drawn) status = t("j_entered");
-        else if (await appsRead.isWinner(id, myAddr)) status = (await appsRead.prizeClaimed(id, myAddr)) ? t("j_won_claimed") : `<b style="color:var(--gold)">${t("j_winner")}</b>`;
+        else if (await rd.isWinner(id, myAddr)) status = (await rd.prizeClaimed(id, myAddr)) ? t("j_won_claimed") : `<b style="color:var(--gold)">${t("j_winner")}</b>`;
         else status = t("j_notwon");
       } else if (kind === 1){
-        const ls = await voteLabels(appsRead, id);
+        const ls = await voteLabels(rd, ref);
         status = `${t("j_voted")} \u00b7 ${ls[st.option ?? 0] ? escHtml(ls[st.option ?? 0]) : t("c_option") + " " + ((st.option ?? 0) + 1)}`;
       } else {
-        status = st.claimed ? `${t("j_claimed")} \u00b7 ${fmtAmt(st.amount, c.prizeToken)} ${tokenLabel(c.prizeToken)}` : t("j_entered");
+        status = st.claimed ? (c.prizeLabel ? `${t("j_claimed")} \u00b7 ${String(c.prizeLabel).replace(/</g, "&lt;")}` : `${t("j_claimed")} \u00b7 ${fmtAmt(st.amount, c.prizeToken)} ${tokenLabel(c.prizeToken)}`) : t("j_entered");
       }
       cards.push(`<div class="camp">
         <div class="camp-top"><span class="chip ${kind === 0 ? "raffle" : ""}">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")}</span><span class="count">${live ? t("c_live") : ended ? t("c_ended") : t("c_upcoming")}</span></div>
         <h3>${String(c.title).replace(/</g, "&lt;")}</h3>
         <div class="meta"><b>${t("j_mystatus")}</b> ${status}<br><b>${t("c_window")}</b> ${fmtTime(c.startAt)} \u2192 ${fmtTime(c.endAt)}</div>
-        <div class="foot"><a class="btn sm" href="campaign.html?id=${id}" style="text-decoration:none">${t("d_details")}</a></div>
+        <div class="foot"><a class="btn sm" href="campaign.html?ref=${ref}" style="text-decoration:none">${t("d_details")}</a></div>
       </div>`);
     }
     grid.innerHTML = cards.length ? cards.join("") : `<div class="empty">${t("j_none")}</div>`;
@@ -3072,54 +3173,62 @@ async function loadMine(){
   try{
     const latest = await providerTest.getBlockNumber();
     const topicAddr = ethers.zeroPadValue(myAddr, 32);
-    const logs = await getLogsCached({ address: APPS_TESTNET, topics: [ethers.id("CampaignCreated(uint256,address,uint8,string,uint64,uint64)"), null, topicAddr] }, APPS_DEPLOY_BLOCK, latest);
-    renderMineSummary(logs.length);
-    if(!logs.length){ grid.innerHTML = `<div class="empty">${t("mine_none")}</div>`; return; }
+    const logsAll = [];
+    for (const s of APPS_SOURCES){
+      const ls = await getLogsCached({ address: s.addr, topics: [ethers.id("CampaignCreated(uint256,address,uint8,string,uint64,uint64)"), null, topicAddr] }, s.block, latest);
+      for (const l of ls) logsAll.push({ s, l });
+    }
+    renderMineSummary(logsAll.length);
+    if(!logsAll.length){ grid.innerHTML = `<div class="empty">${t("mine_none")}</div>`; return; }
     const cards = [];
-    for (const log of logs.slice().reverse()){
+    for (const ent of logsAll.slice().reverse()){
+      const log = ent.l;
       const id = Number(BigInt(log.topics[1]));
-      const c = await appsRead.getCampaign(id);
+      const ref = makeRef(ent.s.key, id);
+      const RD = readFor(ent.s);
+      const c = await RD.getCampaign(id);
       const now = Math.floor(Date.now()/1000);
       const ended = now > Number(c.endAt);
       const kind = Number(c.kind);
       await decimalsOf(c.prizeToken);
       let actions = "";
-      if (kind === 0 && ended && !c.drawn) actions += drawFlowHtml(id, c, latest, "btn sm", "c_draw");
-      if (kind === 0 && c.drawn) actions += `<button class="btn sm ghost" onclick="copyWinners(${id}, this)">${t("m_copy")}</button>`;
-      if ((kind === 2 && ended && !c.reclaimed) || (kind === 0 && c.drawn && !c.reclaimed && now > Number(c.endAt) + 2592000)) actions += `<button class="btn sm ghost" onclick="reclaimCampaign(${id})">${t("m_reclaim")}</button>`;
-      const curPost = await appsRead.postUrl(id).catch(() => "");
-      const curSeries = await appsRead.series(id).catch(() => "");
-      const curWinfo = await appsRead.winnerInfoUrl(id).catch(() => "");
-      const curWnote = await appsRead.winnerInfoNote(id).catch(() => "");
+      if (kind === 0 && ended && !c.drawn) actions += drawFlowHtml(ref, c, latest, "btn sm", "c_draw");
+      if (kind === 0 && c.drawn) actions += `<button class="btn sm ghost" onclick="copyWinners('${ref}', this)">${t("m_copy")}</button>`;
+      if ((kind === 2 && ended && !c.reclaimed) || (kind === 0 && c.drawn && !c.reclaimed && now > Number(c.endAt) + 2592000)) actions += `<button class="btn sm ghost" onclick="reclaimCampaign('${ref}')">${t("m_reclaim")}</button>`;
+      const curPost = await RD.postUrl(id).catch(() => "");
+      const curSeries = await RD.series(id).catch(() => "");
+      const curWinfo = await RD.winnerInfoUrl(id).catch(() => "");
+      const curWnote = await RD.winnerInfoNote(id).catch(() => "");
       cards.push(`<div class="camp">
         <div class="camp-top"><span class="chip ${kind === 0 ? "raffle" : ""}">${kind === 0 ? t("c_raffle") : kind === 2 ? t("c_claim") : t("c_vote")}</span><span class="chip ${ended ? "ended" : "live"}">${ended ? t("c_ended") : t("c_live")}</span></div>
         <h3>${String(c.title).replace(/</g,"&lt;")}</h3>
-        <div class="meta"><b>${t("c_window")}</b> ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}<br><b>${t("c_entries")}</b> ${c.entryCount}${kind === 0 && c.prizePerWinner > 0n ? `<br><b>${t("c_prize")}</b> ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)} · ${t("paid_out")} ${fmtAmt(c.paidOut, c.prizeToken)}` : ""}${kind === 2 ? `<br><b>${t("c_pool")}</b> ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)} · ${t("paid_out")} ${fmtAmt(c.paidOut, c.prizeToken)}` : ""}</div>
-        <div class="foot" style="gap:8px;flex-wrap:wrap">${actions}<span class="camp-msg" role="status" id="msg-${id}"></span></div>
+        <div class="meta"><b>${t("c_window")}</b> ${fmtTime(c.startAt)} → ${fmtTime(c.endAt)}<br><b>${t("c_entries")}</b> ${c.entryCount}${kind === 0 && c.prizePerWinner > 0n ? `<br><b>${t("c_prize")}</b> ${fmtAmt(c.prizePerWinner, c.prizeToken)} ${tokenLabel(c.prizeToken)} · ${t("paid_out")} ${fmtAmt(c.paidOut, c.prizeToken)}` : ""}${kind === 2 ? (c.prizeLabel ? `<br><b>${t("c_prize")}</b> ${String(c.prizeLabel).replace(/</g, "&lt;")} \u00b7 ${t("c_claimed_n")} ${c.entryCount}/${c.maxClaims}` : `<br><b>${t("c_pool")}</b> ${fmtAmt(c.pool, c.prizeToken)} ${tokenLabel(c.prizeToken)} · ${t("paid_out")} ${fmtAmt(c.paidOut, c.prizeToken)}`) : ""}</div>
+        <div class="foot" style="gap:8px;flex-wrap:wrap">${actions}<span class="camp-msg" role="status" id="msg-${ref}"></span></div>
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
           <span style="font-size:12.5px;color:var(--faint)">${t("post_set")}</span>
-          <input id="posturl-${id}" type="text" value="${curPost.replace(/"/g, "%22")}" placeholder="${t("post_ph")}" style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
-          <button class="btn sm ghost" onclick="setPostUrlMine(${id})">${t("post_save")}</button>
+          <input id="posturl-${ref}" type="text" value="${curPost.replace(/"/g, "%22")}" placeholder="${t("post_ph")}" style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
+          <button class="btn sm ghost" onclick="setPostUrlMine('${ref}')">${t("post_save")}</button>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">
           <span style="font-size:12.5px;color:var(--faint)">${t("f_series")}</span>
-          <input id="series-${id}" type="text" value="${curSeries.replace(/"/g, "%22")}" placeholder="${t("series_ph")}" style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
-          <button class="btn sm ghost" onclick="setSeriesMine(${id})">${t("series_set")}</button>
+          <input id="series-${ref}" type="text" value="${curSeries.replace(/"/g, "%22")}" placeholder="${t("series_ph")}" style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
+          <button class="btn sm ghost" onclick="setSeriesMine('${ref}')">${t("series_set")}</button>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">
           <span style="font-size:12.5px;color:var(--faint)">${t("winfo_set")}</span>
-          <input id="winfo-${id}" type="text" value="${curWinfo.replace(/"/g, "%22")}" placeholder="${t("winfo_ph")}"${c.drawn ? " disabled" : ""} style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
-          <input id="winote-${id}" type="text" value="${curWnote.replace(/"/g, "%22")}" placeholder="${t("winote_ph")}"${c.drawn ? " disabled" : ""} style="flex:1;min-width:160px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
-          ${c.drawn ? `<span style="font-size:12.5px;color:var(--gold,#F0B90B)">${t("winfo_locked")}</span>` : `<button class="btn sm ghost" onclick="setWinnerInfoMine(${id})">${t("winfo_save")}</button>`}
+          <input id="winfo-${ref}" type="text" value="${curWinfo.replace(/"/g, "%22")}" placeholder="${t("winfo_ph")}"${c.drawn ? " disabled" : ""} style="flex:1;min-width:200px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
+          <input id="winote-${ref}" type="text" value="${curWnote.replace(/"/g, "%22")}" placeholder="${t("winote_ph")}"${c.drawn ? " disabled" : ""} style="flex:1;min-width:160px;background:#101013;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px">
+          ${c.drawn ? `<span style="font-size:12.5px;color:var(--gold,#F0B90B)">${t("winfo_locked")}</span>` : `<button class="btn sm ghost" onclick="setWinnerInfoMine('${ref}')">${t("winfo_save")}</button>`}
         </div>
       </div>`);
     }
     grid.innerHTML = cards.join("");
   }catch(e){ grid.innerHTML = `<div class="empty">${t("load_fail")}</div>`; }
 }
-window.copyWinners = async (id, btn) => {
+window.copyWinners = async (ref, btn) => {
   try{
-    const w = await appsRead.getWinners(id);
+    const _pr = parseRef(ref);
+    const w = await readFor(_pr.src).getWinners(_pr.id);
     await navigator.clipboard.writeText(w.join("\n"));
     btn.textContent = t("m_copied");
   }catch(e){ toast(t("load_fail")); }
@@ -3379,7 +3488,10 @@ window.demoReset = () => {
     if (tsel) tsel.addEventListener("change", () => {
       $("fTokenAddrRow").style.display = tsel.value === "erc20" ? "" : "none";
       $("fPerWinnerRow").style.display = (tsel.value !== "none" && tsel.value !== "custom" && createKind === 0) ? "" : "none";
-      if ($("fPrizeLabelRow")) $("fPrizeLabelRow").style.display = (tsel.value === "custom" && createKind === 0) ? "" : "none";
+      if ($("fPrizeLabelRow")) $("fPrizeLabelRow").style.display = (tsel.value === "custom" && (createKind === 0 || createKind === 2)) ? "" : "none";
+      if ($("fPoolRow")) $("fPoolRow").style.display = (createKind === 2 && tsel.value !== "custom") ? "" : "none";
+      if ($("fModeRow")) $("fModeRow").style.display = (createKind === 2 && tsel.value !== "custom") ? "" : "none";
+      if ($("fCustomHint")){ const _hk = (createKind === 2 && tsel.value === "custom") ? "f_claim_custom_note" : "f_custom_hint"; $("fCustomHint").setAttribute("data-i18n", _hk); $("fCustomHint").textContent = t(_hk); }
       renderPreview();
     });
     labelPresetOptions();
