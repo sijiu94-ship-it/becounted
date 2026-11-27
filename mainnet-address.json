@@ -36,5 +36,8 @@
   "appsV16Block": 135942248,
   "appsV17": "0xc1a396eFc40e1E943574CFDd162F5e6BE5CA1A5E",
   "appsV17Tx": "0x0f9c5edb970dbd2bbcc0d578b91e7096674070846e5ac350210d0cd1bcc7891b",
-  "appsV17Block": 136008461
+  "appsV17Block": 136008461,
+  "appsV18": "0x3Ba2420457b1254FA632D03190b5189Bfa2ffFb1",
+  "appsV18Tx": "0xa91dd4d42a64bb7da17268cb899e7ed2bf073f965bae98d74faaab24d42c86ff",
+  "appsV18Block": 136023352
 }

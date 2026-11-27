@@ -1,0 +1,13 @@
+{
+  "network": "bsc-testnet",
+  "chainId": 97,
+  "gate": "0x9D3a18e06d5Ec7174D733Be6014dae3B5b75C349",
+  "bindingsV4": "0xE9262F8508D704F98eB01abbB2B5D9113A6dE4d0",
+  "checkInV2": "0xC896D0265419435c745ca6B6fE9612E9B8625617",
+  "campaignsV18": "0x4f3a2e9637B3FD394D382C7158b8861Fc386d361",
+  "deployTx": "0xde2badcb1984af269d06310112a02cee7fe52088d9545afbde01707dd40811e7",
+  "checkInV2TrialInstance": "0xC896D0265419435c745ca6B6fE9612E9B8625617",
+  "trial": "V18: deploy/wiring/constructor EOA checkIn_ rejected/snapshot proof (lock H=2,U=1, U post-lock check-in, DrawWeighted total=3, winner matches snapshot)/DrawWeights event carries winner snapshot weight/claimPrizeFor: non-winner triggers, winner paid exactly, replay AlreadyCounted/N6 live: reentry-attempting gate token, entryCount stays 1/https:// replays/registration claim regression all PASS",
+  "trialWeightedWinner": "0x925943c5dcBc98bdDEB10da8f1089A8D7C90Cec6",
+  "deployedAt": "2026-11-27T09:31:05.509Z"
+}

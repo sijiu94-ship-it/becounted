@@ -207,7 +207,7 @@ try {
 } catch (e) {
   fail("deployment record is not valid JSON: " + addrPath + " (" + e.message + ")");
 }
-const appsAddr = rec.appsV17 || rec.appsV16 || rec.appsV15 || rec.appsV14 || rec.appsV13 || rec.appsV12 || rec.appsV11 || rec.appsV9 || rec.appsV7;
+const appsAddr = rec.appsV18 || rec.appsV17 || rec.appsV16 || rec.appsV15 || rec.appsV14 || rec.appsV13 || rec.appsV12 || rec.appsV11 || rec.appsV9 || rec.appsV7;
 const bindAddr = rec.bindingsV4 || rec.bindings;
 const appsBlock = rec.appsV17 ? rec.appsV17Block : rec.appsV16 ? rec.appsV16Block : rec.appsV15 ? rec.appsV15Block : rec.appsV14 ? rec.appsV14Block : rec.appsV13 ? rec.appsV13Block : rec.appsV12 ? rec.appsV12Block : rec.appsBlock;
 // No-quest mode (user decision 2026-11-25): QuestPass is NOT part of this

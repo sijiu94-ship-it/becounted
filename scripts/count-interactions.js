@@ -140,7 +140,7 @@ const pick = (...keys) => {
 };
 // Every recorded OneIDCampaigns version gets scanned (newest first).
 const APPS_VERSIONS = [];
-for (const [label, akey, bkey] of [["V16", "appsV16", "appsV16Block"], ["V15", "appsV15", "appsV15Block"], ["V14", "appsV14", "appsV14Block"], ["V13", "appsV13", "appsV13Block"], ["V12", "appsV12", "appsV12Block"], ["V11", "appsV11", "appsV11Block"]]) {
+for (const [label, akey, bkey] of [["V18", "appsV18", "appsV18Block"], ["V17", "appsV17", "appsV17Block"], ["V16", "appsV16", "appsV16Block"], ["V15", "appsV15", "appsV15Block"], ["V14", "appsV14", "appsV14Block"], ["V13", "appsV13", "appsV13Block"], ["V12", "appsV12", "appsV12Block"], ["V11", "appsV11", "appsV11Block"]]) {
   if (rec[akey]) APPS_VERSIONS.push({ label, address: rec[akey], block: Number(rec[bkey] ?? rec.appsBlock ?? 0) });
 }
 if (!APPS_VERSIONS.length && rec.apps) APPS_VERSIONS.push({ label: "apps", address: rec.apps, block: Number(rec.appsBlock ?? 0) });
